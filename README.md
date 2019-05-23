@@ -11,6 +11,12 @@
     </p>
 </p>
 
+Rabbit is a lite-weight service that will build and store your go projects binaries. Once a VCS system (github or bitbucket) notifies rabbit of a new release, it clones the project, builds different binaries and publish them.
+
+<p align="center">
+    <img src="https://raw.githubusercontent.com/Clivern/Rabbit/master/assets/img/diagram.png" />
+</p>
+
 ## Documentation
 
 ### Installation:
