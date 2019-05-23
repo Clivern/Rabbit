@@ -57,7 +57,7 @@ $ go run rabbit.go -config=/custom/path/config.prod.yml
 Or [download a pre-built Rabbit binary](https://github.com/Clivern/Rabbit/releases) for your operating system.
 
 ```bash
-$ curl -sL https://github.com/Clivern/Rabbit/releases/download/x.x.x/beagle_x.x.x_OS.tar.gz | tar xz
+$ curl -sL https://github.com/Clivern/Rabbit/releases/download/x.x.x/rabbit_x.x.x_OS.tar.gz | tar xz
 $ ./rabbit -config=config.prod.yml
 ```
 
