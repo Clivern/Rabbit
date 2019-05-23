@@ -1,0 +1,11 @@
+app:
+    mode: dev
+    port: 8080
+    tls:
+        status: off
+        pemPath: cert/server.pem
+        keyPath: cert/server.key
+
+log:
+    level: info
+    path: var/logs
