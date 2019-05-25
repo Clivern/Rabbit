@@ -45,6 +45,7 @@ func main() {
 
 	r := gin.Default()
 	r.Use(middleware.Correlation())
+	r.Use(middleware.Logger())
 	r.GET("/", controller.Index)
 	r.GET("/_health", controller.HealthCheck)
 	r.GET("/favicon.ico", func(c *gin.Context) {
