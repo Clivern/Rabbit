@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"github.com/clivern/hippo"
 	"github.com/gin-gonic/gin"
+	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"io/ioutil"
 	"time"
@@ -27,7 +28,12 @@ func Logger() gin.HandlerFunc {
 		}
 		c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
 
-		logger, _ := hippo.NewLogger("debug", "json", []string{"stdout"})
+		logger, _ := hippo.NewLogger(
+			viper.GetString("log.level"),
+			viper.GetString("log.format"),
+			[]string{viper.GetString("log.output")},
+		)
+
 		logger.Info(
 			fmt.Sprintf(
 				`Incoming request %s %s %s`,

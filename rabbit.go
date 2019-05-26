@@ -7,6 +7,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/clivern/hippo"
 	"github.com/clivern/rabbit/internal/app/controller"
 	"github.com/clivern/rabbit/internal/app/middleware"
 	"github.com/gin-gonic/gin"
@@ -14,6 +15,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 )
 
@@ -36,11 +38,37 @@ func main() {
 		))
 	}
 
+	if viper.GetString("log.output") != "stdout" {
+		dir, _ := filepath.Split(viper.GetString("log.output"))
+		if !hippo.DirExists(dir) {
+			panic(fmt.Sprintf(
+				"Logs output directory [%s] not exist",
+				dir,
+			))
+		}
+
+		if !hippo.FileExists(viper.GetString("log.output")) {
+			f, err := os.Create(viper.GetString("log.output"))
+			if err != nil {
+				panic(fmt.Sprintf(
+					"Error while creating log file [%s]: %s",
+					viper.GetString("log.output"),
+					err.Error(),
+				))
+			}
+			defer f.Close()
+		}
+	}
+
 	if viper.GetString("app.mode") == "prod" {
 		gin.SetMode(gin.ReleaseMode)
 		gin.DisableConsoleColor()
-		f, _ := os.Create(fmt.Sprintf("%s/gin.log", viper.GetString("log.path")))
-		gin.DefaultWriter = io.MultiWriter(f)
+		if viper.GetString("log.output") == "stdout" {
+			gin.DefaultWriter = os.Stdout
+		} else {
+			f, _ := os.Create(fmt.Sprintf("%s/gin.log", viper.GetString("log.output")))
+			gin.DefaultWriter = io.MultiWriter(f)
+		}
 	}
 
 	r := gin.Default()
