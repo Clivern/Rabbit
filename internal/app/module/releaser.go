@@ -7,3 +7,14 @@ package module
 // Releaser struct
 type Releaser struct {
 }
+
+// NewReleaser returns a new instance of Releaser
+func NewReleaser() *Releaser {
+	return &Releaser{}
+}
+
+// Release build & release all binaries
+func (r *Releaser) Release() (bool, error) {
+	// Stuff Comes Here
+	return true, nil
+}
