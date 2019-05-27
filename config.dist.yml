@@ -10,3 +10,9 @@ log:
     level: debug
     output: stdout
     format: json
+
+releases:
+    path: /app/var/releases
+
+build:
+    path: /app/var/build

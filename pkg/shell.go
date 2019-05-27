@@ -19,11 +19,17 @@ type Result struct {
 	Stderr string
 }
 
+// NewShellCommand creates a new shell command
+func NewShellCommand() *Shell {
+	return &Shell{}
+}
+
 // Exec execute a command
-func (s *Shell) Exec(name string, arg ...string) (*Result, error) {
+func (s *Shell) Exec(path, name string, arg ...string) (*Result, error) {
 	var stdout, stderr bytes.Buffer
 	cmd := exec.Command(name, arg...)
 
+	cmd.Dir = path
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 

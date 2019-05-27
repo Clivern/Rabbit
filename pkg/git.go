@@ -13,6 +13,11 @@ type Repository struct {
 	URL string
 }
 
+// NewRepository creates a new repository
+func NewRepository(url string) *Repository {
+	return &Repository{URL: url}
+}
+
 // Clone Clones a Repository
 func (r *Repository) Clone(directory string) (bool, error) {
 	_, err := git.PlainClone(directory, false, &git.CloneOptions{

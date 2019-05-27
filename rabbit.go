@@ -8,6 +8,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/clivern/hippo"
+	"github.com/clivern/rabbit/internal/app/cmd"
 	"github.com/clivern/rabbit/internal/app/controller"
 	"github.com/clivern/rabbit/internal/app/middleware"
 	"github.com/gin-gonic/gin"
@@ -21,9 +22,11 @@ import (
 
 func main() {
 
+	var exec string
 	var configFile string
 
 	flag.StringVar(&configFile, "config", "config.prod.yml", "config")
+	flag.StringVar(&exec, "exec", "", "exec")
 	flag.Parse()
 
 	viper.SetConfigFile(configFile)
@@ -36,6 +39,14 @@ func main() {
 			configFile,
 			err.Error(),
 		))
+	}
+
+	if exec != "" {
+		switch exec {
+		case "release":
+			cmd.ReleasePackage()
+		}
+		return
 	}
 
 	if viper.GetString("log.output") != "stdout" {

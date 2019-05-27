@@ -4,6 +4,23 @@
 
 package cmd
 
-// Build struct
-type Build struct {
+import (
+	"fmt"
+	"github.com/clivern/rabbit/pkg"
+	"github.com/spf13/viper"
+)
+
+// ReleasePackage clones and build binaries
+func ReleasePackage() {
+	releasesPath := viper.GetString("releases.path")
+
+	cmd := pkg.NewShellCommand()
+
+	fmt.Println("Run git clone https://github.com/Clivern/Beaver.git beaver")
+	cmd.Exec(releasesPath, "git", "clone", "https://github.com/Clivern/Beaver.git", "beaver")
+
+	fmt.Println("Start Releasing")
+	re := pkg.NewReleaser()
+	re.Install(releasesPath + "/beaver")
+	re.Release(releasesPath + "/beaver")
 }
