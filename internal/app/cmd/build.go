@@ -6,21 +6,13 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/clivern/rabbit/pkg"
-	"github.com/spf13/viper"
+	"github.com/clivern/rabbit/internal/app/module"
 )
 
 // ReleasePackage clones and build binaries
 func ReleasePackage() {
-	releasesPath := viper.GetString("releases.path")
-
-	cmd := pkg.NewShellCommand()
-
-	fmt.Println("Run git clone https://github.com/Clivern/Beaver.git beaver")
-	cmd.Exec(releasesPath, "git", "clone", "https://github.com/Clivern/Beaver.git", "beaver")
-
-	fmt.Println("Start Releasing")
-	re := pkg.NewReleaser()
-	re.Install(releasesPath + "/beaver")
-	re.Release(releasesPath + "/beaver")
+	releaser := module.NewReleaser("hippo", "https://github.com/Clivern/Hippo.git", "v1.3.0")
+	fmt.Println(releaser.Clone())
+	fmt.Println(releaser)
+	fmt.Println(releaser.Cleanup())
 }

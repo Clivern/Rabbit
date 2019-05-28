@@ -18,6 +18,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 )
 
 func main() {
@@ -69,6 +70,20 @@ func main() {
 			}
 			defer f.Close()
 		}
+	}
+
+	if !hippo.DirExists(strings.TrimSuffix(viper.GetString("build.path"), "/")) {
+		panic(fmt.Sprintf(
+			"Build directory [%s] not exist",
+			strings.TrimSuffix(viper.GetString("build.path"), "/"),
+		))
+	}
+
+	if !hippo.DirExists(strings.TrimSuffix(viper.GetString("releases.path"), "/")) {
+		panic(fmt.Sprintf(
+			"Releases directory [%s] not exist",
+			strings.TrimSuffix(viper.GetString("releases.path"), "/"),
+		))
 	}
 
 	if viper.GetString("app.mode") == "prod" {
