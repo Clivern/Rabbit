@@ -20,9 +20,13 @@ func ReleasePackage(repositoryName, repositoryURL, repositoryTag string) {
 	s.Start()
 	defer s.Stop()
 
-	releaser := module.NewReleaser(repositoryName, repositoryURL, repositoryTag)
+	releaser, err := module.NewReleaser(repositoryName, repositoryURL, repositoryTag)
 
-	_, err := releaser.Clone()
+	if err != nil {
+		panic(err.Error())
+	}
+
+	_, err = releaser.Clone()
 
 	if err != nil {
 		panic(err.Error())
@@ -34,5 +38,9 @@ func ReleasePackage(repositoryName, repositoryURL, repositoryTag string) {
 		panic(err.Error())
 	}
 
-	//fmt.Println(releaser.Cleanup())
+	_, err = releaser.Cleanup()
+
+	if err != nil {
+		panic(err.Error())
+	}
 }
