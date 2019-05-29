@@ -22,6 +22,8 @@ func ReleasePackage(repositoryName, repositoryURL, repositoryTag string) {
 
 	releaser, err := module.NewReleaser(repositoryName, repositoryURL, repositoryTag)
 
+	defer releaser.Cleanup()
+
 	if err != nil {
 		panic(err.Error())
 	}
@@ -33,12 +35,6 @@ func ReleasePackage(repositoryName, repositoryURL, repositoryTag string) {
 	}
 
 	_, err = releaser.Release()
-
-	if err != nil {
-		panic(err.Error())
-	}
-
-	_, err = releaser.Cleanup()
 
 	if err != nil {
 		panic(err.Error())

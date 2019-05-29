@@ -17,6 +17,9 @@ import (
 // GoReleaserConfig config file for go releaser
 const GoReleaserConfig = ".goreleaser.yml"
 
+// GoReleaserChecksums checksums file
+const GoReleaserChecksums = "checksums.txt"
+
 // ReleasePath struct
 type ReleasePath struct {
 	VCS        string
@@ -111,7 +114,7 @@ func (r *Releaser) releaseWithGoReleaser() (bool, error) {
 	distPath := fmt.Sprintf("%s/%s", r.BuildPath, "dist")
 
 	err = filepath.Walk(distPath, func(path string, info os.FileInfo, err error) error {
-		if filepath.Ext(path) != ".gz" {
+		if filepath.Ext(path) != ".gz" && filepath.Ext(path) != ".txt" {
 			return nil
 		}
 		files = append(files, filepath.Base(path))
@@ -120,6 +123,24 @@ func (r *Releaser) releaseWithGoReleaser() (bool, error) {
 
 	if err != nil {
 		return false, err
+	}
+
+	// Validate checksums
+	for _, file := range files {
+		if filepath.Ext(file) != ".gz" {
+			continue
+		}
+
+		res, err := pkg.ValidateChecksum(
+			fmt.Sprintf("%s/%s", distPath, file),
+			fmt.Sprintf("%s/%s", distPath, GoReleaserChecksums),
+		)
+		if err != nil {
+			return false, err
+		}
+		if !res {
+			return false, fmt.Errorf("File [%s] checksum is not valid", fmt.Sprintf("%s/%s", distPath, file))
+		}
 	}
 
 	newPath := fmt.Sprintf(
