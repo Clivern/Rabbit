@@ -19,8 +19,13 @@ RUN mkdir -p /app/var/logs
 RUN mkdir -p /app/var/build
 RUN mkdir -p /app/var/releases
 
+VOLUME /app/configs
+VOLUME /app/var/logs
+VOLUME /app/var/build
+VOLUME /app/var/releases
+
 WORKDIR /app
 
 EXPOSE 8080
 
-CMD ["./rabbit"]
+CMD ["./rabbit", "--config", "/app/configs/config.prod.yml"]
