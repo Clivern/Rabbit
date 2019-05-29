@@ -10,8 +10,13 @@ import (
 )
 
 // ReleasePackage clones and build binaries
-func ReleasePackage() {
-	releaser := module.NewReleaser("hippo", "https://github.com/Clivern/Hippo.git", "v1.3.0")
+func ReleasePackage(repositoryName, repositoryURL, repositoryTag string) {
+
+	if repositoryName == "" || repositoryURL == "" || repositoryTag == "" {
+		panic("Please provide the repository name, URL and tag")
+	}
+
+	releaser := module.NewReleaser(repositoryName, repositoryURL, repositoryTag)
 	fmt.Println(releaser.Clone())
 	fmt.Println(releaser)
 	fmt.Println(releaser.Cleanup())
