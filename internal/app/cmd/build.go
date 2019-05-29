@@ -5,8 +5,8 @@
 package cmd
 
 import (
-	"fmt"
 	"github.com/clivern/rabbit/internal/app/module"
+	"github.com/clivern/rabbit/pkg"
 )
 
 // ReleasePackage clones and build binaries
@@ -16,8 +16,23 @@ func ReleasePackage(repositoryName, repositoryURL, repositoryTag string) {
 		panic("Please provide the repository name, URL and tag")
 	}
 
+	s := pkg.NewSpinner("%s Hold on...")
+	s.Start()
+	defer s.Stop()
+
 	releaser := module.NewReleaser(repositoryName, repositoryURL, repositoryTag)
-	fmt.Println(releaser.Clone())
-	fmt.Println(releaser)
-	fmt.Println(releaser.Cleanup())
+
+	_, err := releaser.Clone()
+
+	if err != nil {
+		panic(err.Error())
+	}
+
+	_, err = releaser.Release()
+
+	if err != nil {
+		panic(err.Error())
+	}
+
+	//fmt.Println(releaser.Cleanup())
 }

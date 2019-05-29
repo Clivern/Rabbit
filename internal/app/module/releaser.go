@@ -37,6 +37,18 @@ func NewReleaser(repositoryName, repositoryURL, version string) *Releaser {
 
 // Release build & release all binaries
 func (r *Releaser) Release() (bool, error) {
+	cmd := pkg.NewShellCommand()
+
+	if r.BuildPath == "" || !hippo.DirExists(r.BuildPath) {
+		return false, fmt.Errorf("Unable to find build path [%s]", r.BuildPath)
+	}
+
+	_, err := cmd.Exec(r.BuildPath, "goreleaser", "--snapshot", "--skip-publish", "--rm-dist")
+
+	if err != nil {
+		return false, err
+	}
+
 	return true, nil
 }
 
