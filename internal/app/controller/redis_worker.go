@@ -11,8 +11,8 @@ import (
 	"github.com/spf13/viper"
 )
 
-// Worker runs async jobs
-func Worker() {
+// RedisWorker runs async jobs
+func RedisWorker() {
 	driver := hippo.NewRedisDriver(
 		viper.GetString("redis.addr"),
 		viper.GetString("redis.password"),

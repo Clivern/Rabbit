@@ -13,8 +13,8 @@ import (
 	"net/http"
 )
 
-// Release controller
-func Release(c *gin.Context) {
+// RedisRelease controller
+func RedisRelease(c *gin.Context) {
 
 	var releaseRequest module.ReleaseRequest
 	validate := pkg.Validator{}
