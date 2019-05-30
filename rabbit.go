@@ -108,9 +108,12 @@ func main() {
 	r.Use(middleware.Logger())
 	r.GET("/", controller.Index)
 	r.GET("/_health", controller.HealthCheck)
+	r.POST("/release", controller.Release)
 	r.GET("/favicon.ico", func(c *gin.Context) {
 		c.String(http.StatusNoContent, "")
 	})
+
+	go controller.Worker()
 
 	if viper.GetBool("app.tls.status") {
 		r.RunTLS(
