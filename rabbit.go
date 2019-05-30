@@ -113,20 +113,11 @@ func main() {
 		c.String(http.StatusNoContent, "")
 	})
 	r.GET("/_health", controller.HealthCheck)
+	r.POST("/api/release", func(c *gin.Context) {
+		controller.Release(c, messages)
+	})
 
-	if viper.GetString("broker.driver") == "redis" {
-		r.POST("/release", controller.RedisRelease)
-	} else {
-		r.POST("/release", func(c *gin.Context) {
-			controller.ChanRelease(c, messages)
-		})
-	}
-
-	if viper.GetString("broker.driver") == "redis" {
-		go controller.RedisWorker()
-	} else {
-		go controller.ChanWorker(messages)
-	}
+	go controller.Worker(messages)
 
 	if viper.GetBool("app.tls.status") {
 		r.RunTLS(

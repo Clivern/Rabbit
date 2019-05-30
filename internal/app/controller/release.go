@@ -13,8 +13,8 @@ import (
 	"net/http"
 )
 
-// RedisRelease controller
-func RedisRelease(c *gin.Context) {
+// Release controller
+func Release(c *gin.Context, messages chan<- string) {
 
 	var releaseRequest module.ReleaseRequest
 	validate := pkg.Validator{}
@@ -73,54 +73,58 @@ func RedisRelease(c *gin.Context) {
 		return
 	}
 
-	driver := hippo.NewRedisDriver(
-		viper.GetString("redis.addr"),
-		viper.GetString("redis.password"),
-		viper.GetInt("redis.db"),
-	)
+	if viper.GetString("broker.driver") == "redis" {
+		driver := hippo.NewRedisDriver(
+			viper.GetString("redis.addr"),
+			viper.GetString("redis.password"),
+			viper.GetInt("redis.db"),
+		)
 
-	// connect to redis server
-	ok, err = driver.Connect()
+		// connect to redis server
+		ok, err = driver.Connect()
 
-	if err != nil {
-		c.JSON(http.StatusServiceUnavailable, gin.H{
-			"status": "error",
-			"error":  "Internal server error",
-		})
-		return
+		if err != nil {
+			c.JSON(http.StatusServiceUnavailable, gin.H{
+				"status": "error",
+				"error":  "Internal server error",
+			})
+			return
+		}
+
+		if !ok {
+			c.JSON(http.StatusServiceUnavailable, gin.H{
+				"status": "error",
+				"error":  "Internal server error",
+			})
+			return
+		}
+
+		// ping check
+		ok, err = driver.Ping()
+
+		if err != nil {
+			c.JSON(http.StatusServiceUnavailable, gin.H{
+				"status": "error",
+				"error":  "Internal server error",
+			})
+			return
+		}
+
+		if !ok {
+			c.JSON(http.StatusServiceUnavailable, gin.H{
+				"status": "error",
+				"error":  "Internal server error",
+			})
+			return
+		}
+
+		driver.Publish(
+			viper.GetString("redis.channel"),
+			requestBody,
+		)
+	} else {
+		messages <- requestBody
 	}
-
-	if !ok {
-		c.JSON(http.StatusServiceUnavailable, gin.H{
-			"status": "error",
-			"error":  "Internal server error",
-		})
-		return
-	}
-
-	// ping check
-	ok, err = driver.Ping()
-
-	if err != nil {
-		c.JSON(http.StatusServiceUnavailable, gin.H{
-			"status": "error",
-			"error":  "Internal server error",
-		})
-		return
-	}
-
-	if !ok {
-		c.JSON(http.StatusServiceUnavailable, gin.H{
-			"status": "error",
-			"error":  "Internal server error",
-		})
-		return
-	}
-
-	driver.Publish(
-		viper.GetString("redis.channel"),
-		requestBody,
-	)
 
 	c.Status(http.StatusAccepted)
 }
