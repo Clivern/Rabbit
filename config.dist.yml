@@ -6,6 +6,12 @@ app:
         pemPath: cert/server.pem
         keyPath: cert/server.key
 
+redis:
+    addr: localhost:6379
+    password:
+    db: 0
+    channel: rabbit
+
 log:
     level: debug
     output: stdout

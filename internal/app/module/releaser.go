@@ -5,6 +5,7 @@
 package module
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/clivern/hippo"
 	"github.com/clivern/rabbit/pkg"
@@ -19,6 +20,13 @@ const GoReleaserConfig = ".goreleaser.yml"
 
 // GoReleaserChecksums checksums file
 const GoReleaserChecksums = "checksums.txt"
+
+// ReleaseRequest struct
+type ReleaseRequest struct {
+	Name    string
+	URL     string
+	Version string
+}
 
 // ReleasePath struct
 type ReleasePath struct {
@@ -239,4 +247,22 @@ func (r *Releaser) Cleanup() (bool, error) {
 	}
 
 	return true, nil
+}
+
+// LoadFromJSON load object from json
+func (c *ReleaseRequest) LoadFromJSON(data []byte) (bool, error) {
+	err := json.Unmarshal(data, &c)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+// ConvertToJSON converts object to json
+func (c *ReleaseRequest) ConvertToJSON() (string, error) {
+	data, err := json.Marshal(&c)
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
 }
