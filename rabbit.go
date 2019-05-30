@@ -103,17 +103,30 @@ func main() {
 		}
 	}
 
+	messages := make(chan string)
 	r := gin.Default()
+
 	r.Use(middleware.Correlation())
 	r.Use(middleware.Logger())
 	r.GET("/", controller.Index)
-	r.GET("/_health", controller.HealthCheck)
-	r.POST("/release", controller.Release)
 	r.GET("/favicon.ico", func(c *gin.Context) {
 		c.String(http.StatusNoContent, "")
 	})
+	r.GET("/_health", controller.HealthCheck)
 
-	go controller.Worker()
+	if viper.GetString("broker.driver") == "redis" {
+		r.POST("/release", controller.RedisRelease)
+	} else {
+		r.POST("/release", func(c *gin.Context) {
+			controller.ChanRelease(c, messages)
+		})
+	}
+
+	if viper.GetString("broker.driver") == "redis" {
+		go controller.RedisWorker()
+	} else {
+		go controller.ChanWorker(messages)
+	}
 
 	if viper.GetBool("app.tls.status") {
 		r.RunTLS(

@@ -6,6 +6,10 @@ app:
         pemPath: cert/server.pem
         keyPath: cert/server.key
 
+broker:
+    # native or redis
+    driver: native
+
 redis:
     addr: localhost:6379
     password:

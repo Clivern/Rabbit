@@ -40,9 +40,26 @@ app:
         pemPath: cert/server.pem
         keyPath: cert/server.key
 
+broker:
+    # native or redis
+    driver: native
+
+redis:
+    addr: localhost:6379
+    password:
+    db: 0
+    channel: rabbit
+
 log:
-    level: info
-    path: var/logs
+    level: debug
+    output: stdout
+    format: json
+
+releases:
+    path: /app/var/releases
+
+build:
+    path: /app/var/build
 ```
 
 And then run the application.
