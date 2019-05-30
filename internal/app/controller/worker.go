@@ -7,6 +7,7 @@ package controller
 import (
 	"fmt"
 	"github.com/clivern/hippo"
+	"github.com/clivern/rabbit/internal/app/module"
 	"github.com/spf13/viper"
 )
 
@@ -41,9 +42,33 @@ func Worker() {
 	}
 
 	driver.Subscribe("rabbit", func(message hippo.Message) error {
-		// message.Channel
-		// message.Payload
-		fmt.Println(message)
+		var releaseRequest module.ReleaseRequest
+
+		ok, err := releaseRequest.LoadFromJSON([]byte(message.Payload))
+
+		if !ok || err != nil {
+			return nil
+		}
+
+		releaser, err := module.NewReleaser(releaseRequest.Name, releaseRequest.URL, releaseRequest.Version)
+
+		defer releaser.Cleanup()
+
+		if err != nil {
+			return nil
+		}
+
+		_, err = releaser.Clone()
+
+		if err != nil {
+			return nil
+		}
+
+		_, err = releaser.Release()
+
+		if err != nil {
+			return nil
+		}
 		return nil
 	})
 }

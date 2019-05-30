@@ -5,8 +5,9 @@
 package controller
 
 import (
-	"fmt"
 	"github.com/clivern/hippo"
+	"github.com/clivern/rabbit/internal/app/module"
+	"github.com/clivern/rabbit/pkg"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 	"net/http"
@@ -14,6 +15,64 @@ import (
 
 // Release controller
 func Release(c *gin.Context) {
+
+	var releaseRequest module.ReleaseRequest
+	validate := pkg.Validator{}
+
+	rawBody, err := c.GetRawData()
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": "error",
+			"error":  "Invalid request",
+		})
+		return
+	}
+
+	ok, err := releaseRequest.LoadFromJSON(rawBody)
+
+	if !ok || err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": "error",
+			"error":  "Invalid request",
+		})
+		return
+	}
+
+	if validate.IsEmpty(releaseRequest.Name) {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": "error",
+			"error":  "Repository name is required",
+		})
+		return
+	}
+
+	if validate.IsEmpty(releaseRequest.URL) {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": "error",
+			"error":  "Repository url is required",
+		})
+		return
+	}
+
+	if validate.IsEmpty(releaseRequest.Version) {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": "error",
+			"error":  "Repository version is required",
+		})
+		return
+	}
+
+	requestBody, err := releaseRequest.ConvertToJSON()
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": "error",
+			"error":  "Invalid request",
+		})
+		return
+	}
+
 	driver := hippo.NewRedisDriver(
 		viper.GetString("redis.addr"),
 		viper.GetString("redis.password"),
@@ -21,30 +80,46 @@ func Release(c *gin.Context) {
 	)
 
 	// connect to redis server
-	ok, err := driver.Connect()
+	ok, err = driver.Connect()
 
 	if err != nil {
-		panic(err.Error())
+		c.JSON(http.StatusServiceUnavailable, gin.H{
+			"status": "error",
+			"error":  "Internal server error",
+		})
+		return
 	}
 
 	if !ok {
-		panic(fmt.Errorf("Unable to connect to redis server [%s]", viper.GetString("redis.addr")))
+		c.JSON(http.StatusServiceUnavailable, gin.H{
+			"status": "error",
+			"error":  "Internal server error",
+		})
+		return
 	}
 
 	// ping check
 	ok, err = driver.Ping()
 
 	if err != nil {
-		panic(err.Error())
+		c.JSON(http.StatusServiceUnavailable, gin.H{
+			"status": "error",
+			"error":  "Internal server error",
+		})
+		return
 	}
 
 	if !ok {
-		panic(fmt.Errorf("Unable to connect to redis server [%s]", viper.GetString("redis.addr")))
+		c.JSON(http.StatusServiceUnavailable, gin.H{
+			"status": "error",
+			"error":  "Internal server error",
+		})
+		return
 	}
 
 	driver.Publish(
 		viper.GetString("redis.channel"),
-		`{"repo":"https://github.com/Clivern/Hippo.git"}`,
+		requestBody,
 	)
 
 	c.Status(http.StatusAccepted)
