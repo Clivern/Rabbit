@@ -7,5 +7,12 @@ app:
         keyPath: cert/server.key
 
 log:
-    level: info
-    path: var/logs
+    level: debug
+    output: stdout
+    format: json
+
+releases:
+    path: /app/var/releases
+
+build:
+    path: /app/var/build

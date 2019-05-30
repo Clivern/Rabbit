@@ -14,6 +14,7 @@ import (
 func Correlation() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		corralationID := c.Request.Header.Get("X-Correlation-ID")
+
 		if strings.TrimSpace(corralationID) == "" {
 			correlation := hippo.NewCorrelation()
 			c.Request.Header.Add("X-Correlation-ID", correlation.UUIDv4())

@@ -10,9 +10,6 @@ services:
   - redis-server
 
 go:
-  - 1.9.x
-  - 1.10.x
-  - 1.11.x
   - 1.12.x
   - master
 
@@ -40,12 +37,6 @@ script:
   - cat diff.log
   - git clean -fd
   - git reset --hard
-
-matrix:
-  include:
-  allow_failures:
-  - go: 1.9.x
-  - go: 1.10.x
 
 deploy:
 - provider: script

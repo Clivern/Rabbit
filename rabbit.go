@@ -7,6 +7,8 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/clivern/hippo"
+	"github.com/clivern/rabbit/internal/app/cmd"
 	"github.com/clivern/rabbit/internal/app/controller"
 	"github.com/clivern/rabbit/internal/app/middleware"
 	"github.com/gin-gonic/gin"
@@ -14,14 +16,24 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
+	"strings"
 )
 
 func main() {
 
+	var exec string
+	var repositoryName string
+	var repositoryURL string
+	var repositoryTag string
 	var configFile string
 
 	flag.StringVar(&configFile, "config", "config.prod.yml", "config")
+	flag.StringVar(&exec, "exec", "", "exec")
+	flag.StringVar(&repositoryName, "repository_name", "", "repository_name")
+	flag.StringVar(&repositoryURL, "repository_url", "", "repository_url")
+	flag.StringVar(&repositoryTag, "repository_tag", "", "repository_tag")
 	flag.Parse()
 
 	viper.SetConfigFile(configFile)
@@ -36,15 +48,64 @@ func main() {
 		))
 	}
 
+	if exec != "" {
+		switch exec {
+		case "release":
+			cmd.ReleasePackage(repositoryName, repositoryURL, repositoryTag)
+		}
+		return
+	}
+
+	if viper.GetString("log.output") != "stdout" {
+		dir, _ := filepath.Split(viper.GetString("log.output"))
+		if !hippo.DirExists(dir) {
+			panic(fmt.Sprintf(
+				"Logs output directory [%s] not exist",
+				dir,
+			))
+		}
+
+		if !hippo.FileExists(viper.GetString("log.output")) {
+			f, err := os.Create(viper.GetString("log.output"))
+			if err != nil {
+				panic(fmt.Sprintf(
+					"Error while creating log file [%s]: %s",
+					viper.GetString("log.output"),
+					err.Error(),
+				))
+			}
+			defer f.Close()
+		}
+	}
+
+	if !hippo.DirExists(strings.TrimSuffix(viper.GetString("build.path"), "/")) {
+		panic(fmt.Sprintf(
+			"Build directory [%s] not exist",
+			strings.TrimSuffix(viper.GetString("build.path"), "/"),
+		))
+	}
+
+	if !hippo.DirExists(strings.TrimSuffix(viper.GetString("releases.path"), "/")) {
+		panic(fmt.Sprintf(
+			"Releases directory [%s] not exist",
+			strings.TrimSuffix(viper.GetString("releases.path"), "/"),
+		))
+	}
+
 	if viper.GetString("app.mode") == "prod" {
 		gin.SetMode(gin.ReleaseMode)
 		gin.DisableConsoleColor()
-		f, _ := os.Create(fmt.Sprintf("%s/gin.log", viper.GetString("log.path")))
-		gin.DefaultWriter = io.MultiWriter(f)
+		if viper.GetString("log.output") == "stdout" {
+			gin.DefaultWriter = os.Stdout
+		} else {
+			f, _ := os.Create(fmt.Sprintf("%s/gin.log", viper.GetString("log.output")))
+			gin.DefaultWriter = io.MultiWriter(f)
+		}
 	}
 
 	r := gin.Default()
 	r.Use(middleware.Correlation())
+	r.Use(middleware.Logger())
 	r.GET("/", controller.Index)
 	r.GET("/_health", controller.HealthCheck)
 	r.GET("/favicon.ico", func(c *gin.Context) {
