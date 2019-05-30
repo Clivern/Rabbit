@@ -27,7 +27,10 @@ func Worker() {
 	}
 
 	if !ok {
-		panic(fmt.Errorf("Unable to connect to redis server [%s]", viper.GetString("redis.addr")))
+		panic(fmt.Errorf(
+			"Unable to connect to redis server [%s]",
+			viper.GetString("redis.addr"),
+		))
 	}
 
 	// ping check
@@ -38,7 +41,10 @@ func Worker() {
 	}
 
 	if !ok {
-		panic(fmt.Errorf("Unable to connect to redis server [%s]", viper.GetString("redis.addr")))
+		panic(fmt.Errorf(
+			"Unable to connect to redis server [%s]",
+			viper.GetString("redis.addr"),
+		))
 	}
 
 	driver.Subscribe("rabbit", func(message hippo.Message) error {
@@ -50,7 +56,11 @@ func Worker() {
 			return nil
 		}
 
-		releaser, err := module.NewReleaser(releaseRequest.Name, releaseRequest.URL, releaseRequest.Version)
+		releaser, err := module.NewReleaser(
+			releaseRequest.Name,
+			releaseRequest.URL,
+			releaseRequest.Version,
+		)
 
 		defer releaser.Cleanup()
 
