@@ -9,10 +9,26 @@ import (
 	"github.com/clivern/hippo"
 	"github.com/clivern/rabbit/internal/app/module"
 	"github.com/spf13/viper"
+	"go.uber.org/zap"
 )
 
 // Worker runs async jobs
-func Worker(messages <-chan string) {
+func Worker(workerID int, messages <-chan string) {
+
+	workerName := fmt.Sprintf("Worker#%d", workerID)
+
+	logger, _ := hippo.NewLogger(
+		viper.GetString("log.level"),
+		viper.GetString("log.format"),
+		[]string{viper.GetString("log.output")},
+	)
+
+	defer logger.Sync()
+
+	logger.Info(fmt.Sprintf(
+		`%s started`,
+		workerName,
+	), zap.String("WorkerName", workerName))
 
 	if viper.GetString("broker.driver") == "redis" {
 
@@ -30,9 +46,15 @@ func Worker(messages <-chan string) {
 		}
 
 		if !ok {
-			panic(fmt.Errorf(
-				"Unable to connect to redis server [%s]",
+			logger.Error(fmt.Sprintf(
+				"Unable to connect to redis server [%s] [%s]",
 				viper.GetString("broker.redis.addr"),
+				workerName,
+			))
+			panic(fmt.Sprintf(
+				"Unable to connect to redis server [%s] [%s]",
+				viper.GetString("broker.redis.addr"),
+				workerName,
 			))
 		}
 
@@ -44,9 +66,15 @@ func Worker(messages <-chan string) {
 		}
 
 		if !ok {
-			panic(fmt.Errorf(
-				"Unable to connect to redis server [%s]",
+			logger.Error(fmt.Sprintf(
+				"Unable to connect to redis server [%s] [%s]",
 				viper.GetString("broker.redis.addr"),
+				workerName,
+			))
+			panic(fmt.Sprintf(
+				"Unable to connect to redis server [%s] [%s]",
+				viper.GetString("broker.redis.addr"),
+				workerName,
 			))
 		}
 

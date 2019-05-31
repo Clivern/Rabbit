@@ -118,7 +118,7 @@ func main() {
 	})
 
 	for i := 0; i < viper.GetInt("broker.native.workers"); i++ {
-		go controller.Worker(messages)
+		go controller.Worker(i+1, messages)
 	}
 
 	if viper.GetBool("app.tls.status") {
