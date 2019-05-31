@@ -1,28 +1,47 @@
+# General App Configs
 app:
+    # Env mode (dev or prod)
     mode: dev
+    # HTTP port
     port: 8080
+    # TLS configs
     tls:
         status: off
         pemPath: cert/server.pem
         keyPath: cert/server.key
 
+# Message Broker Configs
 broker:
-    # native or redis
+    # Broker driver (native or redis)
     driver: native
+    # Native driver configs
+    native:
+        # Queue max capacity
+        capacity: 50
+        # Number of concurrent workers
+        workers: 1
+    # Redis configs
+    redis:
+        addr: localhost:6379
+        password:
+        db: 0
+        channel: rabbit
 
-redis:
-    addr: localhost:6379
-    password:
-    db: 0
-    channel: rabbit
-
+# Log configs
 log:
+    # Log level, it can be debug, info, warn, error, panic, fatal
     level: debug
+    # output can be stdout or abs path to log file /var/logs/rabbit.log
     output: stdout
+    # Format can be json or text
     format: json
 
+# Release configs
 releases:
+    # Releases absolute path
     path: /app/var/releases
 
+# Build configs
 build:
+    # Build absolute path
     path: /app/var/build
