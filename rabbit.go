@@ -103,7 +103,7 @@ func main() {
 		}
 	}
 
-	messages := make(chan string)
+	messages := make(chan string, viper.GetInt("broker.native.capacity"))
 	r := gin.Default()
 
 	r.Use(middleware.Correlation())
@@ -117,7 +117,9 @@ func main() {
 		controller.Release(c, messages)
 	})
 
-	go controller.Worker(messages)
+	for i := 0; i < viper.GetInt("broker.native.workers"); i++ {
+		go controller.Worker(messages)
+	}
 
 	if viper.GetBool("app.tls.status") {
 		r.RunTLS(

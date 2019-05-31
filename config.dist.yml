@@ -9,12 +9,17 @@ app:
 broker:
     # native or redis
     driver: native
+    # Native Driver Configs
+    native:
+        capacity: 50
+        workers: 1
+    # Redis Configs
+    redis:
+        addr: localhost:6379
+        password:
+        db: 0
+        channel: rabbit
 
-redis:
-    addr: localhost:6379
-    password:
-    db: 0
-    channel: rabbit
 
 log:
     level: debug

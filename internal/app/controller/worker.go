@@ -17,9 +17,9 @@ func Worker(messages <-chan string) {
 	if viper.GetString("broker.driver") == "redis" {
 
 		driver := hippo.NewRedisDriver(
-			viper.GetString("redis.addr"),
-			viper.GetString("redis.password"),
-			viper.GetInt("redis.db"),
+			viper.GetString("broker.redis.addr"),
+			viper.GetString("broker.redis.password"),
+			viper.GetInt("broker.redis.db"),
 		)
 
 		// connect to redis server
@@ -32,7 +32,7 @@ func Worker(messages <-chan string) {
 		if !ok {
 			panic(fmt.Errorf(
 				"Unable to connect to redis server [%s]",
-				viper.GetString("redis.addr"),
+				viper.GetString("broker.redis.addr"),
 			))
 		}
 
@@ -46,11 +46,11 @@ func Worker(messages <-chan string) {
 		if !ok {
 			panic(fmt.Errorf(
 				"Unable to connect to redis server [%s]",
-				viper.GetString("redis.addr"),
+				viper.GetString("broker.redis.addr"),
 			))
 		}
 
-		driver.Subscribe("rabbit", func(message hippo.Message) error {
+		driver.Subscribe(viper.GetString("broker.redis.channel"), func(message hippo.Message) error {
 			var releaseRequest module.ReleaseRequest
 
 			ok, err := releaseRequest.LoadFromJSON([]byte(message.Payload))
