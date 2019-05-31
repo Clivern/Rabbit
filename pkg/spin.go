@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-// ClearLine go to the beggining of the line and clear it
+// ClearLine go to the beginning of the line and clear it
 const ClearLine = "\r\033[K"
 
 // Spinner types.
