@@ -42,6 +42,11 @@ func Worker(workerID int, messages <-chan string) {
 		ok, err := driver.Connect()
 
 		if err != nil {
+			logger.Error(fmt.Sprintf(
+				"Error while connecting to redis server [%s] [%s]",
+				viper.GetString("broker.redis.addr"),
+				err.Error(),
+			))
 			panic(err.Error())
 		}
 
@@ -62,17 +67,22 @@ func Worker(workerID int, messages <-chan string) {
 		ok, err = driver.Ping()
 
 		if err != nil {
+			logger.Error(fmt.Sprintf(
+				"Error while pinging redis server [%s] [%s]",
+				viper.GetString("broker.redis.addr"),
+				err.Error(),
+			))
 			panic(err.Error())
 		}
 
 		if !ok {
 			logger.Error(fmt.Sprintf(
-				"Unable to connect to redis server [%s] [%s]",
+				"Unable to ping redis server [%s] [%s]",
 				viper.GetString("broker.redis.addr"),
 				workerName,
 			))
 			panic(fmt.Sprintf(
-				"Unable to connect to redis server [%s] [%s]",
+				"Unable to ping redis server [%s] [%s]",
 				viper.GetString("broker.redis.addr"),
 				workerName,
 			))
@@ -84,8 +94,19 @@ func Worker(workerID int, messages <-chan string) {
 			ok, err := releaseRequest.LoadFromJSON([]byte(message.Payload))
 
 			if !ok || err != nil {
+				logger.Error(fmt.Sprintf(
+					"Error while parsing message payload [%s]",
+					message.Payload,
+				))
 				return nil
 			}
+
+			logger.Info(fmt.Sprintf(
+				"Init releaser for package [%s] url [%s] version [%s]",
+				releaseRequest.Name,
+				releaseRequest.URL,
+				releaseRequest.Version,
+			))
 
 			releaser, err := module.NewReleaser(
 				releaseRequest.Name,
@@ -96,20 +117,63 @@ func Worker(workerID int, messages <-chan string) {
 			defer releaser.Cleanup()
 
 			if err != nil {
+				logger.Error(fmt.Sprintf(
+					"Error while parsing data for package [%s] url [%s] version [%s]: [%s]",
+					releaseRequest.Name,
+					releaseRequest.URL,
+					releaseRequest.Version,
+					err.Error(),
+				))
 				return nil
 			}
+
+			logger.Info(fmt.Sprintf(
+				"Cloning package [%s] url [%s] version [%s]",
+				releaseRequest.Name,
+				releaseRequest.URL,
+				releaseRequest.Version,
+			))
 
 			_, err = releaser.Clone()
 
 			if err != nil {
+				logger.Error(fmt.Sprintf(
+					"Error while cloning package [%s] url [%s] version [%s]: [%s]",
+					releaseRequest.Name,
+					releaseRequest.URL,
+					releaseRequest.Version,
+					err.Error(),
+				))
 				return nil
 			}
+
+			logger.Info(fmt.Sprintf(
+				"Releasing package [%s] url [%s] version [%s]",
+				releaseRequest.Name,
+				releaseRequest.URL,
+				releaseRequest.Version,
+			))
 
 			_, err = releaser.Release()
 
 			if err != nil {
+				logger.Error(fmt.Sprintf(
+					"Error while releasing package [%s] url [%s] version [%s]: [%s]",
+					releaseRequest.Name,
+					releaseRequest.URL,
+					releaseRequest.Version,
+					err.Error(),
+				))
 				return nil
 			}
+
+			logger.Info(fmt.Sprintf(
+				"Package [%s] url [%s] version [%s] released, do cleanup",
+				releaseRequest.Name,
+				releaseRequest.URL,
+				releaseRequest.Version,
+			))
+
 			return nil
 		})
 	} else {
@@ -119,8 +183,19 @@ func Worker(workerID int, messages <-chan string) {
 			ok, err := releaseRequest.LoadFromJSON([]byte(message))
 
 			if !ok || err != nil {
+				logger.Error(fmt.Sprintf(
+					"Error while parsing message payload [%s]",
+					message,
+				))
 				continue
 			}
+
+			logger.Info(fmt.Sprintf(
+				"Init releaser for package [%s] url [%s] version [%s]",
+				releaseRequest.Name,
+				releaseRequest.URL,
+				releaseRequest.Version,
+			))
 
 			releaser, err := module.NewReleaser(
 				releaseRequest.Name,
@@ -129,22 +204,64 @@ func Worker(workerID int, messages <-chan string) {
 			)
 
 			if err != nil {
+				logger.Error(fmt.Sprintf(
+					"Error while parsing data for package [%s] url [%s] version [%s]: [%s]",
+					releaseRequest.Name,
+					releaseRequest.URL,
+					releaseRequest.Version,
+					err.Error(),
+				))
 				continue
 			}
+
+			logger.Info(fmt.Sprintf(
+				"Cloning package [%s] url [%s] version [%s]",
+				releaseRequest.Name,
+				releaseRequest.URL,
+				releaseRequest.Version,
+			))
 
 			_, err = releaser.Clone()
 
 			if err != nil {
+				logger.Error(fmt.Sprintf(
+					"Error while cloning package [%s] url [%s] version [%s]: [%s]",
+					releaseRequest.Name,
+					releaseRequest.URL,
+					releaseRequest.Version,
+					err.Error(),
+				))
 				releaser.Cleanup()
 				continue
 			}
+
+			logger.Info(fmt.Sprintf(
+				"Releasing package [%s] url [%s] version [%s]",
+				releaseRequest.Name,
+				releaseRequest.URL,
+				releaseRequest.Version,
+			))
 
 			_, err = releaser.Release()
 
 			if err != nil {
+				logger.Error(fmt.Sprintf(
+					"Error while releasing package [%s] url [%s] version [%s]: [%s]",
+					releaseRequest.Name,
+					releaseRequest.URL,
+					releaseRequest.Version,
+					err.Error(),
+				))
 				releaser.Cleanup()
 				continue
 			}
+
+			logger.Info(fmt.Sprintf(
+				"Package [%s] url [%s] version [%s] released, do cleanup",
+				releaseRequest.Name,
+				releaseRequest.URL,
+				releaseRequest.Version,
+			))
 
 			releaser.Cleanup()
 		}

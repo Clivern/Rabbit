@@ -158,11 +158,21 @@ func Release(c *gin.Context, messages chan<- string) {
 			return
 		}
 
+		logger.Info(fmt.Sprintf(
+			`Send request [%s] to workers`,
+			requestBody,
+		), zap.String("CorrelationID", c.Request.Header.Get("X-Correlation-ID")))
+
 		driver.Publish(
 			viper.GetString("broker.redis.channel"),
 			requestBody,
 		)
 	} else {
+		logger.Info(fmt.Sprintf(
+			`Send request [%s] to workers`,
+			requestBody,
+		), zap.String("CorrelationID", c.Request.Header.Get("X-Correlation-ID")))
+
 		messages <- requestBody
 	}
 
