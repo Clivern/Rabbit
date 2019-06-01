@@ -20,7 +20,10 @@ func Logger() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// before request
 		var bodyBytes []byte
-		t := time.Now()
+
+		latencyTrack := hippo.NewLatencyTracker()
+		latencyTrack.NewAction("http.response")
+		latencyTrack.SetStart("http.response", time.Now())
 
 		// Workaround for issue https://github.com/gin-gonic/gin/issues/1651
 		if c.Request.Body != nil {
@@ -49,7 +52,9 @@ func Logger() gin.HandlerFunc {
 		c.Next()
 
 		// after request
-		latency := time.Since(t)
+		latencyTrack.SetEnd("http.response", time.Now())
+		latency, _ := latencyTrack.GetLatency("http.response")
+
 		status := c.Writer.Status()
 		size := c.Writer.Size()
 
