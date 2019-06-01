@@ -15,12 +15,6 @@ import (
 	"strings"
 )
 
-// GoReleaserConfig config file for go releaser
-const GoReleaserConfig = ".goreleaser.yml"
-
-// GoReleaserChecksums checksums file
-const GoReleaserChecksums = "checksums.txt"
-
 // ReleaseRequest struct
 type ReleaseRequest struct {
 	Name    string
@@ -97,14 +91,31 @@ func (r *Releaser) Release() (bool, error) {
 		return false, fmt.Errorf("Unable to find build path [%s]", r.BuildPath)
 	}
 
-	// Release with goreleaser if .goreleaser.yml file exists
-	if hippo.FileExists(fmt.Sprintf("%s/%s", r.BuildPath, GoReleaserConfig)) {
-		return r.releaseWithGoReleaser()
+	releaseName := viper.GetString("releases.name")
+	releaseName = strings.ReplaceAll(
+		releaseName,
+		"[.Tag]",
+		strings.ToLower(r.Version),
+	)
+
+	ok, err := CreateReleaserConfig(r.BuildPath, strings.ToLower(r.RepositoryName), releaseName)
+
+	if err != nil || !ok {
+		return false, fmt.Errorf(
+			"Unable to create/update goreleaser config file [%s]",
+			fmt.Sprintf("%s/%s", r.BuildPath, GoReleaserConfig),
+		)
 	}
 
-	// Manually release it or create goreleaser file & release
+	// double check the goreleaser file
+	if !hippo.FileExists(fmt.Sprintf("%s/%s", r.BuildPath, GoReleaserConfig)) {
+		return false, fmt.Errorf(
+			"Unable to create/update goreleaser config file [%s]",
+			fmt.Sprintf("%s/%s", r.BuildPath, GoReleaserConfig),
+		)
+	}
 
-	return true, nil
+	return r.releaseWithGoReleaser()
 }
 
 // releaseWithGoReleaser release a project
