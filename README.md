@@ -29,7 +29,7 @@ Rabbit uses [Go Modules](https://github.com/golang/go/wiki/Modules) to manage de
 $ cp config.dist.yml config.prod.yml
 ```
 
-Then add your `app.*`, `log.*` ...etc.
+Then add your configs
 
 ```yml
 # General App Configs
@@ -44,6 +44,12 @@ app:
         pemPath: cert/server.pem
         keyPath: cert/server.key
 
+# Redis Configs
+redis:
+    addr: localhost:6379
+    password:
+    db: 0
+
 # Message Broker Configs
 broker:
     # Broker driver (native or redis)
@@ -56,9 +62,6 @@ broker:
         workers: 1
     # Redis configs
     redis:
-        addr: localhost:6379
-        password:
-        db: 0
         channel: rabbit
 
 # Log configs
@@ -74,11 +77,20 @@ log:
 releases:
     # Releases absolute path
     path: /app/var/releases
+    name: "[.Tag]"
 
 # Build configs
 build:
     # Build absolute path
     path: /app/var/build
+
+# Application Database
+database:
+    # Database driver (redis)
+    driver: redis
+    # Redis
+    redis:
+        hash_prefix: rabbit
 ```
 
 And then run the application.

@@ -95,9 +95,9 @@ func Release(c *gin.Context, messages chan<- string) {
 
 	if viper.GetString("broker.driver") == "redis" {
 		driver := hippo.NewRedisDriver(
-			viper.GetString("broker.redis.addr"),
-			viper.GetString("broker.redis.password"),
-			viper.GetInt("broker.redis.db"),
+			viper.GetString("redis.addr"),
+			viper.GetString("redis.password"),
+			viper.GetInt("redis.db"),
 		)
 
 		// connect to redis server
