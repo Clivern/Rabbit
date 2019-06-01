@@ -31,7 +31,6 @@ func Worker(workerID int, messages <-chan string) {
 		workerName,
 	), zap.String("WorkerName", workerName))
 
-
 	latencyTrack := hippo.NewLatencyTracker()
 
 	if viper.GetString("broker.driver") == "redis" {
