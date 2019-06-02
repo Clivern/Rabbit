@@ -38,7 +38,7 @@ func (r *RedisDataStore) Connect() (bool, error) {
 // StoreRelease stores the release data
 func (r *RedisDataStore) StoreRelease(release model.Release) (bool, error) {
 
-	value, err := release.ConvertToJSON()
+	jsonValue, err := release.ConvertToJSON()
 
 	if err != nil {
 		return false, fmt.Errorf("Error while coverting release to json: [%s]", err.Error())
@@ -47,7 +47,7 @@ func (r *RedisDataStore) StoreRelease(release model.Release) (bool, error) {
 	_, err = r.Client.HSet(
 		fmt.Sprintf("%s%s", viper.GetString("database.redis.hash_prefix"), ReleasesData),
 		release.UUID,
-		value,
+		jsonValue,
 	)
 
 	if err != nil {
@@ -105,17 +105,54 @@ func (r *RedisDataStore) DeleteReleaseByURL(url string) (bool, error) {
 	return true, nil
 }
 
+// ReleaseExistsByURL check if release exists by URL
+func (r *RedisDataStore) ReleaseExistsByURL(url string) (bool, error) {
+	return r.Client.HExists(
+		fmt.Sprintf("%s%s", viper.GetString("database.redis.hash_prefix"), ReleasesURLLookup),
+		url,
+	)
+}
+
+// ReleaseExistsByUUID check if release exists by UUID
+func (r *RedisDataStore) ReleaseExistsByUUID(uuid string) (bool, error) {
+	return r.Client.HExists(
+		fmt.Sprintf("%s%s", viper.GetString("database.redis.hash_prefix"), ReleasesUUIDLookup),
+		uuid,
+	)
+}
+
 // GetReleaseByUUID gets a release data by uuid
 func (r *RedisDataStore) GetReleaseByUUID(uuid string) (*model.Release, error) {
-	return &model.Release{}, nil
+	result, err := r.Client.HGet(
+		fmt.Sprintf("%s%s", viper.GetString("database.redis.hash_prefix"), ReleasesData),
+		uuid,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	release := &model.Release{}
+
+	_, err = release.LoadFromJSON([]byte(result))
+
+	if err != nil {
+		return nil, err
+	}
+
+	return release, nil
 }
 
 // GetReleaseByURL gets a release data by url
 func (r *RedisDataStore) GetReleaseByURL(url string) (*model.Release, error) {
-	return &model.Release{}, nil
-}
+	uuid, err := r.Client.HGet(
+		fmt.Sprintf("%s%s", viper.GetString("database.redis.hash_prefix"), ReleasesURLLookup),
+		url,
+	)
 
-// GetReleases gets a list of releases
-func (r *RedisDataStore) GetReleases(order string) ([]model.Release, error) {
-	return []model.Release{}, nil
+	if err != nil {
+		return nil, err
+	}
+
+	return r.GetReleaseByUUID(uuid)
 }
