@@ -79,8 +79,8 @@ func Index(c *gin.Context) {
             <p>{{ description }}</p>
         </div>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/vue"></script>
-    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://unpkg.com/vue@2.6.10/dist/vue.min.js"></script>
+    <script src="https://unpkg.com/axios@0.19.0/dist/axios.min.js"></script>
 
     <script type="text/javascript" charset="utf-8">
         var app = new Vue({
