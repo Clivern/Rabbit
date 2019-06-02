@@ -35,50 +35,49 @@ func (r *RedisDataStore) Connect() (bool, error) {
 	return r.Client.Connect()
 }
 
-// StoreRelease stores the release data
-func (r *RedisDataStore) StoreRelease(release model.Release) (bool, error) {
-
-	jsonValue, err := release.ConvertToJSON()
+// StoreProject stores the project data
+func (r *RedisDataStore) StoreProject(project model.Project) (bool, error) {
+	jsonValue, err := project.ConvertToJSON()
 
 	if err != nil {
-		return false, fmt.Errorf("Error while coverting release to json: [%s]", err.Error())
+		return false, fmt.Errorf("Error while coverting project to json: [%s]", err.Error())
 	}
 
 	_, err = r.Client.HSet(
 		fmt.Sprintf("%s%s", viper.GetString("database.redis.hash_prefix"), ReleasesData),
-		release.UUID,
+		project.UUID,
 		jsonValue,
 	)
 
 	if err != nil {
-		return false, fmt.Errorf("Error while storing release data: [%s]", err.Error())
+		return false, fmt.Errorf("Error while storing project data: [%s]", err.Error())
 	}
 
 	_, err = r.Client.HSet(
 		fmt.Sprintf("%s%s", viper.GetString("database.redis.hash_prefix"), ReleasesURLLookup),
-		release.URL,
-		release.UUID,
+		project.URL,
+		project.UUID,
 	)
 
 	if err != nil {
-		return false, fmt.Errorf("Error while storing release URL: [%s]", err.Error())
+		return false, fmt.Errorf("Error while storing project URL: [%s]", err.Error())
 	}
 
 	_, err = r.Client.HSet(
 		fmt.Sprintf("%s%s", viper.GetString("database.redis.hash_prefix"), ReleasesUUIDLookup),
-		release.UUID,
-		release.URL,
+		project.UUID,
+		project.URL,
 	)
 
 	if err != nil {
-		return false, fmt.Errorf("Error while storing release UUID: [%s]", err.Error())
+		return false, fmt.Errorf("Error while storing project UUID: [%s]", err.Error())
 	}
 
 	return true, nil
 }
 
-// DeleteReleaseByUUID deletes a release data by uuid
-func (r *RedisDataStore) DeleteReleaseByUUID(uuid string) (bool, error) {
+// DeleteProjectByUUID deletes a project data by uuid
+func (r *RedisDataStore) DeleteProjectByUUID(uuid string) (bool, error) {
 	_, err := r.Client.HDel(
 		fmt.Sprintf("%s%s", viper.GetString("database.redis.hash_prefix"), ReleasesUUIDLookup),
 		uuid,
@@ -91,8 +90,8 @@ func (r *RedisDataStore) DeleteReleaseByUUID(uuid string) (bool, error) {
 	return true, nil
 }
 
-// DeleteReleaseByURL deletes a release data by url
-func (r *RedisDataStore) DeleteReleaseByURL(url string) (bool, error) {
+// DeleteProjectByURL deletes a project data by url
+func (r *RedisDataStore) DeleteProjectByURL(url string) (bool, error) {
 	_, err := r.Client.HDel(
 		fmt.Sprintf("%s%s", viper.GetString("database.redis.hash_prefix"), ReleasesURLLookup),
 		url,
@@ -105,24 +104,24 @@ func (r *RedisDataStore) DeleteReleaseByURL(url string) (bool, error) {
 	return true, nil
 }
 
-// ReleaseExistsByURL check if release exists by URL
-func (r *RedisDataStore) ReleaseExistsByURL(url string) (bool, error) {
+// ProjectExistsByURL check if project exists by URL
+func (r *RedisDataStore) ProjectExistsByURL(url string) (bool, error) {
 	return r.Client.HExists(
 		fmt.Sprintf("%s%s", viper.GetString("database.redis.hash_prefix"), ReleasesURLLookup),
 		url,
 	)
 }
 
-// ReleaseExistsByUUID check if release exists by UUID
-func (r *RedisDataStore) ReleaseExistsByUUID(uuid string) (bool, error) {
+// ProjectExistsByUUID check if project exists by UUID
+func (r *RedisDataStore) ProjectExistsByUUID(uuid string) (bool, error) {
 	return r.Client.HExists(
 		fmt.Sprintf("%s%s", viper.GetString("database.redis.hash_prefix"), ReleasesUUIDLookup),
 		uuid,
 	)
 }
 
-// GetReleaseByUUID gets a release data by uuid
-func (r *RedisDataStore) GetReleaseByUUID(uuid string) (*model.Release, error) {
+// GetProjectByUUID gets a project data by uuid
+func (r *RedisDataStore) GetProjectByUUID(uuid string) (*model.Project, error) {
 	result, err := r.Client.HGet(
 		fmt.Sprintf("%s%s", viper.GetString("database.redis.hash_prefix"), ReleasesData),
 		uuid,
@@ -132,19 +131,19 @@ func (r *RedisDataStore) GetReleaseByUUID(uuid string) (*model.Release, error) {
 		return nil, err
 	}
 
-	release := &model.Release{}
+	project := model.NewProject()
 
-	_, err = release.LoadFromJSON([]byte(result))
+	_, err = project.LoadFromJSON([]byte(result))
 
 	if err != nil {
 		return nil, err
 	}
 
-	return release, nil
+	return project, nil
 }
 
-// GetReleaseByURL gets a release data by url
-func (r *RedisDataStore) GetReleaseByURL(url string) (*model.Release, error) {
+// GetProjectByURL gets a project data by url
+func (r *RedisDataStore) GetProjectByURL(url string) (*model.Project, error) {
 	uuid, err := r.Client.HGet(
 		fmt.Sprintf("%s%s", viper.GetString("database.redis.hash_prefix"), ReleasesURLLookup),
 		url,
@@ -154,5 +153,5 @@ func (r *RedisDataStore) GetReleaseByURL(url string) (*model.Release, error) {
 		return nil, err
 	}
 
-	return r.GetReleaseByUUID(uuid)
+	return r.GetProjectByUUID(uuid)
 }
