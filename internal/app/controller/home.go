@@ -80,12 +80,19 @@ func Index(c *gin.Context) {
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+
     <script type="text/javascript" charset="utf-8">
         var app = new Vue({
             el: '#app',
             data: {
                 name: "Rabbit",
                 description: "A Private go binaries builder & hosting service integrated with github and bitbucket."
+            },
+            mounted () {
+                axios
+                  .get('https://httpbin.org/ip')
+                  .then(response => (console.log(response)))
             }
         })
     </script>
