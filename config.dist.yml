@@ -56,4 +56,4 @@ database:
     driver: redis
     # Redis
     redis:
-        hash_prefix: rabbit
+        hash_prefix: rabbit_

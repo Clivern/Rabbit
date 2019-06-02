@@ -90,7 +90,7 @@ database:
     driver: redis
     # Redis
     redis:
-        hash_prefix: rabbit
+        hash_prefix: rabbit_
 ```
 
 And then run the application.
