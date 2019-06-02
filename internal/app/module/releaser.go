@@ -5,29 +5,15 @@
 package module
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/clivern/hippo"
+	"github.com/clivern/rabbit/internal/app/model"
 	"github.com/clivern/rabbit/pkg"
 	"github.com/spf13/viper"
 	"os"
 	"path/filepath"
 	"strings"
 )
-
-// ReleaseRequest struct
-type ReleaseRequest struct {
-	Name    string
-	URL     string
-	Version string
-}
-
-// ReleasePath struct
-type ReleasePath struct {
-	VCS        string
-	Author     string
-	Repository string
-}
 
 // Releaser struct
 type Releaser struct {
@@ -38,7 +24,7 @@ type Releaser struct {
 	LastCommit     string
 	BuildPath      string
 	LastTag        string
-	ReleasePath    *ReleasePath
+	ReleasePath    *model.ReleasePath
 }
 
 // NewReleaser returns a new instance of Releaser
@@ -60,8 +46,8 @@ func NewReleaser(repositoryName, repositoryURL, version string) (*Releaser, erro
 }
 
 // releasePathFromURL
-func releasePathFromURL(repositoryURL string) (*ReleasePath, error) {
-	releasePath := &ReleasePath{}
+func releasePathFromURL(repositoryURL string) (*model.ReleasePath, error) {
+	releasePath := &model.ReleasePath{}
 
 	newRepositoryURL := repositoryURL
 
@@ -258,22 +244,4 @@ func (r *Releaser) Cleanup() (bool, error) {
 	}
 
 	return true, nil
-}
-
-// LoadFromJSON load object from json
-func (c *ReleaseRequest) LoadFromJSON(data []byte) (bool, error) {
-	err := json.Unmarshal(data, &c)
-	if err != nil {
-		return false, err
-	}
-	return true, nil
-}
-
-// ConvertToJSON converts object to json
-func (c *ReleaseRequest) ConvertToJSON() (string, error) {
-	data, err := json.Marshal(&c)
-	if err != nil {
-		return "", err
-	}
-	return string(data), nil
 }

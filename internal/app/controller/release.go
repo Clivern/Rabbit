@@ -7,7 +7,7 @@ package controller
 import (
 	"fmt"
 	"github.com/clivern/hippo"
-	"github.com/clivern/rabbit/internal/app/module"
+	"github.com/clivern/rabbit/internal/app/model"
 	"github.com/clivern/rabbit/pkg"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
@@ -18,7 +18,7 @@ import (
 // Release controller
 func Release(c *gin.Context, messages chan<- string) {
 
-	var releaseRequest module.ReleaseRequest
+	var releaseRequest model.ReleaseRequest
 	validate := pkg.Validator{}
 
 	logger, _ := hippo.NewLogger(

@@ -7,6 +7,7 @@ package module
 import (
 	"fmt"
 	"github.com/clivern/hippo"
+	"github.com/clivern/rabbit/internal/app/model"
 	"github.com/spf13/viper"
 )
 
@@ -35,7 +36,7 @@ func (r *RedisDataStore) Connect() (bool, error) {
 }
 
 // StoreRelease stores the release data
-func (r *RedisDataStore) StoreRelease(release Release) (bool, error) {
+func (r *RedisDataStore) StoreRelease(release model.Release) (bool, error) {
 
 	value, err := release.ConvertToJSON()
 
@@ -105,16 +106,16 @@ func (r *RedisDataStore) DeleteReleaseByURL(url string) (bool, error) {
 }
 
 // GetReleaseByUUID gets a release data by uuid
-func (r *RedisDataStore) GetReleaseByUUID(uuid string) (*Release, error) {
-	return &Release{}, nil
+func (r *RedisDataStore) GetReleaseByUUID(uuid string) (*model.Release, error) {
+	return &model.Release{}, nil
 }
 
 // GetReleaseByURL gets a release data by url
-func (r *RedisDataStore) GetReleaseByURL(url string) (*Release, error) {
-	return &Release{}, nil
+func (r *RedisDataStore) GetReleaseByURL(url string) (*model.Release, error) {
+	return &model.Release{}, nil
 }
 
 // GetReleases gets a list of releases
-func (r *RedisDataStore) GetReleases(order string) ([]Release, error) {
-	return []Release{}, nil
+func (r *RedisDataStore) GetReleases(order string) ([]model.Release, error) {
+	return []model.Release{}, nil
 }

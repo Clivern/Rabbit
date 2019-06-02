@@ -7,6 +7,7 @@ package controller
 import (
 	"fmt"
 	"github.com/clivern/hippo"
+	"github.com/clivern/rabbit/internal/app/model"
 	"github.com/clivern/rabbit/internal/app/module"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
@@ -92,7 +93,7 @@ func Worker(workerID int, messages <-chan string) {
 		}
 
 		driver.Subscribe(viper.GetString("broker.redis.channel"), func(message hippo.Message) error {
-			var releaseRequest module.ReleaseRequest
+			var releaseRequest model.ReleaseRequest
 
 			latencyTrack.NewAction("repository.clone")
 			latencyTrack.NewAction("repository.release")
@@ -214,7 +215,7 @@ func Worker(workerID int, messages <-chan string) {
 		})
 	} else {
 		for message := range messages {
-			var releaseRequest module.ReleaseRequest
+			var releaseRequest model.ReleaseRequest
 
 			latencyTrack.NewAction("repository.clone")
 			latencyTrack.NewAction("repository.release")
