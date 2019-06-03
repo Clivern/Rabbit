@@ -56,6 +56,13 @@ func (p *Project) SetRelease(version string, createdAt time.Time) {
 	}
 }
 
+// DeleteRelease deletes a release
+func (p *Project) DeleteRelease(version string) {
+	if _, ok := p.Releases[version]; ok {
+		delete(p.Releases, version)
+	}
+}
+
 // AddBinary adds a binary to release
 func (p *Project) AddBinary(version, fileName, checksum, checksumType string) {
 	if _, ok := p.Releases[version]; !ok {
