@@ -23,16 +23,27 @@ type Release struct {
 	Binaries  []*Binary `json:"binaries"`
 }
 
+// Meta struct
+type Meta struct {
+}
+
 // Project struct
 type Project struct {
+	Name     string              `json:"name"`
 	UUID     string              `json:"uuid"`
 	URL      string              `json:"url"`
 	Releases map[string]*Release `json:"releases"`
+	Meta     *Meta               `json:"meta"`
 }
 
 // NewProject creates a new project model
 func NewProject() *Project {
 	return &Project{}
+}
+
+// SetName sets a project name
+func (p *Project) SetName(name string) {
+	p.Name = name
 }
 
 // SetUUID sets a project UUID
