@@ -1,7 +1,7 @@
 <p align="center">
     <img alt="Rabbit Logo" src="https://raw.githubusercontent.com/Clivern/Rabbit/master/assets/img/logo.png" height="80" />
     <h3 align="center">Rabbit</h3>
-    <p align="center">Private go binaries builder & hosting service integrated with github and bitbucket.</p>
+    <p align="center">A lightweight service that will build and store your go projects binaries.</p>
     <p align="center">
         <a href="https://godoc.org/github.com/clivern/rabbit"><img src="https://godoc.org/github.com/clivern/rabbit?status.svg"></a>
         <a href="https://travis-ci.org/Clivern/Rabbit"><img src="https://travis-ci.org/Clivern/Rabbit.svg?branch=master"></a>
