@@ -36,7 +36,7 @@ func (r *RedisDataStore) Connect() (bool, error) {
 }
 
 // StoreProject stores the project data
-func (r *RedisDataStore) StoreProject(project model.Project) (bool, error) {
+func (r *RedisDataStore) StoreProject(project *model.Project) (bool, error) {
 	jsonValue, err := project.ConvertToJSON()
 
 	if err != nil {

@@ -16,8 +16,8 @@ type ReleaseRequest struct {
 }
 
 // LoadFromJSON load object from json
-func (c *ReleaseRequest) LoadFromJSON(data []byte) (bool, error) {
-	err := json.Unmarshal(data, &c)
+func (r *ReleaseRequest) LoadFromJSON(data []byte) (bool, error) {
+	err := json.Unmarshal(data, &r)
 	if err != nil {
 		return false, err
 	}
@@ -25,8 +25,8 @@ func (c *ReleaseRequest) LoadFromJSON(data []byte) (bool, error) {
 }
 
 // ConvertToJSON converts object to json
-func (c *ReleaseRequest) ConvertToJSON() (string, error) {
-	data, err := json.Marshal(&c)
+func (r *ReleaseRequest) ConvertToJSON() (string, error) {
+	data, err := json.Marshal(&r)
 	if err != nil {
 		return "", err
 	}

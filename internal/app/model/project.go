@@ -56,6 +56,21 @@ func (p *Project) SetURL(url string) {
 	p.URL = url
 }
 
+// GetName gets a project name
+func (p *Project) GetName() string {
+	return p.Name
+}
+
+// GetUUID gets a project UUID
+func (p *Project) GetUUID() string {
+	return p.UUID
+}
+
+// GetURL gets a project URL
+func (p *Project) GetURL() string {
+	return p.URL
+}
+
 // SetRelease sets a new release or update old one
 func (p *Project) SetRelease(version string, createdAt time.Time) {
 	if len(p.Releases) <= 0 {
