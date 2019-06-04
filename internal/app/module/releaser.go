@@ -5,9 +5,9 @@
 package module
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/clivern/hippo"
+	"github.com/clivern/rabbit/internal/app/model"
 	"github.com/clivern/rabbit/pkg"
 	"github.com/spf13/viper"
 	"os"
@@ -15,73 +15,28 @@ import (
 	"strings"
 )
 
-// ReleaseRequest struct
-type ReleaseRequest struct {
-	Name    string
-	URL     string
-	Version string
-}
-
-// ReleasePath struct
-type ReleasePath struct {
-	VCS        string
-	Author     string
-	Repository string
-}
-
 // Releaser struct
 type Releaser struct {
-	ID             string
-	RepositoryName string
-	RepositoryURL  string
-	Version        string
-	LastCommit     string
-	BuildPath      string
-	LastTag        string
-	ReleasePath    *ReleasePath
+	ID          string
+	ProjectName string
+	ProjectURL  string
+	Version     string
+	LastCommit  string
+	BuildPath   string
+	LastTag     string
+	Binaries    map[string]string
 }
 
 // NewReleaser returns a new instance of Releaser
-func NewReleaser(repositoryName, repositoryURL, version string) (*Releaser, error) {
+func NewReleaser(projectName, projectURL, version string) (*Releaser, error) {
 	correlation := hippo.NewCorrelation()
-	releasePath, err := releasePathFromURL(repositoryURL)
-
-	if err != nil {
-		return nil, err
-	}
 
 	return &Releaser{
-		ID:             correlation.UUIDv4(),
-		RepositoryName: repositoryName,
-		RepositoryURL:  repositoryURL,
-		Version:        version,
-		ReleasePath:    releasePath,
+		ID:          correlation.UUIDv4(),
+		ProjectName: projectName,
+		ProjectURL:  projectURL,
+		Version:     version,
 	}, nil
-}
-
-// releasePathFromURL
-func releasePathFromURL(repositoryURL string) (*ReleasePath, error) {
-	releasePath := &ReleasePath{}
-
-	newRepositoryURL := repositoryURL
-
-	// Parse github repo url
-	if strings.Contains(newRepositoryURL, "github.com") {
-		releasePath.VCS = "github.com"
-		newRepositoryURL = strings.ReplaceAll(newRepositoryURL, "git@github.com:", "")
-		newRepositoryURL = strings.ReplaceAll(newRepositoryURL, "https://github.com/", "")
-		newRepositoryURL = strings.ReplaceAll(newRepositoryURL, ".git", "")
-
-		if strings.Contains(newRepositoryURL, "/") {
-			namespaces := strings.Split(newRepositoryURL, "/")
-			releasePath.Author = strings.ToLower(namespaces[0])
-			releasePath.Repository = strings.ToLower(namespaces[1])
-		} else {
-			return nil, fmt.Errorf("Unable to parse repository url [%s]", repositoryURL)
-		}
-	}
-
-	return releasePath, nil
 }
 
 // Release build & release all binaries
@@ -98,7 +53,7 @@ func (r *Releaser) Release() (bool, error) {
 		strings.ToLower(r.Version),
 	)
 
-	ok, err := CreateReleaserConfig(r.BuildPath, strings.ToLower(r.RepositoryName), releaseName)
+	ok, err := CreateReleaserConfig(r.BuildPath, strings.ToLower(r.ProjectName), releaseName)
 
 	if err != nil || !ok {
 		return false, fmt.Errorf(
@@ -115,11 +70,21 @@ func (r *Releaser) Release() (bool, error) {
 		)
 	}
 
-	return r.releaseWithGoReleaser()
+	result, err := r.Build()
+
+	if err != nil {
+		return false, err
+	}
+
+	if !result {
+		return false, fmt.Errorf("Error while building project")
+	}
+
+	return r.Store()
 }
 
-// releaseWithGoReleaser release a project
-func (r *Releaser) releaseWithGoReleaser() (bool, error) {
+// Build builds the project
+func (r *Releaser) Build() (bool, error) {
 	cmd := pkg.NewShellCommand()
 
 	_, err := cmd.Exec(r.BuildPath, "goreleaser", "--snapshot", "--skip-publish", "--rm-dist")
@@ -144,6 +109,10 @@ func (r *Releaser) releaseWithGoReleaser() (bool, error) {
 		return false, err
 	}
 
+	if len(r.Binaries) <= 0 {
+		r.Binaries = make(map[string]string)
+	}
+
 	// Validate checksums
 	for _, file := range files {
 		if filepath.Ext(file) != ".gz" {
@@ -160,16 +129,60 @@ func (r *Releaser) releaseWithGoReleaser() (bool, error) {
 		if !res {
 			return false, fmt.Errorf("File [%s] checksum is not valid", fmt.Sprintf("%s/%s", distPath, file))
 		}
+
+		checksum, err := pkg.GetChecksum(fmt.Sprintf("%s/%s", distPath, file))
+
+		if err != nil {
+			return false, fmt.Errorf("Unable to get checksum for [%s]", fmt.Sprintf("%s/%s", distPath, file))
+		}
+		r.Binaries[checksum] = file
+	}
+
+	return true, nil
+}
+
+// Store stores the project
+func (r *Releaser) Store() (bool, error) {
+	var project *model.Project
+
+	dataStore := &RedisDataStore{}
+	status, err := dataStore.Connect()
+
+	if err != nil {
+		return false, err
+	}
+
+	if !status {
+		return false, fmt.Errorf("Unable to connect to redis")
+	}
+
+	status, err = dataStore.ProjectExistsByURL(r.ProjectURL)
+
+	if err != nil {
+		return false, err
+	}
+
+	if status {
+		project, err = dataStore.GetProjectByURL(r.ProjectURL)
+
+		if err != nil {
+			return false, err
+		}
+	} else {
+		project = model.NewProject()
+		project.SetName(r.ProjectName)
+		project.SetUUID(r.ID)
+		project.SetURL(r.ProjectURL)
 	}
 
 	newPath := fmt.Sprintf(
-		"%s/%s/%s/%s/%s",
+		"%s/%s/%s",
 		strings.TrimSuffix(viper.GetString("releases.path"), "/"),
-		r.ReleasePath.VCS,
-		r.ReleasePath.Author,
-		r.ReleasePath.Repository,
+		project.GetUUID(),
 		r.Version,
 	)
+
+	distPath := fmt.Sprintf("%s/%s", r.BuildPath, "dist")
 
 	err = os.MkdirAll(newPath, 0777)
 
@@ -177,17 +190,18 @@ func (r *Releaser) releaseWithGoReleaser() (bool, error) {
 		return false, err
 	}
 
-	for _, file := range files {
+	for checksum, fileName := range r.Binaries {
 		err = os.Rename(
-			fmt.Sprintf("%s/%s", distPath, file),
-			fmt.Sprintf("%s/%s", newPath, strings.ToLower(file)),
+			fmt.Sprintf("%s/%s", distPath, fileName),
+			fmt.Sprintf("%s/%s", newPath, strings.ToLower(fileName)),
 		)
 		if err != nil {
 			return false, err
 		}
+		project.AddBinary(r.Version, fileName, checksum, "md5sum")
 	}
 
-	return true, nil
+	return dataStore.StoreProject(project)
 }
 
 // Clone clones a repository
@@ -200,7 +214,7 @@ func (r *Releaser) Clone() (bool, error) {
 		r.ID,
 	)
 
-	_, err := cmd.Exec(strings.TrimSuffix(viper.GetString("build.path"), "/"), "git", "clone", r.RepositoryURL, r.ID)
+	_, err := cmd.Exec(strings.TrimSuffix(viper.GetString("build.path"), "/"), "git", "clone", r.ProjectURL, r.ID)
 
 	if err != nil {
 		return false, err
@@ -213,7 +227,7 @@ func (r *Releaser) Clone() (bool, error) {
 	}
 
 	if result.Stdout == "" {
-		return false, fmt.Errorf("Cloned repository %s is corrupted", r.RepositoryURL)
+		return false, fmt.Errorf("Cloned repository %s is corrupted", r.ProjectURL)
 	}
 
 	r.LastCommit = strings.TrimSpace(result.Stdout)
@@ -252,28 +266,17 @@ func (r *Releaser) Cleanup() (bool, error) {
 	}
 
 	cmd := pkg.NewShellCommand()
-	_, err := cmd.Exec(strings.TrimSuffix(viper.GetString("build.path"), "/"), "rm", "-rf", r.ID)
+
+	_, err := cmd.Exec(
+		strings.TrimSuffix(viper.GetString("build.path"), "/"),
+		"rm",
+		"-rf",
+		r.ID,
+	)
+
 	if err != nil {
 		return false, err
 	}
 
 	return true, nil
-}
-
-// LoadFromJSON load object from json
-func (c *ReleaseRequest) LoadFromJSON(data []byte) (bool, error) {
-	err := json.Unmarshal(data, &c)
-	if err != nil {
-		return false, err
-	}
-	return true, nil
-}
-
-// ConvertToJSON converts object to json
-func (c *ReleaseRequest) ConvertToJSON() (string, error) {
-	data, err := json.Marshal(&c)
-	if err != nil {
-		return "", err
-	}
-	return string(data), nil
 }

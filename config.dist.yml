@@ -10,6 +10,12 @@ app:
         pemPath: cert/server.pem
         keyPath: cert/server.key
 
+# Redis Configs
+redis:
+    addr: localhost:6379
+    password:
+    db: 0
+
 # Message Broker Configs
 broker:
     # Broker driver (native or redis)
@@ -22,9 +28,6 @@ broker:
         workers: 1
     # Redis configs
     redis:
-        addr: localhost:6379
-        password:
-        db: 0
         channel: rabbit
 
 # Log configs
@@ -46,3 +49,11 @@ releases:
 build:
     # Build absolute path
     path: /app/var/build
+
+# Application Database
+database:
+    # Database driver (redis)
+    driver: redis
+    # Redis
+    redis:
+        hash_prefix: rabbit_

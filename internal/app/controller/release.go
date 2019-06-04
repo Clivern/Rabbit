@@ -7,7 +7,7 @@ package controller
 import (
 	"fmt"
 	"github.com/clivern/hippo"
-	"github.com/clivern/rabbit/internal/app/module"
+	"github.com/clivern/rabbit/internal/app/model"
 	"github.com/clivern/rabbit/pkg"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
@@ -18,7 +18,7 @@ import (
 // Release controller
 func Release(c *gin.Context, messages chan<- string) {
 
-	var releaseRequest module.ReleaseRequest
+	var releaseRequest model.ReleaseRequest
 	validate := pkg.Validator{}
 
 	logger, _ := hippo.NewLogger(
@@ -95,9 +95,9 @@ func Release(c *gin.Context, messages chan<- string) {
 
 	if viper.GetString("broker.driver") == "redis" {
 		driver := hippo.NewRedisDriver(
-			viper.GetString("broker.redis.addr"),
-			viper.GetString("broker.redis.password"),
-			viper.GetInt("broker.redis.db"),
+			viper.GetString("redis.addr"),
+			viper.GetString("redis.password"),
+			viper.GetInt("redis.db"),
 		)
 
 		// connect to redis server

@@ -1,17 +1,4 @@
-// Copyright 2019 Clivern. All rights reserved.
-// Use of this source code is governed by the MIT
-// license that can be found in the LICENSE file.
-
-package controller
-
-import (
-	"github.com/gin-gonic/gin"
-	"net/http"
-)
-
-// Index controller
-func Index(c *gin.Context) {
-	homeTpl := `<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
@@ -417,9 +404,4 @@ func Index(c *gin.Context) {
         })
     </script>
 </body>
-</html>`
-
-	c.Writer.WriteHeader(http.StatusOK)
-	c.Writer.Write([]byte(homeTpl))
-	return
-}
+</html>

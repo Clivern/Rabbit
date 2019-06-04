@@ -7,9 +7,11 @@ package controller
 import (
 	"fmt"
 	"github.com/clivern/hippo"
+	"github.com/clivern/rabbit/internal/app/model"
 	"github.com/clivern/rabbit/internal/app/module"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
+	"time"
 )
 
 // Worker runs async jobs
@@ -30,12 +32,14 @@ func Worker(workerID int, messages <-chan string) {
 		workerName,
 	), zap.String("WorkerName", workerName))
 
+	latencyTrack := hippo.NewLatencyTracker()
+
 	if viper.GetString("broker.driver") == "redis" {
 
 		driver := hippo.NewRedisDriver(
-			viper.GetString("broker.redis.addr"),
-			viper.GetString("broker.redis.password"),
-			viper.GetInt("broker.redis.db"),
+			viper.GetString("redis.addr"),
+			viper.GetString("redis.password"),
+			viper.GetInt("redis.db"),
 		)
 
 		// connect to redis server
@@ -89,7 +93,10 @@ func Worker(workerID int, messages <-chan string) {
 		}
 
 		driver.Subscribe(viper.GetString("broker.redis.channel"), func(message hippo.Message) error {
-			var releaseRequest module.ReleaseRequest
+			var releaseRequest model.ReleaseRequest
+
+			latencyTrack.NewAction("repository.clone")
+			latencyTrack.NewAction("repository.release")
 
 			ok, err := releaseRequest.LoadFromJSON([]byte(message.Payload))
 
@@ -134,7 +141,11 @@ func Worker(workerID int, messages <-chan string) {
 				releaseRequest.Version,
 			))
 
+			latencyTrack.SetStart("repository.clone", time.Now())
+
 			_, err = releaser.Clone()
+
+			latencyTrack.SetEnd("repository.clone", time.Now())
 
 			if err != nil {
 				logger.Error(fmt.Sprintf(
@@ -154,7 +165,11 @@ func Worker(workerID int, messages <-chan string) {
 				releaseRequest.Version,
 			))
 
+			latencyTrack.SetStart("repository.release", time.Now())
+
 			_, err = releaser.Release()
+
+			latencyTrack.SetEnd("repository.release", time.Now())
 
 			if err != nil {
 				logger.Error(fmt.Sprintf(
@@ -167,18 +182,43 @@ func Worker(workerID int, messages <-chan string) {
 				return nil
 			}
 
+			cloneLatency, err := latencyTrack.GetLatency("repository.clone")
+
+			if err != nil {
+				logger.Error(fmt.Sprintf(
+					"Error while calculating latency: [%s]",
+					err.Error(),
+				))
+				releaser.Cleanup()
+			}
+
+			releaseLatency, err := latencyTrack.GetLatency("repository.release")
+
+			if err != nil {
+				logger.Error(fmt.Sprintf(
+					"Error while calculating latency: [%s]",
+					err.Error(),
+				))
+				releaser.Cleanup()
+			}
+
 			logger.Info(fmt.Sprintf(
-				"Package [%s] url [%s] version [%s] released, do cleanup",
+				"Package [%s] url [%s] version [%s] cloned within [%s] released within [%s], will do a cleanup",
 				releaseRequest.Name,
 				releaseRequest.URL,
 				releaseRequest.Version,
+				cloneLatency,
+				releaseLatency,
 			))
 
 			return nil
 		})
 	} else {
 		for message := range messages {
-			var releaseRequest module.ReleaseRequest
+			var releaseRequest model.ReleaseRequest
+
+			latencyTrack.NewAction("repository.clone")
+			latencyTrack.NewAction("repository.release")
 
 			ok, err := releaseRequest.LoadFromJSON([]byte(message))
 
@@ -221,7 +261,11 @@ func Worker(workerID int, messages <-chan string) {
 				releaseRequest.Version,
 			))
 
+			latencyTrack.SetStart("repository.clone", time.Now())
+
 			_, err = releaser.Clone()
+
+			latencyTrack.SetEnd("repository.clone", time.Now())
 
 			if err != nil {
 				logger.Error(fmt.Sprintf(
@@ -242,7 +286,11 @@ func Worker(workerID int, messages <-chan string) {
 				releaseRequest.Version,
 			))
 
+			latencyTrack.SetStart("repository.release", time.Now())
+
 			_, err = releaser.Release()
+
+			latencyTrack.SetEnd("repository.release", time.Now())
 
 			if err != nil {
 				logger.Error(fmt.Sprintf(
@@ -256,11 +304,35 @@ func Worker(workerID int, messages <-chan string) {
 				continue
 			}
 
+			cloneLatency, err := latencyTrack.GetLatency("repository.clone")
+
+			if err != nil {
+				logger.Error(fmt.Sprintf(
+					"Error while calculating latency: [%s]",
+					err.Error(),
+				))
+				releaser.Cleanup()
+				continue
+			}
+
+			releaseLatency, err := latencyTrack.GetLatency("repository.release")
+
+			if err != nil {
+				logger.Error(fmt.Sprintf(
+					"Error while calculating latency: [%s]",
+					err.Error(),
+				))
+				releaser.Cleanup()
+				continue
+			}
+
 			logger.Info(fmt.Sprintf(
-				"Package [%s] url [%s] version [%s] released, do cleanup",
+				"Package [%s] url [%s] version [%s] cloned within [%s] released within [%s], will do a cleanup",
 				releaseRequest.Name,
 				releaseRequest.URL,
 				releaseRequest.Version,
+				cloneLatency,
+				releaseLatency,
 			))
 
 			releaser.Cleanup()
