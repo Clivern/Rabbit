@@ -210,7 +210,7 @@ func GetProjectByID(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"status": "error",
-			"error":  err.Error(),
+			"error":  "Project is not exist",
 		})
 		return
 	}
@@ -228,7 +228,7 @@ func GetProjectByID(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"status": "error",
-			"error":  err.Error(),
+			"error":  "Project is not exist",
 		})
 		return
 	}
@@ -263,7 +263,7 @@ func GetProjects(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusServiceUnavailable, gin.H{
 			"status": "error",
-			"error":  err.Error(),
+			"error":  "Internal server error",
 		})
 		return
 	}
