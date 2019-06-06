@@ -133,11 +133,7 @@ func (r *RedisDataStore) GetProjectByUUID(uuid string) (*model.Project, error) {
 
 	project := model.NewProject()
 
-	_, err = project.LoadFromJSON([]byte(result))
-
-	if err != nil {
-		return nil, err
-	}
+	project.LoadFromJSON([]byte(result))
 
 	return project, nil
 }
@@ -154,4 +150,32 @@ func (r *RedisDataStore) GetProjectByURL(url string) (*model.Project, error) {
 	}
 
 	return r.GetProjectByUUID(uuid)
+}
+
+// GetProjects gets projects list
+func (r *RedisDataStore) GetProjects() ([]*model.Project, error) {
+	var projects []*model.Project
+
+	iter := r.Client.HScan(
+		fmt.Sprintf("%s%s", viper.GetString("database.redis.hash_prefix"), ReleasesData),
+		0,
+		"",
+		0,
+	).Iterator()
+
+	for iter.Next() {
+		data := iter.Val()
+
+		project := model.NewProject()
+
+		_, err := project.LoadFromJSON([]byte(data))
+
+		if err != nil {
+			continue
+		}
+
+		projects = append(projects, project)
+	}
+
+	return projects, nil
 }

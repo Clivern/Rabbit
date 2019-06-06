@@ -114,9 +114,10 @@ func main() {
 	})
 	r.GET("/_health", controller.HealthCheck)
 	r.POST("/api/release", func(c *gin.Context) {
-		controller.CreateRelease(c, messages)
+		controller.CreateProject(c, messages)
 	})
-	r.GET("/api/release/:id", controller.GetReleaseByID)
+	r.GET("/api/release/:id", controller.GetProjectByID)
+	r.GET("/api/release", controller.GetProjects)
 
 	for i := 0; i < viper.GetInt("broker.native.workers"); i++ {
 		go controller.Worker(i+1, messages)

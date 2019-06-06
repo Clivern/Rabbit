@@ -16,8 +16,8 @@ import (
 	"net/http"
 )
 
-// CreateRelease controller
-func CreateRelease(c *gin.Context, messages chan<- string) {
+// CreateProject controller
+func CreateProject(c *gin.Context, messages chan<- string) {
 
 	var releaseRequest model.ReleaseRequest
 	validate := pkg.Validator{}
@@ -180,8 +180,8 @@ func CreateRelease(c *gin.Context, messages chan<- string) {
 	c.Status(http.StatusAccepted)
 }
 
-// GetReleaseByID controller
-func GetReleaseByID(c *gin.Context) {
+// GetProjectByID controller
+func GetProjectByID(c *gin.Context) {
 
 	var project *model.Project
 
@@ -234,4 +234,39 @@ func GetReleaseByID(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, project)
+}
+
+// GetProjects controller
+func GetProjects(c *gin.Context) {
+
+	dataStore := &module.RedisDataStore{}
+	status, err := dataStore.Connect()
+
+	if err != nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{
+			"status": "error",
+			"error":  "Internal server error",
+		})
+		return
+	}
+
+	if !status {
+		c.JSON(http.StatusServiceUnavailable, gin.H{
+			"status": "error",
+			"error":  "Internal server error",
+		})
+		return
+	}
+
+	projects, err := dataStore.GetProjects()
+
+	if err != nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{
+			"status": "error",
+			"error":  err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, projects)
 }
