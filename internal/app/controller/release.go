@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/clivern/hippo"
 	"github.com/clivern/rabbit/internal/app/model"
+	"github.com/clivern/rabbit/internal/app/module"
 	"github.com/clivern/rabbit/pkg"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
@@ -15,8 +16,8 @@ import (
 	"net/http"
 )
 
-// Release controller
-func Release(c *gin.Context, messages chan<- string) {
+// CreateProject controller
+func CreateProject(c *gin.Context, messages chan<- string) {
 
 	var releaseRequest model.ReleaseRequest
 	validate := pkg.Validator{}
@@ -177,4 +178,95 @@ func Release(c *gin.Context, messages chan<- string) {
 	}
 
 	c.Status(http.StatusAccepted)
+}
+
+// GetProjectByID controller
+func GetProjectByID(c *gin.Context) {
+
+	var project *model.Project
+
+	ID := c.Param("id")
+	dataStore := &module.RedisDataStore{}
+	status, err := dataStore.Connect()
+
+	if err != nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{
+			"status": "error",
+			"error":  "Internal server error",
+		})
+		return
+	}
+
+	if !status {
+		c.JSON(http.StatusServiceUnavailable, gin.H{
+			"status": "error",
+			"error":  "Internal server error",
+		})
+		return
+	}
+
+	status, err = dataStore.ProjectExistsByUUID(ID)
+
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"status": "error",
+			"error":  "Project is not exist",
+		})
+		return
+	}
+
+	if !status {
+		c.JSON(http.StatusNotFound, gin.H{
+			"status": "error",
+			"error":  "Project is not exist",
+		})
+		return
+	}
+
+	project, err = dataStore.GetProjectByUUID(ID)
+
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"status": "error",
+			"error":  "Project is not exist",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, project)
+}
+
+// GetProjects controller
+func GetProjects(c *gin.Context) {
+
+	dataStore := &module.RedisDataStore{}
+	status, err := dataStore.Connect()
+
+	if err != nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{
+			"status": "error",
+			"error":  "Internal server error",
+		})
+		return
+	}
+
+	if !status {
+		c.JSON(http.StatusServiceUnavailable, gin.H{
+			"status": "error",
+			"error":  "Internal server error",
+		})
+		return
+	}
+
+	projects, err := dataStore.GetProjects()
+
+	if err != nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{
+			"status": "error",
+			"error":  "Internal server error",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, projects)
 }

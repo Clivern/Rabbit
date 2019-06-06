@@ -198,10 +198,12 @@ func (r *Releaser) Store() (bool, error) {
 		if err != nil {
 			return false, err
 		}
-		project.AddBinary(r.Version, fileName, checksum, "md5sum")
+		project.AddBinary(r.Version, fileName, checksum, "SHA256")
 	}
 
-	return dataStore.StoreProject(project)
+	ok, err := dataStore.StoreProject(project)
+
+	return ok, err
 }
 
 // Clone clones a repository
