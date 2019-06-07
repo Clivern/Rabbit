@@ -108,11 +108,17 @@ func main() {
 
 	r.Use(middleware.Correlation())
 	r.Use(middleware.Logger())
+
+	r.StaticFS(
+		"/releases",
+		http.Dir(strings.TrimSuffix(viper.GetString("releases.path"), "/")),
+	)
 	r.GET("/", controller.Index)
 	r.GET("/favicon.ico", func(c *gin.Context) {
 		c.String(http.StatusNoContent, "")
 	})
 	r.GET("/_health", controller.HealthCheck)
+
 	r.POST("/api/project", func(c *gin.Context) {
 		controller.CreateProject(c, messages)
 	})
