@@ -1,28 +1,29 @@
-FROM golang:1.12.5
+FROM golang:1.12.5 as builder
 
 ENV GO111MODULE=on
-
-ARG VERSION=1.0.0
-
-RUN mkdir -p /app
-
-RUN cd /app
-
-RUN go get -u github.com/goreleaser/goreleaser
-
-RUN curl -sL https://github.com/Clivern/Rabbit/releases/download/$VERSION/Rabbit_$VERSION_Linux_x86_64.tar.gz | tar xz
-
-RUN mv Rabbit rabbit
 
 RUN mkdir -p /app/configs
 RUN mkdir -p /app/var/logs
 RUN mkdir -p /app/var/build
 RUN mkdir -p /app/var/releases
 
-VOLUME /app/configs
-VOLUME /app/var/logs
-VOLUME /app/var/build
-VOLUME /app/var/releases
+WORKDIR /app
+
+RUN curl -sL https://github.com/Clivern/Rabbit/releases/download/0.0.1/Rabbit_0.0.1_Linux_x86_64.tar.gz | tar xz
+RUN curl -sL https://github.com/goreleaser/goreleaser/releases/download/v0.108.0/goreleaser_Linux_x86_64.tar.gz | tar xz
+
+RUN mv Rabbit rabbit
+
+# Build a small image
+FROM alpine:3.9.4
+RUN apk --no-cache add ca-certificates
+
+COPY --from=builder /app/configs /app/configs
+COPY --from=builder /app/var/logs /app/var/logs
+COPY --from=builder /app/var/build /app/var/build
+COPY --from=builder /app/var/releases /app/var/releases
+COPY --from=builder /app/rabbit /app/rabbit
+COPY --from=builder /app/goreleaser /bin/goreleaser
 
 WORKDIR /app
 
