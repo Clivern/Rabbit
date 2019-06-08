@@ -14,6 +14,9 @@ import (
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"net/http"
+	"sort"
+	"strings"
+	"time"
 )
 
 // CreateProject controller
@@ -239,6 +242,7 @@ func GetProjectByID(c *gin.Context) {
 // GetProjects controller
 func GetProjects(c *gin.Context) {
 
+	projectsUI := []model.ProjectUI{}
 	dataStore := &module.RedisDataStore{}
 	status, err := dataStore.Connect()
 
@@ -268,5 +272,57 @@ func GetProjects(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, projects)
+	// Sort projects based on name
+	sort.Slice(projects, func(i, j int) bool {
+		return projects[i].Name < projects[j].Name
+	})
+
+	for _, project := range projects {
+		releases := map[string]model.ReleaseUI{}
+
+		latestRelease := ""
+		now := time.Now()
+		diff := time.Duration(0)
+
+		for version, release := range project.Releases {
+
+			currentDiff := now.Sub(release.CreatedAt)
+
+			if diff == time.Duration(0) || currentDiff < diff {
+				latestRelease = version
+				diff = currentDiff
+			}
+
+			newRelease := model.ReleaseUI{}
+
+			for _, binary := range release.Binaries {
+				url := fmt.Sprintf(
+					"%s/releases/%s/%s/%s",
+					strings.TrimSuffix(viper.GetString("app.domain"), "/"),
+					project.UUID,
+					version,
+					binary.FileName,
+				)
+				newBinary := model.BinaryUI{
+					URL:      url,
+					Checksum: binary.Checksum,
+				}
+
+				newRelease.Binaries = append(newRelease.Binaries, newBinary)
+			}
+
+			releases[version] = newRelease
+		}
+
+		newProject := model.ProjectUI{
+			Name:           strings.Title(project.Name),
+			LatestRelease:  latestRelease,
+			CurrentRelease: latestRelease,
+			Releases:       releases,
+		}
+
+		projectsUI = append(projectsUI, newProject)
+	}
+
+	c.JSON(http.StatusOK, projectsUI)
 }

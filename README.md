@@ -38,6 +38,8 @@ app:
     mode: dev
     # HTTP port
     port: 8080
+    # App URL
+    domain: http://127.0.0.1:8080
     # TLS configs
     tls:
         status: off
