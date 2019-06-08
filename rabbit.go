@@ -124,6 +124,9 @@ func main() {
 	})
 	r.GET("/api/project/:id", controller.GetProjectByID)
 	r.GET("/api/project", controller.GetProjects)
+	r.POST("/webhook/github", func(c *gin.Context) {
+		controller.GithubListener(c, messages)
+	})
 
 	for i := 0; i < viper.GetInt("broker.native.workers"); i++ {
 		go controller.Worker(i+1, messages)

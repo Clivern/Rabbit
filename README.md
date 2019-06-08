@@ -91,6 +91,15 @@ database:
     # Redis
     redis:
         hash_prefix: rabbit_
+
+# Third Party API Integration
+integrations:
+    # Github Configs
+    github:
+        # Webhook Secret (From Repo settings page > Webhooks)
+        webhook_secret: Pz2ufk7r5BTjnkOo
+        # whether to use ssh or https to clone
+        clone_with: https
 ```
 
 And then run the application.
