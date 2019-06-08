@@ -18,6 +18,7 @@ Rabbit is a lightweight service that will build and store your go projects binar
 </p>
 <br/>
 <p align="center">
+    <h3 align="center">Screenshot</h3>
     <img src="https://raw.githubusercontent.com/Clivern/Rabbit/master/assets/img/screenshot.png?v=0.0.1" />
 </p>
 <br/>
