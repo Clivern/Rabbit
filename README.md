@@ -126,6 +126,8 @@ $ go run rabbit.go -config=/custom/path/config.prod.yml
 
 ## Deployment
 
+Rabbit needs a decent resources to be able to work properly. Because the build process itself done by goreleaser and it consumes a lot. So better to keep `parallelism` equal `1` and increase if you have more resources and would like to speed the build process.
+
 ### On a Linux Server
 
 Make sure you have `git`, `golang 1.12` and `goreleaser` installed, and make goreleaser executable from everywhere.
