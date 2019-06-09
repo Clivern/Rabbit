@@ -51,6 +51,7 @@ releases:
 build:
     # Build absolute path
     path: /app/var/build
+    parallelism: 1
 
 # Application Database
 database:

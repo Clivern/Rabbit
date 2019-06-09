@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/viper"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
@@ -87,7 +88,15 @@ func (r *Releaser) Release() (bool, error) {
 func (r *Releaser) Build() (bool, error) {
 	cmd := pkg.NewShellCommand()
 
-	_, err := cmd.Exec(r.BuildPath, "goreleaser", "--snapshot", "--skip-publish", "--rm-dist")
+	_, err := cmd.Exec(
+		r.BuildPath,
+		"goreleaser",
+		"--snapshot",
+		"--skip-publish",
+		"--rm-dist",
+		"--parallelism",
+		strconv.Itoa(viper.GetInt("build.parallelism")),
+	)
 
 	if err != nil {
 		return false, err

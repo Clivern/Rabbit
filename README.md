@@ -5,7 +5,7 @@
     <p align="center">
         <a href="https://godoc.org/github.com/clivern/rabbit"><img src="https://godoc.org/github.com/clivern/rabbit?status.svg"></a>
         <a href="https://travis-ci.org/Clivern/Rabbit"><img src="https://travis-ci.org/Clivern/Rabbit.svg?branch=master"></a>
-        <a href="https://github.com/Clivern/Rabbit/releases"><img src="https://img.shields.io/badge/Version-0.0.1-red.svg"></a>
+        <a href="https://github.com/Clivern/Rabbit/releases"><img src="https://img.shields.io/badge/Version-0.0.2-red.svg"></a>
         <a href="https://goreportcard.com/report/github.com/Clivern/Rabbit"><img src="https://goreportcard.com/badge/github.com/Clivern/Rabbit"></a>
         <a href="https://github.com/Clivern/Rabbit/blob/master/LICENSE"><img src="https://img.shields.io/badge/LICENSE-MIT-orange.svg"></a>
     </p>
@@ -14,12 +14,12 @@
 Rabbit is a lightweight service that will build and store your go projects binaries. Once a VCS system (github or bitbucket) notifies rabbit of a new release, it clones the project, builds different binaries and publish them.
 
 <p align="center">
-    <img src="https://raw.githubusercontent.com/Clivern/Rabbit/master/assets/img/diagram.png?v=0.0.1" />
+    <img src="https://raw.githubusercontent.com/Clivern/Rabbit/master/assets/img/diagram.png?v=0.0.2" />
 </p>
 <br/>
 <p align="center">
     <h3 align="center">Screenshot</h3>
-    <img src="https://raw.githubusercontent.com/Clivern/Rabbit/master/assets/img/screenshot.png?v=0.0.1" />
+    <img src="https://raw.githubusercontent.com/Clivern/Rabbit/master/assets/img/screenshot.png?v=0.0.2" />
 </p>
 <br/>
 
@@ -90,6 +90,7 @@ releases:
 build:
     # Build absolute path
     path: /app/var/build
+    parallelism: 1
 
 # Application Database
 database:
@@ -126,7 +127,7 @@ $ go run rabbit.go -config=/custom/path/config.prod.yml
 
 ## Deployment
 
-Rabbit needs a decent resources to be able to work properly. Because the build process itself done by goreleaser and it consumes a lot. So better to keep `parallelism` equal `1` and increase if you have more resources and would like to speed the build process.
+Rabbit needs a decent resources to be able to work properly. Because the build process itself done by goreleaser and it consumes a lot. So better to keep `build.parallelism` equal `1` and increase if you have more resources and would like to speed the build process.
 
 ### On a Linux Server
 
