@@ -8,17 +8,18 @@ services:
    web:
       image: "clivern_rabbit:0.0.1"
       build: .
-      command: './rabbit --config /app/configs/config.prod.yml'
+      command: './rabbit --config /app/configs/config.docker.yml'
       ports:
          - "8080:8080"
       depends_on:
          - redis
       volumes:
+         - '~/.ssh:/root/.ssh'
          - './var:/app/var'
          - './configs:/app/configs'
       restart: always
       healthcheck:
-         test: './rabbit --config /app/configs/config.prod.yml --exec health'
+         test: './rabbit --config /app/configs/config.docker.yml --exec health'
          interval: 5s
          timeout: 2s
          retries: 5

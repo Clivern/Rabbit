@@ -1,0 +1,70 @@
+# General App Configs
+app:
+    # Env mode (dev or prod)
+    mode: dev
+    # HTTP port
+    port: 8080
+    # App URL
+    domain: http://127.0.0.1:8080
+    # TLS configs
+    tls:
+        status: off
+        pemPath: cert/server.pem
+        keyPath: cert/server.key
+
+# Redis Configs
+redis:
+    addr: redis:6379
+    password:
+    db: 0
+
+# Message Broker Configs
+broker:
+    # Broker driver (native or redis)
+    driver: native
+    # Native driver configs
+    native:
+        # Queue max capacity
+        capacity: 50
+        # Number of concurrent workers
+        workers: 1
+    # Redis Driver Configs
+    redis:
+        channel: rabbit
+
+# Log configs
+log:
+    # Log level, it can be debug, info, warn, error, panic, fatal
+    level: debug
+    # output can be stdout or abs path to log file /var/logs/rabbit.log
+    output: /app/var/logs/rabbit.log
+    # Format can be json or text
+    format: json
+
+# Release configs
+releases:
+    # Releases absolute path
+    path: /app/var/releases
+    name: "[.Tag]"
+
+# Build configs
+build:
+    # Build absolute path
+    path: /app/var/build
+
+# Application Database
+database:
+    # Database driver (redis)
+    driver: redis
+    # Redis Driver Configs
+    redis:
+        hash_prefix: rabbit_
+
+# Third Party API Integration
+integrations:
+    # Github Configs
+    github:
+        # Webhook Secret (From Repo settings page > Webhooks)
+        webhook_secret: Pz2ufk7r5BTjnkOo
+        # whether to use ssh or https to clone
+        clone_with: https

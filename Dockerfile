@@ -14,9 +14,9 @@ RUN curl -sL https://github.com/goreleaser/goreleaser/releases/download/v0.108.0
 
 RUN mv Rabbit rabbit
 
-# Build a small image
-FROM alpine:3.9.4
-RUN apk --no-cache add ca-certificates
+FROM golang:1.12.5
+
+ENV GO111MODULE=on
 
 COPY --from=builder /app/configs /app/configs
 COPY --from=builder /app/var/logs /app/var/logs
@@ -29,4 +29,4 @@ WORKDIR /app
 
 EXPOSE 8080
 
-CMD ["./rabbit", "--config", "/app/configs/config.prod.yml"]
+CMD ["./rabbit", "--config", "/app/configs/config.docker.yml"]
