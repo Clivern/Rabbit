@@ -25,13 +25,12 @@ Rabbit is a lightweight service that will build and store your go projects binar
 
 ## Documentation
 
-### Installation:
-
-### Config & Run The Application
+### Development:
 
 Rabbit uses [Go Modules](https://github.com/golang/go/wiki/Modules) to manage dependencies. First Create a prod config file.
 
 ```bash
+$ git clone https://github.com/Clivern/Rabbit.git
 $ cp config.dist.yml config.prod.yml
 ```
 
@@ -125,12 +124,43 @@ $ ./rabbit -config=/custom/path/config.prod.yml
 $ go run rabbit.go -config=/custom/path/config.prod.yml
 ```
 
-Or [download a pre-built Rabbit binary](https://github.com/Clivern/Rabbit/releases) for your operating system.
+## Deployment
+
+### On a Linux Server
+
+Make sure you have `git`, `golang 1.12` and `goreleaser` installed, and make goreleaser executable from everywhere.
+
+```bash
+# To download the latest goreleaser binary for linux (https://github.com/goreleaser/goreleaser/releases)
+$ curl -sL https://github.com/goreleaser/goreleaser/releases/download/v0.108.0/goreleaser_Linux_x86_64.tar.gz | tar xz
+```
+
+Also make sure you are able to clone all your repositories in a non-interactive way. Just configure ssh-key and add the remote VCS to your known hosts.
+
+Then download [the latest Rabbit binary.](https://github.com/Clivern/Rabbit/releases)
 
 ```bash
 $ curl -sL https://github.com/Clivern/Rabbit/releases/download/x.x.x/rabbit_x.x.x_OS.tar.gz | tar xz
-$ ./rabbit -config=config.prod.yml
 ```
+
+Create your config file as explained before on development part and run rabbit with systemd or anything else you prefer.
+
+```
+$ ./rabbit -config=/custom/path/config.prod.yml
+```
+
+### On Docker
+
+Running rabbit with `docker-compose` is pretty straightforward.
+
+```bash
+$ git clone https://github.com/Clivern/Rabbit.git
+$ cd Rabbit/deployments/docker-compose
+$ docker-compose build
+$ docker-compose up -d
+```
+
+Docker will mount you host server `~/.ssh` directory in order to be able to clone repositories that need ssh key. Please make sure it has the right permissions and also remote VCS added to known hosts. otherwise rabbit will stuck on git interactive clone.
 
 ## Versioning
 
