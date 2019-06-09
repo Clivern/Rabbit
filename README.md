@@ -90,6 +90,7 @@ releases:
 build:
     # Build absolute path
     path: /app/var/build
+    # Number of parallel builds
     parallelism: 1
 
 # Application Database
