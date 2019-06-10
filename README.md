@@ -5,7 +5,7 @@
     <p align="center">
         <a href="https://godoc.org/github.com/clivern/rabbit"><img src="https://godoc.org/github.com/clivern/rabbit?status.svg"></a>
         <a href="https://travis-ci.org/Clivern/Rabbit"><img src="https://travis-ci.org/Clivern/Rabbit.svg?branch=master"></a>
-        <a href="https://github.com/Clivern/Rabbit/releases"><img src="https://img.shields.io/badge/Version-0.0.2-red.svg"></a>
+        <a href="https://github.com/Clivern/Rabbit/releases"><img src="https://img.shields.io/badge/Version-0.1.0-red.svg"></a>
         <a href="https://goreportcard.com/report/github.com/Clivern/Rabbit"><img src="https://goreportcard.com/badge/github.com/Clivern/Rabbit"></a>
         <a href="https://github.com/Clivern/Rabbit/blob/master/LICENSE"><img src="https://img.shields.io/badge/LICENSE-MIT-orange.svg"></a>
     </p>
@@ -105,10 +105,22 @@ database:
 integrations:
     # Github Configs
     github:
+        # Webhook URI (Full URL will be app.domain + webhook_uri)
+        webhook_uri: /webhook/github
         # Webhook Secret (From Repo settings page > Webhooks)
         webhook_secret: Pz2ufk7r5BTjnkOo
         # whether to use ssh or https to clone
         clone_with: https
+    # Bitbucket Configs
+    bitbucket:
+        # Webhook URI (Full URL will be app.domain + webhook_uri)
+        webhook_uri: /webhook/bitbucket
+        # whether to use ssh or https to clone
+        clone_with: https
+        # HTTPS URL format, Full name will be something like Clivern/Rabbit
+        https_format: https://bitbucket.org/{$full_name}.git
+        # SSH URL format, Full name will be something like Clivern/Rabbit
+        ssh_format: git@bitbucket.org:{$full_name}.git
 ```
 
 And then run the application.
