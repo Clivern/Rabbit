@@ -66,7 +66,19 @@ database:
 integrations:
     # Github Configs
     github:
+        # Webhook URI (Full URL will be app.domain + webhook_uri)
+        webhook_uri: /webhook/github
         # Webhook Secret (From Repo settings page > Webhooks)
         webhook_secret: Pz2ufk7r5BTjnkOo
         # whether to use ssh or https to clone
         clone_with: https
+    # Bitbucket Configs
+    bitbucket:
+        # Webhook URI (Full URL will be app.domain + webhook_uri)
+        webhook_uri: /webhook/bitbucket
+        # whether to use ssh or https to clone
+        clone_with: ssh
+        # HTTPS URL format, Full name will be something like Clivern/Rabbit
+        https_format: https://bitbucket.org/{$full_name}.git
+        # SSH URL format, Full name will be something like Clivern/Rabbit
+        ssh_format: git@bitbucket.org:{$full_name}.git
