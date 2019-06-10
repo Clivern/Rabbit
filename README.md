@@ -111,6 +111,10 @@ integrations:
         webhook_secret: Pz2ufk7r5BTjnkOo
         # whether to use ssh or https to clone
         clone_with: https
+        # HTTPS URL format, Full name will be something like Clivern/Rabbit
+        https_format: https://github.com/{$full_name}.git
+        # SSH URL format, Full name will be something like Clivern/Rabbit
+        ssh_format: git@github.com:{$full_name}.git
     # Bitbucket Configs
     bitbucket:
         # Webhook URI (Full URL will be app.domain + webhook_uri)

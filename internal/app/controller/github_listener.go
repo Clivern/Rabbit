@@ -13,6 +13,7 @@ import (
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"net/http"
+	"strings"
 )
 
 // GithubListener controller
@@ -79,14 +80,24 @@ func GithubListener(c *gin.Context, messages chan<- string) {
 				return
 			}
 
-			releaseRequest := model.ReleaseRequest{
-				Name:    createEvent.Repository.Name,
-				URL:     createEvent.Repository.CloneURL,
-				Version: createEvent.Ref,
-			}
+			href := strings.ReplaceAll(
+				viper.GetString("integrations.github.https_format"),
+				"{$full_name}",
+				createEvent.Repository.FullName,
+			)
 
 			if viper.GetString("integrations.github.clone_with") == "ssh" {
-				releaseRequest.URL = createEvent.Repository.SSHURL
+				href = strings.ReplaceAll(
+					viper.GetString("integrations.github.ssh_format"),
+					"{$full_name}",
+					createEvent.Repository.FullName,
+				)
+			}
+
+			releaseRequest := model.ReleaseRequest{
+				Name:    createEvent.Repository.Name,
+				URL:     href,
+				Version: createEvent.Ref,
 			}
 
 			validate := pkg.Validator{}
