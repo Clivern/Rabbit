@@ -2,17 +2,16 @@
 // Use of this source code is governed by the MIT
 // license that can be found in the LICENSE file.
 
-package controller
+package cmd
 
 import (
+	"fmt"
 	"github.com/clivern/hippo"
-	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
-	"net/http"
 )
 
-// HealthCheck controller
-func HealthCheck(c *gin.Context) {
+// HealthCheck do a health check
+func HealthCheck() {
 
 	logger, _ := hippo.NewLogger(
 		viper.GetString("log.level"),
@@ -38,14 +37,9 @@ func HealthCheck(c *gin.Context) {
 	if healthChecker.ChecksStatus() == "DOWN" {
 		report, _ := healthChecker.ChecksReport()
 		logger.Error("Health Check Error: " + report)
-		c.JSON(http.StatusServiceUnavailable, gin.H{
-			"status": "error",
-			"error":  "Internal server error",
-		})
+		panic(report)
 	} else {
 		logger.Info("Health Check: I am Ok")
-		c.JSON(http.StatusOK, gin.H{
-			"status": "ok",
-		})
+		fmt.Println("I am Ok")
 	}
 }

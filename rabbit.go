@@ -50,8 +50,8 @@ func main() {
 
 	if exec != "" {
 		switch exec {
-		case "release":
-			cmd.ReleasePackage(repositoryName, repositoryURL, repositoryTag)
+		case "health":
+			cmd.HealthCheck()
 		}
 		return
 	}
