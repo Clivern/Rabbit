@@ -9,7 +9,7 @@ RUN mkdir -p /app/var/releases
 
 WORKDIR /app
 
-RUN curl -sL https://github.com/Clivern/Rabbit/releases/download/0.1.0/Rabbit_0.1.0_Linux_x86_64.tar.gz | tar xz
+RUN curl -sL https://github.com/Clivern/Rabbit/releases/download/0.1.1/Rabbit_0.1.1_Linux_x86_64.tar.gz | tar xz
 RUN curl -sL https://github.com/goreleaser/goreleaser/releases/download/v0.109.0/goreleaser_Linux_x86_64.tar.gz | tar xz
 
 RUN mv Rabbit rabbit
