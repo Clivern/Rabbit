@@ -116,7 +116,7 @@ integrations:
         # Webhook URI (Full URL will be app.domain + webhook_uri)
         webhook_uri: /webhook/bitbucket
         # whether to use ssh or https to clone
-        clone_with: ssh
+        clone_with: https
         # HTTPS URL format, Full name will be something like Clivern/Rabbit
         https_format: https://bitbucket.org/{$full_name}.git
         # SSH URL format, Full name will be something like Clivern/Rabbit
