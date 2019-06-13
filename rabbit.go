@@ -24,16 +24,10 @@ import (
 func main() {
 
 	var exec string
-	var repositoryName string
-	var repositoryURL string
-	var repositoryTag string
 	var configFile string
 
 	flag.StringVar(&configFile, "config", "config.prod.yml", "config")
 	flag.StringVar(&exec, "exec", "", "exec")
-	flag.StringVar(&repositoryName, "repository_name", "", "repository_name")
-	flag.StringVar(&repositoryURL, "repository_url", "", "repository_url")
-	flag.StringVar(&repositoryTag, "repository_tag", "", "repository_tag")
 	flag.Parse()
 
 	viper.SetConfigFile(configFile)
