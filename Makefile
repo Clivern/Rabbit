@@ -5,7 +5,7 @@ pkgs          = ./...
 
 help: Makefile
 	@echo
-	@echo " Choose a command run in Beaver:"
+	@echo " Choose a command run in Rabbit:"
 	@echo
 	@sed -n 's/^##//p' $< | column -t -s ':' |  sed -e 's/^/ /'
 	@echo
