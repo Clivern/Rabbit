@@ -5,7 +5,7 @@ pkgs          = ./...
 
 help: Makefile
 	@echo
-	@echo " Choose a command run in Beaver:"
+	@echo " Choose a command run in Rabbit:"
 	@echo
 	@sed -n 's/^##//p' $< | column -t -s ':' |  sed -e 's/^/ /'
 	@echo
@@ -13,13 +13,13 @@ help: Makefile
 
 ## install_revive: Install revive for linting.
 install_revive:
-	@echo ">> Install revive"
+	@echo ">> ============= Install Revive ============= <<"
 	$(GO) get github.com/mgechev/revive
 
 
 ## style: Check code style.
 style:
-	@echo ">> checking code style"
+	@echo ">> ============= Checking Code Style ============= <<"
 	@fmtRes=$$($(GOFMT) -d $$(find . -path ./vendor -prune -o -name '*.go' -print)); \
 	if [ -n "$${fmtRes}" ]; then \
 		echo "gofmt checking failed!"; echo "$${fmtRes}"; echo; \
@@ -30,7 +30,7 @@ style:
 
 ## check_license: Check if license header on all files.
 check_license:
-	@echo ">> checking license header"
+	@echo ">> ============= Checking License Header ============= <<"
 	@licRes=$$(for file in $$(find . -type f -iname '*.go' ! -path './vendor/*') ; do \
                awk 'NR<=3' $$file | grep -Eq "(Copyright|generated|GENERATED)" || echo $$file; \
        done); \
@@ -42,36 +42,37 @@ check_license:
 
 ## test_short: Run test cases with short flag.
 test_short:
-	@echo ">> running short tests"
+	@echo ">> ============= Running Short Tests ============= <<"
 	$(GO) test -short $(pkgs)
 
 
 ## test: Run test cases.
 test:
-	@echo ">> running all tests"
+	@echo ">> ============= Running All Tests ============= <<"
 	$(GO) test -race -cover $(pkgs)
 
 
 ## lint: Lint the code.
 lint:
-	@echo ">> Lint all files"
+	@echo ">> ============= Lint All Files ============= <<"
 	revive -config config.toml -exclude vendor/... -formatter friendly ./...
 
 
 ## format: Format the code.
 format:
-	@echo ">> formatting code"
+	@echo ">> ============= Formatting Code ============= <<"
 	$(GO) fmt $(pkgs)
 
 
 ## vet: Examines source code and reports suspicious constructs.
 vet:
-	@echo ">> vetting code"
+	@echo ">> ============= Vetting Code ============= <<"
 	$(GO) vet $(pkgs)
 
 
 ## coverage: Create HTML coverage report
 coverage:
+	@echo ">> ============= Coverage ============= <<"
 	rm -f coverage.html cover.out
 	$(GO) test -coverprofile=cover.out $(pkgs)
 	go tool cover -html=cover.out -o coverage.html

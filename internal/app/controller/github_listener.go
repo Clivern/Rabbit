@@ -40,16 +40,50 @@ func GithubListener(c *gin.Context, messages chan<- string) {
 	ok := parser.VerifySignature(viper.GetString("integrations.github.webhook_secret"))
 	eventName := parser.GetGitHubEvent()
 
-	if ok {
+	if !ok {
+		c.JSON(http.StatusForbidden, gin.H{
+			"status": "Oops!",
+		})
+		return
+	}
 
-		// Ping event received
-		if eventName == "ping" {
-			var pingEvent pkg.PingEvent
-			pingEvent.LoadFromJSON(rawBody)
+	// Ping event received
+	if eventName == "ping" {
+		var pingEvent pkg.PingEvent
+		pingEvent.LoadFromJSON(rawBody)
 
+		logger.Info(fmt.Sprintf(
+			`Github event %s received`,
+			eventName,
+		), zap.String("CorrelationID", c.Request.Header.Get("X-Correlation-ID")))
+
+		c.JSON(http.StatusOK, gin.H{
+			"status": "Nice!",
+		})
+		return
+	}
+
+	if eventName != "create" {
+		c.JSON(http.StatusOK, gin.H{
+			"status": "Nice, Skip!",
+		})
+		return
+	}
+
+	// Create event received
+	if eventName == "create" {
+		var createEvent pkg.CreateEvent
+		createEvent.LoadFromJSON(rawBody)
+
+		logger.Info(fmt.Sprintf(
+			`Github event %s received`,
+			eventName,
+		), zap.String("CorrelationID", c.Request.Header.Get("X-Correlation-ID")))
+
+		if createEvent.RefType != "tag" {
 			logger.Info(fmt.Sprintf(
-				`Github event %s received`,
-				eventName,
+				`Github create event received but RefType is %s not tag`,
+				createEvent.RefType,
 			), zap.String("CorrelationID", c.Request.Header.Get("X-Correlation-ID")))
 
 			c.JSON(http.StatusOK, gin.H{
@@ -58,179 +92,153 @@ func GithubListener(c *gin.Context, messages chan<- string) {
 			return
 		}
 
-		// Create event received
-		if eventName == "create" {
-			var createEvent pkg.CreateEvent
-			createEvent.LoadFromJSON(rawBody)
+		href := strings.ReplaceAll(
+			viper.GetString("integrations.github.https_format"),
+			"{$full_name}",
+			createEvent.Repository.FullName,
+		)
 
-			logger.Info(fmt.Sprintf(
-				`Github event %s received`,
-				eventName,
-			), zap.String("CorrelationID", c.Request.Header.Get("X-Correlation-ID")))
-
-			if createEvent.RefType != "tag" {
-				logger.Info(fmt.Sprintf(
-					`Github create event received but RefType is %s not tag`,
-					createEvent.RefType,
-				), zap.String("CorrelationID", c.Request.Header.Get("X-Correlation-ID")))
-
-				c.JSON(http.StatusOK, gin.H{
-					"status": "Nice!",
-				})
-				return
-			}
-
-			href := strings.ReplaceAll(
-				viper.GetString("integrations.github.https_format"),
+		if viper.GetString("integrations.github.clone_with") == "ssh" {
+			href = strings.ReplaceAll(
+				viper.GetString("integrations.github.ssh_format"),
 				"{$full_name}",
 				createEvent.Repository.FullName,
 			)
+		}
 
-			if viper.GetString("integrations.github.clone_with") == "ssh" {
-				href = strings.ReplaceAll(
-					viper.GetString("integrations.github.ssh_format"),
-					"{$full_name}",
-					createEvent.Repository.FullName,
-				)
-			}
+		releaseRequest := model.ReleaseRequest{
+			Name:    createEvent.Repository.Name,
+			URL:     href,
+			Version: createEvent.Ref,
+		}
 
-			releaseRequest := model.ReleaseRequest{
-				Name:    createEvent.Repository.Name,
-				URL:     href,
-				Version: createEvent.Ref,
-			}
+		validate := pkg.Validator{}
 
-			validate := pkg.Validator{}
+		if validate.IsEmpty(releaseRequest.Name) {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"status": "error",
+				"error":  "Repository name is required",
+			})
+			return
+		}
 
-			if validate.IsEmpty(releaseRequest.Name) {
-				c.JSON(http.StatusBadRequest, gin.H{
-					"status": "error",
-					"error":  "Repository name is required",
-				})
-				return
-			}
+		if validate.IsEmpty(releaseRequest.URL) {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"status": "error",
+				"error":  "Repository url is required",
+			})
+			return
+		}
 
-			if validate.IsEmpty(releaseRequest.URL) {
-				c.JSON(http.StatusBadRequest, gin.H{
-					"status": "error",
-					"error":  "Repository url is required",
-				})
-				return
-			}
+		if validate.IsEmpty(releaseRequest.Version) {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"status": "error",
+				"error":  "Repository version is required",
+			})
+			return
+		}
 
-			if validate.IsEmpty(releaseRequest.Version) {
-				c.JSON(http.StatusBadRequest, gin.H{
-					"status": "error",
-					"error":  "Repository version is required",
-				})
-				return
-			}
+		requestBody, err := releaseRequest.ConvertToJSON()
 
-			requestBody, err := releaseRequest.ConvertToJSON()
+		if err != nil {
+			logger.Error(fmt.Sprintf(
+				`Error while converting request body to json %s`,
+				err.Error(),
+			), zap.String("CorrelationID", c.Request.Header.Get("X-Correlation-ID")))
+
+			c.JSON(http.StatusBadRequest, gin.H{
+				"status": "error",
+				"error":  "Invalid request",
+			})
+			return
+		}
+
+		if viper.GetString("broker.driver") == "redis" {
+			driver := hippo.NewRedisDriver(
+				viper.GetString("redis.addr"),
+				viper.GetString("redis.password"),
+				viper.GetInt("redis.db"),
+			)
+
+			// connect to redis server
+			ok, err = driver.Connect()
 
 			if err != nil {
 				logger.Error(fmt.Sprintf(
-					`Error while converting request body to json %s`,
+					`Unable to connect to redis server %s`,
 					err.Error(),
 				), zap.String("CorrelationID", c.Request.Header.Get("X-Correlation-ID")))
 
-				c.JSON(http.StatusBadRequest, gin.H{
+				c.JSON(http.StatusServiceUnavailable, gin.H{
 					"status": "error",
-					"error":  "Invalid request",
+					"error":  "Internal server error",
 				})
 				return
 			}
 
-			if viper.GetString("broker.driver") == "redis" {
-				driver := hippo.NewRedisDriver(
-					viper.GetString("redis.addr"),
-					viper.GetString("redis.password"),
-					viper.GetInt("redis.db"),
+			if !ok {
+				logger.Error(
+					`Unable to connect to redis server`,
+					zap.String("CorrelationID", c.Request.Header.Get("X-Correlation-ID")),
 				)
 
-				// connect to redis server
-				ok, err = driver.Connect()
-
-				if err != nil {
-					logger.Error(fmt.Sprintf(
-						`Unable to connect to redis server %s`,
-						err.Error(),
-					), zap.String("CorrelationID", c.Request.Header.Get("X-Correlation-ID")))
-
-					c.JSON(http.StatusServiceUnavailable, gin.H{
-						"status": "error",
-						"error":  "Internal server error",
-					})
-					return
-				}
-
-				if !ok {
-					logger.Error(
-						`Unable to connect to redis server`,
-						zap.String("CorrelationID", c.Request.Header.Get("X-Correlation-ID")),
-					)
-
-					c.JSON(http.StatusServiceUnavailable, gin.H{
-						"status": "error",
-						"error":  "Internal server error",
-					})
-					return
-				}
-
-				// ping check
-				ok, err = driver.Ping()
-
-				if err != nil {
-					logger.Error(fmt.Sprintf(
-						`Unable to ping redis server %s`,
-						err.Error(),
-					), zap.String("CorrelationID", c.Request.Header.Get("X-Correlation-ID")))
-
-					c.JSON(http.StatusServiceUnavailable, gin.H{
-						"status": "error",
-						"error":  "Internal server error",
-					})
-					return
-				}
-
-				if !ok {
-					logger.Error(
-						`Unable to ping redis server`,
-						zap.String("CorrelationID", c.Request.Header.Get("X-Correlation-ID")),
-					)
-
-					c.JSON(http.StatusServiceUnavailable, gin.H{
-						"status": "error",
-						"error":  "Internal server error",
-					})
-					return
-				}
-
-				logger.Info(fmt.Sprintf(
-					`Send request [%s] to workers`,
-					requestBody,
-				), zap.String("CorrelationID", c.Request.Header.Get("X-Correlation-ID")))
-
-				driver.Publish(
-					viper.GetString("broker.redis.channel"),
-					requestBody,
-				)
-			} else {
-				logger.Info(fmt.Sprintf(
-					`Send request [%s] to workers`,
-					requestBody,
-				), zap.String("CorrelationID", c.Request.Header.Get("X-Correlation-ID")))
-
-				messages <- requestBody
+				c.JSON(http.StatusServiceUnavailable, gin.H{
+					"status": "error",
+					"error":  "Internal server error",
+				})
+				return
 			}
-		}
 
-		c.JSON(http.StatusOK, gin.H{
-			"status": "Nice!",
-		})
-	} else {
-		c.JSON(http.StatusForbidden, gin.H{
-			"status": "Oops!",
-		})
+			// ping check
+			ok, err = driver.Ping()
+
+			if err != nil {
+				logger.Error(fmt.Sprintf(
+					`Unable to ping redis server %s`,
+					err.Error(),
+				), zap.String("CorrelationID", c.Request.Header.Get("X-Correlation-ID")))
+
+				c.JSON(http.StatusServiceUnavailable, gin.H{
+					"status": "error",
+					"error":  "Internal server error",
+				})
+				return
+			}
+
+			if !ok {
+				logger.Error(
+					`Unable to ping redis server`,
+					zap.String("CorrelationID", c.Request.Header.Get("X-Correlation-ID")),
+				)
+
+				c.JSON(http.StatusServiceUnavailable, gin.H{
+					"status": "error",
+					"error":  "Internal server error",
+				})
+				return
+			}
+
+			logger.Info(fmt.Sprintf(
+				`Send request [%s] to workers`,
+				requestBody,
+			), zap.String("CorrelationID", c.Request.Header.Get("X-Correlation-ID")))
+
+			driver.Publish(
+				viper.GetString("broker.redis.channel"),
+				requestBody,
+			)
+		} else {
+			logger.Info(fmt.Sprintf(
+				`Send request [%s] to workers`,
+				requestBody,
+			), zap.String("CorrelationID", c.Request.Header.Get("X-Correlation-ID")))
+
+			messages <- requestBody
+		}
 	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status": "Nice!",
+	})
+
 }

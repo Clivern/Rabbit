@@ -5,7 +5,7 @@
     <p align="center">
         <a href="https://godoc.org/github.com/clivern/rabbit"><img src="https://godoc.org/github.com/clivern/rabbit?status.svg"></a>
         <a href="https://travis-ci.org/Clivern/Rabbit"><img src="https://travis-ci.org/Clivern/Rabbit.svg?branch=master"></a>
-        <a href="https://github.com/Clivern/Rabbit/releases"><img src="https://img.shields.io/badge/Version-0.1.1-red.svg"></a>
+        <a href="https://github.com/Clivern/Rabbit/releases"><img src="https://img.shields.io/badge/Version-0.1.2-red.svg"></a>
         <a href="https://goreportcard.com/report/github.com/Clivern/Rabbit"><img src="https://goreportcard.com/badge/github.com/Clivern/Rabbit"></a>
         <a href="https://github.com/Clivern/Rabbit/blob/master/LICENSE"><img src="https://img.shields.io/badge/LICENSE-MIT-orange.svg"></a>
     </p>
@@ -152,7 +152,7 @@ Make sure you have `git`, `golang 1.12` and `goreleaser` installed, and make gor
 
 ```bash
 # To download the latest goreleaser binary for linux (https://github.com/goreleaser/goreleaser/releases)
-$ curl -sL https://github.com/goreleaser/goreleaser/releases/download/v0.108.0/goreleaser_Linux_x86_64.tar.gz | tar xz
+$ curl -sL https://github.com/goreleaser/goreleaser/releases/download/v0.109.0/goreleaser_Linux_x86_64.tar.gz | tar xz
 ```
 
 Also make sure you are able to clone all your repositories in a non-interactive way. Just configure ssh-key and add the remote VCS to your known hosts.
