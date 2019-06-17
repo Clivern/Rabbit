@@ -6,8 +6,7 @@ services:
          - 'redis_data:/data'
       restart: always
    web:
-      image: "clivern_rabbit:0.1.2"
-      build: .
+      image: 'docker.pkg.github.com/clivern/rabbit/rabbit:0.1.2'
       command: './rabbit --config /app/configs/config.docker.yml'
       ports:
          - "8080:8080"
