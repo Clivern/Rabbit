@@ -175,7 +175,9 @@ Running rabbit with `docker-compose` is pretty straightforward.
 
 ```bash
 $ git clone https://github.com/Clivern/Rabbit.git
-$ cd Rabbit/deployments/docker-compose
+$ cd Rabbit
+$ git checkout tags/0.1.2
+$ cd deployments/docker-compose
 $ docker-compose build
 $ docker-compose up -d
 ```
