@@ -5,20 +5,24 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
-	"github.com/clivern/hippo"
-	"github.com/clivern/rabbit/internal/app/cmd"
-	"github.com/clivern/rabbit/internal/app/controller"
-	"github.com/clivern/rabbit/internal/app/middleware"
-	"github.com/gin-gonic/gin"
-	"github.com/spf13/viper"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/clivern/hippo"
+	"github.com/clivern/rabbit/internal/app/cmd"
+	"github.com/clivern/rabbit/internal/app/controller"
+	"github.com/clivern/rabbit/internal/app/middleware"
+	"github.com/drone/envsubst"
+	"github.com/gin-gonic/gin"
+	"github.com/spf13/viper"
 )
 
 func main() {
@@ -30,17 +34,15 @@ func main() {
 	flag.StringVar(&exec, "exec", "", "exec")
 	flag.Parse()
 
-	viper.SetConfigFile(configFile)
+	configUnparsed, err := ioutil.ReadFile(configFile)
+	panicConfigError(err, configFile)
 
-	err := viper.ReadInConfig()
+	configParsed, err := envsubst.EvalEnv(string(configUnparsed))
+	panicConfigError(err, configFile)
 
-	if err != nil {
-		panic(fmt.Sprintf(
-			"Error while loading config file [%s]: %s",
-			configFile,
-			err.Error(),
-		))
-	}
+	viper.SetConfigType("yaml")
+	err = viper.ReadConfig(bytes.NewBuffer([]byte(configParsed)))
+	panicConfigError(err, configFile)
 
 	if exec != "" {
 		switch exec {
@@ -140,5 +142,15 @@ func main() {
 		r.Run(
 			fmt.Sprintf(":%s", strconv.Itoa(viper.GetInt("app.port"))),
 		)
+	}
+}
+
+func panicConfigError(err error, configFile string) {
+	if err != nil {
+		panic(fmt.Sprintf(
+			"Error while loading config file [%s]: %s",
+			configFile,
+			err.Error(),
+		))
 	}
 }
