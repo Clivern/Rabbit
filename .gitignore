@@ -12,3 +12,4 @@
 *.out
 
 config.prod.yml
+rabbit

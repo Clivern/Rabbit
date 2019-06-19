@@ -1,0 +1,22 @@
+version: '3'
+services:
+   redis:
+      image: 'redis:5.0.5-alpine'
+      volumes:
+         - 'redis_data:/data'
+      restart: unless-stopped
+
+   rabbit:
+      image: clivern/rabbit:latest
+      ports:
+         - "8080:8080"
+      depends_on:
+         - redis
+      volumes:
+         - ~/.ssh:/root/.ssh
+         - 'rabbit_releases:/app/var/releases'
+      restart: unless-stopped
+
+volumes:
+    redis_data: null
+    rabbit_releases:
