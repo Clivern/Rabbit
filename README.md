@@ -112,9 +112,9 @@ integrations:
         # whether to use ssh or https to clone
         clone_with: https
         # HTTPS URL format, Full name will be something like Clivern/Rabbit
-        https_format: https://github.com/{$full_name}.git
+        https_format: https://github.com/[.RepoFullName].git
         # SSH URL format, Full name will be something like Clivern/Rabbit
-        ssh_format: git@github.com:{$full_name}.git
+        ssh_format: git@github.com:[.RepoFullName].git
     # Bitbucket Configs
     bitbucket:
         # Webhook URI (Full URL will be app.domain + webhook_uri)
@@ -122,9 +122,9 @@ integrations:
         # whether to use ssh or https to clone
         clone_with: https
         # HTTPS URL format, Full name will be something like Clivern/Rabbit
-        https_format: https://bitbucket.org/{$full_name}.git
+        https_format: https://bitbucket.org/[.RepoFullName].git
         # SSH URL format, Full name will be something like Clivern/Rabbit
-        ssh_format: git@bitbucket.org:{$full_name}.git
+        ssh_format: git@bitbucket.org:[.RepoFullName].git
 ```
 
 And then run the application.

@@ -62,14 +62,14 @@ func BitbucketListener(c *gin.Context, messages chan<- string) {
 	// Push event received
 	href := strings.ReplaceAll(
 		viper.GetString("integrations.bitbucket.https_format"),
-		"{$full_name}",
+		"[.RepoFullName]",
 		pushEvent.Repository.FullName,
 	)
 
 	if viper.GetString("integrations.bitbucket.clone_with") == "ssh" {
 		href = strings.ReplaceAll(
 			viper.GetString("integrations.bitbucket.ssh_format"),
-			"{$full_name}",
+			"[.RepoFullName]",
 			pushEvent.Repository.FullName,
 		)
 	}

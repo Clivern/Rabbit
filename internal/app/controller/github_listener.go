@@ -94,14 +94,14 @@ func GithubListener(c *gin.Context, messages chan<- string) {
 
 		href := strings.ReplaceAll(
 			viper.GetString("integrations.github.https_format"),
-			"{$full_name}",
+			"[.RepoFullName]",
 			createEvent.Repository.FullName,
 		)
 
 		if viper.GetString("integrations.github.clone_with") == "ssh" {
 			href = strings.ReplaceAll(
 				viper.GetString("integrations.github.ssh_format"),
-				"{$full_name}",
+				"[.RepoFullName]",
 				createEvent.Repository.FullName,
 			)
 		}
