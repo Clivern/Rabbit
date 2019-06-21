@@ -13,8 +13,8 @@ services:
       depends_on:
          - redis
       volumes:
-         - ~/.ssh:/root/.ssh
-         - 'rabbit_releases:/app/var/releases'
+         - ~/.ssh:/root/.ssh/
+         - 'rabbit_releases:/app/var/'
       restart: unless-stopped
 
 volumes:

@@ -32,7 +32,7 @@ EXPOSE 8080
 
 CMD ["./rabbit", "--config", "/app/configs/config.yml"]
 
-VOLUME /app/var/releases
+VOLUME /app/var/
 
 HEALTHCHECK --interval=5s --timeout=2s --retries=5 --start-period=2s \
   CMD ./rabbit --config /app/configs/config.yml --exec health
