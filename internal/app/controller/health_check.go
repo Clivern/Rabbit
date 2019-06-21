@@ -5,10 +5,11 @@
 package controller
 
 import (
+	"net/http"
+
 	"github.com/clivern/hippo"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
-	"net/http"
 )
 
 // HealthCheck controller

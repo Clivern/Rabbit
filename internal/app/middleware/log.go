@@ -7,12 +7,13 @@ package middleware
 import (
 	"bytes"
 	"fmt"
+	"io/ioutil"
+	"time"
+
 	"github.com/clivern/hippo"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
-	"io/ioutil"
-	"time"
 )
 
 // Logger middleware

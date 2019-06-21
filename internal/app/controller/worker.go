@@ -6,12 +6,13 @@ package controller
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/clivern/hippo"
 	"github.com/clivern/rabbit/internal/app/model"
 	"github.com/clivern/rabbit/internal/app/module"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
-	"time"
 )
 
 // Worker runs async jobs

@@ -8,6 +8,14 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"net/http"
+	"os"
+	"path/filepath"
+	"strconv"
+	"strings"
+
 	"github.com/clivern/hippo"
 	"github.com/clivern/rabbit/internal/app/cmd"
 	"github.com/clivern/rabbit/internal/app/controller"
@@ -16,13 +24,6 @@ import (
 	"github.com/drone/envsubst"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
-	"io"
-	"io/ioutil"
-	"net/http"
-	"os"
-	"path/filepath"
-	"strconv"
-	"strings"
 )
 
 func main() {
