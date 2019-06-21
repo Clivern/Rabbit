@@ -1,3 +1,7 @@
+// Copyright 2019 Clivern. All rights reserved.
+// Use of this source code is governed by the MIT
+// license that can be found in the LICENSE file.
+
 package pkg
 
 import (
@@ -7,10 +11,12 @@ import (
 )
 
 const (
-	bitbucketDateFormat          string = "2006-01-02T15:04:05+0000"
-	BitbucketServerChangeTypeTag        = "TAG"
+	bitbucketDateFormat string = "2006-01-02T15:04:05+0000"
+	// BitbucketServerChangeTypeTag event change type
+	BitbucketServerChangeTypeTag = "TAG"
 )
 
+// BitbucketServerPushEvent event
 type BitbucketServerPushEvent struct {
 	EventKey   string              `json:"eventKey"`
 	Date       bitbucketServerDate `json:"date"`
@@ -59,6 +65,7 @@ type bitbucketServerDate struct {
 	time.Time
 }
 
+// LoadFromJSON update object from json
 func (bt *bitbucketServerDate) UnmarshalJSON(b []byte) (err error) {
 	s := strings.Trim(string(b), "\"")
 	if s == "null" {

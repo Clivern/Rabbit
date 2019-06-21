@@ -1,3 +1,7 @@
+// Copyright 2019 Clivern. All rights reserved.
+// Use of this source code is governed by the MIT
+// license that can be found in the LICENSE file.
+
 package controller
 
 import (
@@ -12,6 +16,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// passToWorker send release request to workers
 func passToWorker(c *gin.Context, messages chan<- string, logger *zap.Logger, releaseRequest model.ReleaseRequest) {
 	validate := pkg.Validator{}
 
