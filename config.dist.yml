@@ -86,3 +86,12 @@ integrations:
         https_format: ${RABBIT_INTEGRATION_BITBUCKET_HTTPS_FORMAT:-https://bitbucket.org/[.RepoFullName].git}
         # SSH URL format, Full name will be something like Clivern/Rabbit
         ssh_format: ${RABBIT_INTEGRATION_BITBUCKET_SSH_FORMAT:-git@bitbucket.org:[.RepoFullName].git}
+    bitbucket_server:
+        # Webhook URI (Full URL will be app.domain + webhook_uri)
+        webhook_uri: ${RABBIT_INTEGRATION_BITBUCKET_SERVER_WEBHOOK_URI:-/webhook/bitbucket-server}
+        # whether to use ssh or https to clone
+        clone_with: ${RABBIT_INTEGRATION_BITBUCKET_SERVER_CLONE_WITH:-https}
+        # HTTPS URL format, Full name will be something like Clivern/Rabbit
+        https_format: https://${RABBIT_INTEGRATION_BITBUCKET_SERVER_USER:-git}@${RABBIT_INTEGRATION_BITBUCKET_SERVER_HOSTNAME}/scm/{$project.key}/{$repository.slug}.git
+        # SSH URL format, Full name will be something like Clivern/Rabbit
+        ssh_format: ssh://${RABBIT_INTEGRATION_BITBUCKET_SERVER_USER:-git}@${RABBIT_INTEGRATION_BITBUCKET_SERVER_HOSTNAME}:${RABBIT_INTEGRATION_BITBUCKET_SERVER_SSH_PORT:-2200}/{$project.key}/{$repository.slug}.git

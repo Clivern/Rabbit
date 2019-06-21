@@ -7,7 +7,6 @@ package controller
 import (
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/clivern/hippo"
 	"github.com/clivern/rabbit/internal/app/model"
@@ -17,70 +16,8 @@ import (
 	"go.uber.org/zap"
 )
 
-// BitbucketListener controller
-func BitbucketListener(c *gin.Context, messages chan<- string) {
-
-	rawBody, _ := c.GetRawData()
-	body := string(rawBody)
-
-	logger, _ := hippo.NewLogger(
-		viper.GetString("log.level"),
-		viper.GetString("log.format"),
-		[]string{viper.GetString("log.output")},
-	)
-
-	defer logger.Sync()
-
-	pushEvent := pkg.PushEvent{}
-	ok, err := pushEvent.LoadFromJSON(rawBody)
-
-	if err != nil {
-		logger.Info(fmt.Sprintf(
-			`Invalid event received %s`,
-			body,
-		), zap.String("CorrelationID", c.Request.Header.Get("X-Correlation-ID")))
-
-		c.JSON(http.StatusForbidden, gin.H{
-			"status": "Oops!",
-		})
-		return
-	}
-
-	if !ok {
-		c.JSON(http.StatusForbidden, gin.H{
-			"status": "Oops!",
-		})
-		return
-	}
-
-	if len(pushEvent.Push.Changes) <= 0 || !pushEvent.Push.Changes[0].Created || pushEvent.Push.Changes[0].New.Type != "tag" {
-		c.JSON(http.StatusOK, gin.H{
-			"status": "Nice, Skip!",
-		})
-		return
-	}
-
-	// Push event received
-	href := strings.ReplaceAll(
-		viper.GetString("integrations.bitbucket.https_format"),
-		"[.RepoFullName]",
-		pushEvent.Repository.FullName,
-	)
-
-	if viper.GetString("integrations.bitbucket.clone_with") == "ssh" {
-		href = strings.ReplaceAll(
-			viper.GetString("integrations.bitbucket.ssh_format"),
-			"[.RepoFullName]",
-			pushEvent.Repository.FullName,
-		)
-	}
-
-	releaseRequest := model.ReleaseRequest{
-		Name:    pushEvent.Repository.Name,
-		URL:     href,
-		Version: pushEvent.Push.Changes[0].New.Name,
-	}
-
+// passToWorker send release request to workers
+func passToWorker(c *gin.Context, messages chan<- string, logger *zap.Logger, releaseRequest model.ReleaseRequest) {
 	validate := pkg.Validator{}
 
 	if validate.IsEmpty(releaseRequest.Name) {
@@ -130,7 +67,7 @@ func BitbucketListener(c *gin.Context, messages chan<- string) {
 		)
 
 		// connect to redis server
-		ok, err = driver.Connect()
+		ok, err := driver.Connect()
 
 		if err != nil {
 			logger.Error(fmt.Sprintf(

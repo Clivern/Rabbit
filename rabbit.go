@@ -151,11 +151,17 @@ func main() {
 
 	r.GET("/api/project/:id", controller.GetProjectByID)
 	r.GET("/api/project", controller.GetProjects)
+
 	r.POST(strings.TrimSuffix(viper.GetString("integrations.github.webhook_uri"), "/"), func(c *gin.Context) {
 		controller.GithubListener(c, messages)
 	})
+
 	r.POST(strings.TrimSuffix(viper.GetString("integrations.bitbucket.webhook_uri"), "/"), func(c *gin.Context) {
 		controller.BitbucketListener(c, messages)
+	})
+
+	r.POST(strings.TrimSuffix(viper.GetString("integrations.bitbucket_server.webhook_uri"), "/"), func(c *gin.Context) {
+		controller.BitbucketServerListener(c, messages)
 	})
 
 	for i := 0; i < viper.GetInt("broker.native.workers"); i++ {
