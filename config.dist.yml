@@ -45,7 +45,7 @@ log:
 releases:
     # Releases absolute path
     path: ${RABBIT_RELEASES_PATH:-/app/var/releases}
-    name: ${RABBIT_RELEASES_NAME:-[.Tag]}
+    name: ${RABBIT_RELEASES_NAME:-"[.Tag]"}
 
 # Build configs
 build:

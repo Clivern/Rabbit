@@ -6,7 +6,7 @@ services:
             - 'rabbit_redis:/data'
         restart: unless-stopped
     rabbit:
-        image: 'docker.pkg.github.com/clivern/rabbit/rabbit:1.0.0'
+        image: 'rabbit:1.0.0'
         build: .
         ports:
             - "8080:8080"
@@ -18,6 +18,8 @@ services:
             - 'rabbit_var:/app/var'
         environment:
             RABBIT_APP_MODE: prod
+            RABBIT_LOG_LEVEL: info
+            RABBIT_LOG_OUTPUT: /app/var/logs/rabbit.log
         restart: unless-stopped
 
 volumes:

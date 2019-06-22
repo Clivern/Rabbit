@@ -36,7 +36,7 @@ broker:
 log:
     # Log level, it can be debug, info, warn, error, panic, fatal
     level:  ${RABBIT_LOG_LEVEL:-warn}
-    # output can be stdout or abs path to log file /var/logs/beagle.log
+    # output can be stdout or abs path to log file /app/var/logs/rabbit.log
     output:  ${RABBIT_LOG_OUTPUT:-stdout}
     # Format can be json
     format:  ${RABBIT_LOG_FORMAT:-json}
@@ -45,7 +45,7 @@ log:
 releases:
     # Releases absolute path
     path: ${RABBIT_RELEASES_PATH:-/app/var/releases}
-    name: ${RABBIT_RELEASES_NAME:-[.Tag]}
+    name: ${RABBIT_RELEASES_NAME:-"[.Tag]"}
 
 # Build configs
 build:

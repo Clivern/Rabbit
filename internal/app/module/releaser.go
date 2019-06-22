@@ -48,6 +48,7 @@ func (r *Releaser) Release() (bool, error) {
 	}
 
 	releaseName := viper.GetString("releases.name")
+
 	releaseName = strings.ReplaceAll(
 		releaseName,
 		"[.Tag]",
