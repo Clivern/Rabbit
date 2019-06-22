@@ -8,10 +8,8 @@ github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973/go.mod h1:Dwedo/Wpr24
 github.com/beorn7/perks v1.0.0/go.mod h1:KWe93zE9D1o94FZ5RNwFwVgaQK1VOXiVxmqh+CedLV8=
 github.com/cespare/xxhash v1.1.0/go.mod h1:XrSqR1VqqWfGrhpAt58auRo0WTKS1nRRg3ghfAqPWnc=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
-github.com/clivern/hippo v1.5.1 h1:O7AOJ3smbff9BqGA1Hypanu2aUEw7RHOEHgu1i6pMYM=
-github.com/clivern/hippo v1.5.1/go.mod h1:aGxjMpUlaGixQodYdrmKQMjpoItItFUjT/VILUETQG4=
-github.com/clivern/rabbit v0.0.0-20190619212833-cf34bb09610e h1:P3h9/hJYERiqY9Ly8sgt4cIBAmQ37yvkXWojEQBsvJ4=
-github.com/clivern/rabbit v0.0.0-20190619212833-cf34bb09610e/go.mod h1:ndBCWwd7/iTMzRd/PxPeM2D7njAP2yjj2vwRzk2muGo=
+github.com/clivern/hippo v1.5.2 h1:TlRdD9vtiRrdOFpSvMfJMVtFD9U7QkQiO5si5LgPqTY=
+github.com/clivern/hippo v1.5.2/go.mod h1:aGxjMpUlaGixQodYdrmKQMjpoItItFUjT/VILUETQG4=
 github.com/coreos/bbolt v1.3.2/go.mod h1:iRUV2dpdMOn7Bo10OQBFzIJO9kkE559Wcmn+qkEiiKk=
 github.com/coreos/etcd v3.3.10+incompatible/go.mod h1:uF7uidLiAD3TWHmW31ZFd/JWoc32PjwdhPthX9715RE=
 github.com/coreos/go-semver v0.2.0/go.mod h1:nnelYz7RCh+5ahJtPPxZlU+153eP4D4r3EedlOD2RNk=

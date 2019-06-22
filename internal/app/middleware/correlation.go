@@ -5,9 +5,10 @@
 package middleware
 
 import (
+	"strings"
+
 	"github.com/clivern/hippo"
 	"github.com/gin-gonic/gin"
-	"strings"
 )
 
 // Correlation middleware

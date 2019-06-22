@@ -6,10 +6,11 @@ package controller
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/spf13/viper"
 	"net/http"
 	"strings"
+
+	"github.com/gin-gonic/gin"
+	"github.com/spf13/viper"
 )
 
 // Index controller

@@ -35,14 +35,35 @@ func main() {
 	flag.Parse()
 
 	configUnparsed, err := ioutil.ReadFile(configFile)
-	panicConfigError(err, configFile)
+
+	if err != nil {
+		panic(fmt.Sprintf(
+			"Error while reading config file [%s]: %s",
+			configFile,
+			err.Error(),
+		))
+	}
 
 	configParsed, err := envsubst.EvalEnv(string(configUnparsed))
-	panicConfigError(err, configFile)
+
+	if err != nil {
+		panic(fmt.Sprintf(
+			"Error while parsing config file [%s]: %s",
+			configFile,
+			err.Error(),
+		))
+	}
 
 	viper.SetConfigType("yaml")
 	err = viper.ReadConfig(bytes.NewBuffer([]byte(configParsed)))
-	panicConfigError(err, configFile)
+
+	if err != nil {
+		panic(fmt.Sprintf(
+			"Error while loading configs [%s]: %s",
+			configFile,
+			err.Error(),
+		))
+	}
 
 	if exec != "" {
 		switch exec {
@@ -55,10 +76,13 @@ func main() {
 	if viper.GetString("log.output") != "stdout" {
 		dir, _ := filepath.Split(viper.GetString("log.output"))
 		if !hippo.DirExists(dir) {
-			panic(fmt.Sprintf(
-				"Logs output directory [%s] not exist",
-				dir,
-			))
+			if _, err := hippo.EnsureDir(dir, 777); err != nil {
+				panic(fmt.Sprintf(
+					"Directory [%s] creation failed with error: %s",
+					dir,
+					err.Error(),
+				))
+			}
 		}
 
 		if !hippo.FileExists(viper.GetString("log.output")) {
@@ -75,17 +99,23 @@ func main() {
 	}
 
 	if !hippo.DirExists(strings.TrimSuffix(viper.GetString("build.path"), "/")) {
-		panic(fmt.Sprintf(
-			"Build directory [%s] not exist",
-			strings.TrimSuffix(viper.GetString("build.path"), "/"),
-		))
+		if _, err := hippo.EnsureDir(strings.TrimSuffix(viper.GetString("build.path"), "/"), 777); err != nil {
+			panic(fmt.Sprintf(
+				"Build directory [%s] creation failed with error: %s",
+				strings.TrimSuffix(viper.GetString("build.path"), "/"),
+				err.Error(),
+			))
+		}
 	}
 
 	if !hippo.DirExists(strings.TrimSuffix(viper.GetString("releases.path"), "/")) {
-		panic(fmt.Sprintf(
-			"Releases directory [%s] not exist",
-			strings.TrimSuffix(viper.GetString("releases.path"), "/"),
-		))
+		if _, err := hippo.EnsureDir(strings.TrimSuffix(viper.GetString("releases.path"), "/"), 777); err != nil {
+			panic(fmt.Sprintf(
+				"Releases directory [%s] creation failed with error: %s",
+				strings.TrimSuffix(viper.GetString("releases.path"), "/"),
+				err.Error(),
+			))
+		}
 	}
 
 	if viper.GetString("app.mode") == "prod" {
@@ -148,15 +178,5 @@ func main() {
 		r.Run(
 			fmt.Sprintf(":%s", strconv.Itoa(viper.GetInt("app.port"))),
 		)
-	}
-}
-
-func panicConfigError(err error, configFile string) {
-	if err != nil {
-		panic(fmt.Sprintf(
-			"Error while loading config file [%s]: %s",
-			configFile,
-			err.Error(),
-		))
 	}
 }

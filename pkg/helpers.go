@@ -47,3 +47,15 @@ func GetChecksum(file string) (string, error) {
 
 	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }
+
+// EnsureDirectory ensures that directory exists
+func EnsureDirectory(dirName string, mode int) error {
+
+	err := os.MkdirAll(dirName, os.FileMode(mode))
+
+	if err == nil || os.IsExist(err) {
+		return nil
+	}
+
+	return err
+}

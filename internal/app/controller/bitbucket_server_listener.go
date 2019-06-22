@@ -22,6 +22,12 @@ func BitbucketServerListener(c *gin.Context, messages chan<- string) {
 	rawBody, _ := c.GetRawData()
 	body := string(rawBody)
 
+	parser := &pkg.BitbucketServerWebhookParser{
+		UserAgent:    c.GetHeader("User-Agent"),
+		HubSignature: c.GetHeader("X-Hub-Signature"),
+		Body:         body,
+	}
+
 	logger, _ := hippo.NewLogger(
 		viper.GetString("log.level"),
 		viper.GetString("log.format"),
@@ -29,6 +35,15 @@ func BitbucketServerListener(c *gin.Context, messages chan<- string) {
 	)
 
 	defer logger.Sync()
+
+	ok := parser.VerifySignature(viper.GetString("integrations.bitbucket_server.webhook_secret"))
+
+	if !ok && viper.GetString("integrations.bitbucket_server.webhook_secret") != "" {
+		c.JSON(http.StatusForbidden, gin.H{
+			"status": "Oops!",
+		})
+		return
+	}
 
 	pushEvent := pkg.BitbucketServerPushEvent{}
 	ok, err := pushEvent.LoadFromJSON(rawBody)
@@ -56,52 +71,43 @@ func BitbucketServerListener(c *gin.Context, messages chan<- string) {
 		return
 	}
 
-	if len(pushEvent.Changes) <= 0 {
+	if len(pushEvent.Changes) <= 0 || pushEvent.GetTag() == "" {
 		c.JSON(http.StatusOK, gin.H{
 			"status": "Nice, Skip!",
 		})
 		return
 	}
 
-	var cloneFormat string
-	var href string
-
-	// Push event received
-	if viper.GetString("integrations.bitbucket_server.clone_with") == "ssh" {
-		cloneFormat = viper.GetString("integrations.bitbucket_server.ssh_format")
-	} else {
-		cloneFormat = viper.GetString("integrations.bitbucket_server.https_format")
-	}
-
-	href = strings.ReplaceAll(
-		cloneFormat,
-		"{$project.key}",
+	repoFullName := fmt.Sprintf(
+		"%s/%s",
 		strings.ToLower(pushEvent.Repository.Project.Key),
-	)
-
-	href = strings.ReplaceAll(
-		href,
-		"{$repository.slug}",
 		strings.ToLower(pushEvent.Repository.Slug),
 	)
 
-	logger.Info(fmt.Sprintf("Clone URL is: %s", href))
+	href := strings.ReplaceAll(
+		viper.GetString("integrations.bitbucket_server.https_format"),
+		"[.RepoFullName]",
+		repoFullName,
+	)
 
-	for _, changes := range pushEvent.Changes {
-		ref := changes.Ref
-		if ref.Type == pkg.BitbucketServerChangeTypeTag {
-			releaseRequest := model.ReleaseRequest{
-				Name:    pushEvent.Repository.Name,
-				URL:     href,
-				Version: ref.DisplayID,
-			}
-
-			passToWorker(
-				c,
-				messages,
-				logger,
-				releaseRequest,
-			)
-		}
+	if viper.GetString("integrations.bitbucket_server.clone_with") == "ssh" {
+		href = strings.ReplaceAll(
+			viper.GetString("integrations.bitbucket_server.ssh_format"),
+			"[.RepoFullName]",
+			repoFullName,
+		)
 	}
+
+	releaseRequest := model.ReleaseRequest{
+		Name:    pushEvent.Repository.Name,
+		URL:     href,
+		Version: pushEvent.GetTag(),
+	}
+
+	passToWorker(
+		c,
+		messages,
+		logger,
+		releaseRequest,
+	)
 }

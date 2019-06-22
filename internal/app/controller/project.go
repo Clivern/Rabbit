@@ -6,6 +6,11 @@ package controller
 
 import (
 	"fmt"
+	"net/http"
+	"sort"
+	"strings"
+	"time"
+
 	"github.com/clivern/hippo"
 	"github.com/clivern/rabbit/internal/app/model"
 	"github.com/clivern/rabbit/internal/app/module"
@@ -13,10 +18,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
-	"net/http"
-	"sort"
-	"strings"
-	"time"
 )
 
 // CreateProject controller

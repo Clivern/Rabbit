@@ -1,0 +1,27 @@
+version: '3'
+services:
+    redis:
+        image: 'redis:5.0.5-alpine'
+        volumes:
+            - 'rabbit_redis:/data'
+        restart: unless-stopped
+    rabbit:
+        image: 'docker.pkg.github.com/clivern/rabbit/rabbit:1.0.0'
+        ports:
+            - "8080:8080"
+        depends_on:
+            - redis
+        volumes:
+            - '~/.ssh:/root/.ssh'
+            - 'rabbit_configs:/app/configs'
+            - 'rabbit_var:/app/var'
+        environment:
+            RABBIT_APP_MODE: prod
+            RABBIT_LOG_LEVEL: info
+            RABBIT_LOG_OUTPUT: /app/var/logs/rabbit.log
+        restart: unless-stopped
+
+volumes:
+    rabbit_redis: null
+    rabbit_configs: null
+    rabbit_var: null
