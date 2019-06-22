@@ -165,7 +165,7 @@ Make sure you have `git`, `golang 1.12` and `goreleaser` installed, and make gor
 
 ```bash
 # To download the latest goreleaser binary for linux (https://github.com/goreleaser/goreleaser/releases)
-$ curl -sL https://github.com/goreleaser/goreleaser/releases/download/v0.109.0/goreleaser_Linux_x86_64.tar.gz | tar xz
+$ curl -sL https://github.com/goreleaser/goreleaser/releases/download/v0.110.0/goreleaser_Linux_x86_64.tar.gz | tar xz
 ```
 
 Also make sure you are able to clone all your repositories in a non-interactive way. Just configure ssh-key and add the remote VCS to your known hosts.
@@ -188,8 +188,7 @@ Running rabbit with `docker-compose` is pretty straightforward.
 
 ```bash
 $ git clone https://github.com/Clivern/Rabbit.git
-$ cd Rabbit
-$ cd deployments/docker
+$ cd Rabbit/deployments/docker
 $ docker-compose build
 $ docker-compose up -d
 ```
