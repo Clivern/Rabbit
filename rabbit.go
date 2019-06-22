@@ -20,7 +20,6 @@ import (
 	"github.com/clivern/rabbit/internal/app/cmd"
 	"github.com/clivern/rabbit/internal/app/controller"
 	"github.com/clivern/rabbit/internal/app/middleware"
-	"github.com/clivern/rabbit/pkg"
 	"github.com/drone/envsubst"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
@@ -77,7 +76,7 @@ func main() {
 	if viper.GetString("log.output") != "stdout" {
 		dir, _ := filepath.Split(viper.GetString("log.output"))
 		if !hippo.DirExists(dir) {
-			if err := pkg.EnsureDirectory(dir, 777); err != nil {
+			if _, err := hippo.EnsureDir(dir, 777); err != nil {
 				panic(fmt.Sprintf(
 					"Directory [%s] creation failed with error: %s",
 					dir,
@@ -100,7 +99,7 @@ func main() {
 	}
 
 	if !hippo.DirExists(strings.TrimSuffix(viper.GetString("build.path"), "/")) {
-		if err := pkg.EnsureDirectory(strings.TrimSuffix(viper.GetString("build.path"), "/"), 777); err != nil {
+		if _, err := hippo.EnsureDir(strings.TrimSuffix(viper.GetString("build.path"), "/"), 777); err != nil {
 			panic(fmt.Sprintf(
 				"Build directory [%s] creation failed with error: %s",
 				strings.TrimSuffix(viper.GetString("build.path"), "/"),
@@ -110,7 +109,7 @@ func main() {
 	}
 
 	if !hippo.DirExists(strings.TrimSuffix(viper.GetString("releases.path"), "/")) {
-		if err := pkg.EnsureDirectory(strings.TrimSuffix(viper.GetString("releases.path"), "/"), 777); err != nil {
+		if _, err := hippo.EnsureDir(strings.TrimSuffix(viper.GetString("releases.path"), "/"), 777); err != nil {
 			panic(fmt.Sprintf(
 				"Releases directory [%s] creation failed with error: %s",
 				strings.TrimSuffix(viper.GetString("releases.path"), "/"),

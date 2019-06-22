@@ -36,7 +36,7 @@ broker:
 log:
     # Log level, it can be debug, info, warn, error, panic, fatal
     level:  ${RABBIT_LOG_LEVEL:-warn}
-    # output can be stdout or abs path to log file /var/logs/beagle.log
+    # output can be stdout or abs path to log file /var/logs/rabbit.log
     output:  ${RABBIT_LOG_OUTPUT:-stdout}
     # Format can be json
     format:  ${RABBIT_LOG_FORMAT:-json}
@@ -92,6 +92,6 @@ integrations:
         # whether to use ssh or https to clone
         clone_with: ${RABBIT_INTEGRATION_BITBUCKET_SERVER_CLONE_WITH:-https}
         # HTTPS URL format, Full name will be something like Clivern/Rabbit
-        https_format: https://${RABBIT_INTEGRATION_BITBUCKET_SERVER_USER:-git}@${RABBIT_INTEGRATION_BITBUCKET_SERVER_HOSTNAME}/scm/{$project.key}/{$repository.slug}.git
+        https_format: ${RABBIT_INTEGRATION_BITBUCKET_SERVER_HTTPS_FORMAT:-https://git.bitbucket.com/scm/[.RepoFullName].git}
         # SSH URL format, Full name will be something like Clivern/Rabbit
-        ssh_format: ssh://${RABBIT_INTEGRATION_BITBUCKET_SERVER_USER:-git}@${RABBIT_INTEGRATION_BITBUCKET_SERVER_HOSTNAME}:${RABBIT_INTEGRATION_BITBUCKET_SERVER_SSH_PORT:-2200}/{$project.key}/{$repository.slug}.git
+        ssh_format: ${RABBIT_INTEGRATION_BITBUCKET_SERVER_SSH_FORMAT:-ssh://git@git.bitbucket.com/[.RepoFullName].git}
