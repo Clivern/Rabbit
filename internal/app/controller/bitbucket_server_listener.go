@@ -38,7 +38,7 @@ func BitbucketServerListener(c *gin.Context, messages chan<- string) {
 
 	ok := parser.VerifySignature(viper.GetString("integrations.bitbucket_server.webhook_secret"))
 
-	if !ok {
+	if !ok && viper.GetString("integrations.bitbucket_server.webhook_secret") != "" {
 		c.JSON(http.StatusForbidden, gin.H{
 			"status": "Oops!",
 		})

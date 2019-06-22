@@ -41,7 +41,7 @@ func GithubListener(c *gin.Context, messages chan<- string) {
 	ok := parser.VerifySignature(viper.GetString("integrations.github.webhook_secret"))
 	eventName := parser.GetGitHubEvent()
 
-	if !ok {
+	if !ok && viper.GetString("integrations.github.webhook_secret") != "" {
 		c.JSON(http.StatusForbidden, gin.H{
 			"status": "Oops!",
 		})
