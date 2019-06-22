@@ -130,6 +130,8 @@ integrations:
     bitbucket_server:
         # Webhook URI (Full URL will be app.domain + webhook_uri)
         webhook_uri: ${RABBIT_INTEGRATION_BITBUCKET_SERVER_WEBHOOK_URI:-/webhook/bitbucket-server}
+        # Webhook Secret (From Repo settings page > Webhooks)
+        webhook_secret: ${RABBIT_INTEGRATION_BITBUCKET_SERVER_WEBHOOK_SECRET:- }
         # whether to use ssh or https to clone
         clone_with: ${RABBIT_INTEGRATION_BITBUCKET_SERVER_CLONE_WITH:-https}
         # HTTPS URL format, Full name will be something like Clivern/Rabbit

@@ -50,7 +50,7 @@ func GithubListener(c *gin.Context, messages chan<- string) {
 
 	// Ping event received
 	if eventName == "ping" {
-		var pingEvent pkg.PingEvent
+		var pingEvent pkg.GithubPingEvent
 		pingEvent.LoadFromJSON(rawBody)
 
 		logger.Info(fmt.Sprintf(
@@ -71,7 +71,7 @@ func GithubListener(c *gin.Context, messages chan<- string) {
 		return
 	}
 
-	var createEvent pkg.CreateEvent
+	var createEvent pkg.GithubCreateEvent
 	createEvent.LoadFromJSON(rawBody)
 
 	logger.Info(fmt.Sprintf(

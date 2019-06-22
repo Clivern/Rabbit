@@ -31,7 +31,7 @@ func BitbucketListener(c *gin.Context, messages chan<- string) {
 
 	defer logger.Sync()
 
-	pushEvent := pkg.PushEvent{}
+	pushEvent := pkg.BitbucketPushEvent{}
 	ok, err := pushEvent.LoadFromJSON(rawBody)
 
 	if err != nil {

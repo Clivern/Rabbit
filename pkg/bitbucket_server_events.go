@@ -7,36 +7,69 @@ package pkg
 import (
 	"encoding/json"
 	"strings"
-	"time"
-)
-
-const (
-	bitbucketDateFormat string = "2006-01-02T15:04:05+0000"
-	// BitbucketServerChangeTypeTag event change type
-	BitbucketServerChangeTypeTag = "TAG"
 )
 
 // BitbucketServerPushEvent event
 type BitbucketServerPushEvent struct {
-	EventKey   string              `json:"eventKey"`
-	Date       bitbucketServerDate `json:"date"`
-	Actor      bitbucketUser       `json:"actor"`
-	Repository struct {
-		Slug         string `json:"slug"`
-		ID           int    `json:"id"`
+	EventKey string `json:"eventKey"`
+	Date     string `json:"date"`
+	Actor    struct {
 		Name         string `json:"name"`
-		SCMID        string `json:"scmId"`
-		State        string `json:"state"`
-		StateMessage string `json:"statusMessage"`
-		Forkable     bool   `json:"forkable"`
-		Project      struct {
-			Key   string        `json:"key"`
-			ID    int           `json:"id"`
-			Name  string        `json:"name"`
-			Type  string        `json:"type"`
-			Owner bitbucketUser `json:"owner"`
+		EmailAddress string `json:"emailAddress"`
+		ID           int    `json:"id"`
+		DisplayName  string `json:"displayName"`
+		Active       bool   `json:"active"`
+		Slug         string `json:"slug"`
+		Type         string `json:"type"`
+		Links        struct {
+			Self []struct {
+				Href string `json:"href"`
+			} `json:"self"`
+		} `json:"links"`
+	} `json:"actor"`
+	Repository struct {
+		Slug          string `json:"slug"`
+		ID            int    `json:"id"`
+		Name          string `json:"name"`
+		ScmID         string `json:"scmId"`
+		State         string `json:"state"`
+		StatusMessage string `json:"statusMessage"`
+		Forkable      bool   `json:"forkable"`
+		Project       struct {
+			Key   string `json:"key"`
+			ID    int    `json:"id"`
+			Name  string `json:"name"`
+			Type  string `json:"type"`
+			Owner struct {
+				Name         string `json:"name"`
+				EmailAddress string `json:"emailAddress"`
+				ID           int    `json:"id"`
+				DisplayName  string `json:"displayName"`
+				Active       bool   `json:"active"`
+				Slug         string `json:"slug"`
+				Type         string `json:"type"`
+				Links        struct {
+					Self []struct {
+						Href string `json:"href"`
+					} `json:"self"`
+				} `json:"links"`
+			} `json:"owner"`
+			Links struct {
+				Self []struct {
+					Href string `json:"href"`
+				} `json:"self"`
+			} `json:"links"`
 		} `json:"project"`
 		Public bool `json:"public"`
+		Links  struct {
+			Clone []struct {
+				Href string `json:"href"`
+				Name string `json:"name"`
+			} `json:"clone"`
+			Self []struct {
+				Href string `json:"href"`
+			} `json:"self"`
+		} `json:"links"`
 	} `json:"repository"`
 	Changes []struct {
 		Ref struct {
@@ -49,31 +82,6 @@ type BitbucketServerPushEvent struct {
 		ToHash   string `json:"toHash"`
 		Type     string `json:"type"`
 	} `json:"changes"`
-}
-
-type bitbucketUser struct {
-	Name         string `json:"name"`
-	EmailAddress string `json:"emailAddress"`
-	ID           int    `json:"id"`
-	DisplayName  string `json:"displayName"`
-	Active       bool   `json:"active"`
-	Slug         string `json:"slug"`
-	Type         string `json:"type"`
-}
-
-type bitbucketServerDate struct {
-	time.Time
-}
-
-// LoadFromJSON update object from json
-func (bt *bitbucketServerDate) UnmarshalJSON(b []byte) (err error) {
-	s := strings.Trim(string(b), "\"")
-	if s == "null" {
-		bt.Time = time.Now()
-		return
-	}
-	bt.Time, err = time.Parse(bitbucketDateFormat, s)
-	return
 }
 
 // LoadFromJSON update object from json
@@ -92,4 +100,15 @@ func (e *BitbucketServerPushEvent) ConvertToJSON() (string, error) {
 		return "", err
 	}
 	return string(data), nil
+}
+
+// GetTag gets the created tag
+func (e *BitbucketServerPushEvent) GetTag() string {
+	for _, changes := range e.Changes {
+		ref := changes.Ref
+		if strings.ToLower(ref.Type) == "tag" {
+			return ref.DisplayID
+		}
+	}
+	return ""
 }

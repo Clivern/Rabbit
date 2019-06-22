@@ -9,8 +9,8 @@ import (
 	"time"
 )
 
-// PingEvent when a new webhook created
-type PingEvent struct {
+// GithubPingEvent when a new webhook created
+type GithubPingEvent struct {
 	Zen    string `json:"zen"`
 	HookID int    `json:"hook_id"`
 	Hook   struct {
@@ -158,8 +158,8 @@ type PingEvent struct {
 	} `json:"sender"`
 }
 
-// CreateEvent event received any time a Branch or Tag is created.
-type CreateEvent struct {
+// GithubCreateEvent event received any time a Branch or Tag is created.
+type GithubCreateEvent struct {
 	Ref          string `json:"ref"`
 	RefType      string `json:"ref_type"`
 	MasterBranch string `json:"master_branch"`
@@ -288,7 +288,7 @@ type CreateEvent struct {
 }
 
 // LoadFromJSON update object from json
-func (e *CreateEvent) LoadFromJSON(data []byte) (bool, error) {
+func (e *GithubCreateEvent) LoadFromJSON(data []byte) (bool, error) {
 	err := json.Unmarshal(data, &e)
 	if err != nil {
 		return false, err
@@ -297,7 +297,7 @@ func (e *CreateEvent) LoadFromJSON(data []byte) (bool, error) {
 }
 
 // ConvertToJSON convert object to json
-func (e *CreateEvent) ConvertToJSON() (string, error) {
+func (e *GithubCreateEvent) ConvertToJSON() (string, error) {
 	data, err := json.Marshal(&e)
 	if err != nil {
 		return "", err
@@ -306,7 +306,7 @@ func (e *CreateEvent) ConvertToJSON() (string, error) {
 }
 
 // LoadFromJSON update object from json
-func (e *PingEvent) LoadFromJSON(data []byte) (bool, error) {
+func (e *GithubPingEvent) LoadFromJSON(data []byte) (bool, error) {
 	err := json.Unmarshal(data, &e)
 	if err != nil {
 		return false, err
@@ -315,7 +315,7 @@ func (e *PingEvent) LoadFromJSON(data []byte) (bool, error) {
 }
 
 // ConvertToJSON convert object to json
-func (e *PingEvent) ConvertToJSON() (string, error) {
+func (e *GithubPingEvent) ConvertToJSON() (string, error) {
 	data, err := json.Marshal(&e)
 	if err != nil {
 		return "", err

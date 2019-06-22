@@ -12,8 +12,8 @@ import (
 	"fmt"
 )
 
-// BitbucketServer struct
-type BitbucketServer struct {
+// BitbucketServerWebhookParser struct
+type BitbucketServerWebhookParser struct {
 	UserAgent    string
 	HubSignature string
 	Headers      map[string]string
@@ -21,7 +21,7 @@ type BitbucketServer struct {
 }
 
 // LoadFromJSON update object from json
-func (e *BitbucketServer) LoadFromJSON(data []byte) (bool, error) {
+func (e *BitbucketServerWebhookParser) LoadFromJSON(data []byte) (bool, error) {
 	err := json.Unmarshal(data, &e)
 	if err != nil {
 		return false, err
@@ -30,7 +30,7 @@ func (e *BitbucketServer) LoadFromJSON(data []byte) (bool, error) {
 }
 
 // ConvertToJSON convert object to json
-func (e *BitbucketServer) ConvertToJSON() (string, error) {
+func (e *BitbucketServerWebhookParser) ConvertToJSON() (string, error) {
 	data, err := json.Marshal(&e)
 	if err != nil {
 		return "", err
@@ -39,47 +39,47 @@ func (e *BitbucketServer) ConvertToJSON() (string, error) {
 }
 
 // SetUserAgent sets user agent
-func (e *BitbucketServer) SetUserAgent(userAgent string) {
+func (e *BitbucketServerWebhookParser) SetUserAgent(userAgent string) {
 	e.UserAgent = userAgent
 }
 
 // GetUserAgent gets user agent
-func (e *BitbucketServer) GetUserAgent() string {
+func (e *BitbucketServerWebhookParser) GetUserAgent() string {
 	return e.UserAgent
 }
 
 // SetHubSignature sets hub signature
-func (e *BitbucketServer) SetHubSignature(hubSignature string) {
+func (e *BitbucketServerWebhookParser) SetHubSignature(hubSignature string) {
 	e.HubSignature = hubSignature
 }
 
 // GetHubSignature gets hub signature
-func (e *BitbucketServer) GetHubSignature() string {
+func (e *BitbucketServerWebhookParser) GetHubSignature() string {
 	return e.HubSignature
 }
 
 // SetBody sets body
-func (e *BitbucketServer) SetBody(body string) {
+func (e *BitbucketServerWebhookParser) SetBody(body string) {
 	e.Body = body
 }
 
 // GetBody gets body
-func (e *BitbucketServer) GetBody() string {
+func (e *BitbucketServerWebhookParser) GetBody() string {
 	return e.Body
 }
 
 // SetHeader sets header
-func (e *BitbucketServer) SetHeader(key string, value string) {
+func (e *BitbucketServerWebhookParser) SetHeader(key string, value string) {
 	e.Headers[key] = value
 }
 
 // GetHeader gets header
-func (e *BitbucketServer) GetHeader(key string) string {
+func (e *BitbucketServerWebhookParser) GetHeader(key string) string {
 	return e.Headers[key]
 }
 
 // VerifySignature verify signature
-func (e *BitbucketServer) VerifySignature(secret string) bool {
+func (e *BitbucketServerWebhookParser) VerifySignature(secret string) bool {
 	hash := hmac.New(sha256.New, []byte(secret))
 	hash.Write([]byte(e.Body))
 

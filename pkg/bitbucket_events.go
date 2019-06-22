@@ -9,8 +9,8 @@ import (
 	"time"
 )
 
-// PushEvent when a new commit pushed or branch, tag got created
-type PushEvent struct {
+// BitbucketPushEvent when a new commit pushed or branch, tag got created
+type BitbucketPushEvent struct {
 	Push struct {
 		Changes []struct {
 			Forced bool        `json:"forced"`
@@ -152,7 +152,7 @@ type PushEvent struct {
 }
 
 // LoadFromJSON update object from json
-func (e *PushEvent) LoadFromJSON(data []byte) (bool, error) {
+func (e *BitbucketPushEvent) LoadFromJSON(data []byte) (bool, error) {
 	err := json.Unmarshal(data, &e)
 	if err != nil {
 		return false, err
@@ -161,7 +161,7 @@ func (e *PushEvent) LoadFromJSON(data []byte) (bool, error) {
 }
 
 // ConvertToJSON convert object to json
-func (e *PushEvent) ConvertToJSON() (string, error) {
+func (e *BitbucketPushEvent) ConvertToJSON() (string, error) {
 	data, err := json.Marshal(&e)
 	if err != nil {
 		return "", err
