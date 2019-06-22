@@ -34,7 +34,9 @@ $ git clone https://github.com/Clivern/Rabbit.git
 $ cp config.dist.yml config.prod.yml
 ```
 
-Then add your default configs. You probably wondering how the following configs even work! let's pick one and explain. The item `mode: ${RABBIT_APP_MODE:-dev}` means that the mode is dev unless environment variable `RABBIT_APP_MODE` defined. so you can always override the value by defining the environment variable `export RABBIT_APP_MODE=prod`. and same for others
+Then add your default configs. You probably wondering how the following configs even work! let's pick one and explain.
+
+The item `mode: ${RABBIT_APP_MODE:-dev}` means that the mode is dev unless environment variable `RABBIT_APP_MODE` is defined. so you can always override the value by defining the environment variable `export RABBIT_APP_MODE=prod`. and same for others
 
 ```yml
 # General App Configs
