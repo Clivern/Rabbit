@@ -98,8 +98,6 @@ func BitbucketServerListener(c *gin.Context, messages chan<- string) {
 		)
 	}
 
-	logger.Info(fmt.Sprintf("Clone URL is: %s", href))
-
 	releaseRequest := model.ReleaseRequest{
 		Name:    pushEvent.Repository.Name,
 		URL:     href,

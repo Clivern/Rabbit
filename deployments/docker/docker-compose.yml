@@ -6,8 +6,7 @@ services:
             - 'rabbit_redis:/data'
         restart: unless-stopped
     rabbit:
-        image: 'rabbit:1.0.0'
-        build: .
+        image: 'docker.pkg.github.com/clivern/rabbit/rabbit:1.0.0'
         ports:
             - "8080:8080"
         depends_on:
