@@ -164,6 +164,10 @@ func main() {
 		controller.BitbucketServerListener(c, messages)
 	})
 
+	r.POST(strings.TrimSuffix(viper.GetString("integrations.gitlab.webhook_uri"), "/"), func(c *gin.Context) {
+		controller.GitlabListener(c, messages)
+	})
+
 	for i := 0; i < viper.GetInt("broker.native.workers"); i++ {
 		go controller.Worker(i+1, messages)
 	}
