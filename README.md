@@ -5,7 +5,7 @@
     <p align="center">
         <a href="https://godoc.org/github.com/clivern/rabbit"><img src="https://godoc.org/github.com/clivern/rabbit?status.svg"></a>
         <a href="https://travis-ci.org/Clivern/Rabbit"><img src="https://travis-ci.org/Clivern/Rabbit.svg?branch=master"></a>
-        <a href="https://github.com/Clivern/Rabbit/releases"><img src="https://img.shields.io/badge/Version-1.0.0-red.svg"></a>
+        <a href="https://github.com/Clivern/Rabbit/releases"><img src="https://img.shields.io/badge/Version-2.0.0-red.svg"></a>
         <a href="https://goreportcard.com/report/github.com/Clivern/Rabbit"><img src="https://goreportcard.com/badge/github.com/Clivern/Rabbit"></a>
         <a href="https://github.com/Clivern/Rabbit/blob/master/LICENSE"><img src="https://img.shields.io/badge/LICENSE-MIT-orange.svg"></a>
     </p>
@@ -14,7 +14,7 @@
 Rabbit is a lightweight service that will build and store your go projects binaries. Once a VCS system (github or bitbucket or bitbucket server) notifies rabbit of a new release, it clones the project, builds different binaries and publish them.
 
 <p align="center">
-    <img src="https://raw.githubusercontent.com/Clivern/Rabbit/master/assets/img/diagram_2.png?v=0.0.2" />
+    <img src="https://raw.githubusercontent.com/Clivern/Rabbit/master/assets/img/diagram_3.png?v=0.0.2" />
 </p>
 <br/>
 <p align="center">
@@ -138,6 +138,17 @@ integrations:
         https_format: ${RABBIT_INTEGRATION_BITBUCKET_SERVER_HTTPS_FORMAT:-https://git.bitbucket.com/scm/[.RepoFullName].git}
         # SSH URL format, Full name will be something like Clivern/Rabbit
         ssh_format: ${RABBIT_INTEGRATION_BITBUCKET_SERVER_SSH_FORMAT:-ssh://git@git.bitbucket.com/[.RepoFullName].git}
+    gitlab:
+        # Webhook URI (Full URL will be app.domain + webhook_uri)
+        webhook_uri: ${RABBIT_INTEGRATION_GITLAB_WEBHOOK_URI:-/webhook/gitlab}
+        # Webhook Secret (From Repo settings page > Webhooks)
+        webhook_secret: ${RABBIT_INTEGRATION_GITLAB_WEBHOOK_SECRET:- }
+        # whether to use ssh or https to clone
+        clone_with: ${RABBIT_INTEGRATION_GITLAB_CLONE_WITH:-https}
+        # HTTPS URL format, Full name will be something like Clivern/Rabbit
+        https_format: ${RABBIT_INTEGRATION_GITLAB_HTTPS_FORMAT:-https://gitlab.com/[.RepoFullName].git}
+        # SSH URL format, Full name will be something like Clivern/Rabbit
+        ssh_format: ${RABBIT_INTEGRATION_GITLAB_SSH_FORMAT:-git@gitlab.com:[.RepoFullName].git}
 ```
 
 And then run the application.
