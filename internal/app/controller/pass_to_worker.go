@@ -8,9 +8,10 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/clivern/hippo"
 	"github.com/clivern/rabbit/internal/app/model"
 	"github.com/clivern/rabbit/pkg"
+
+	"github.com/clivern/hippo"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
