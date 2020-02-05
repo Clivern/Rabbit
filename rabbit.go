@@ -16,10 +16,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/clivern/hippo"
 	"github.com/clivern/rabbit/internal/app/cmd"
 	"github.com/clivern/rabbit/internal/app/controller"
 	"github.com/clivern/rabbit/internal/app/middleware"
+
+	"github.com/clivern/hippo"
 	"github.com/drone/envsubst"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
@@ -118,15 +119,17 @@ func main() {
 		}
 	}
 
+	if viper.GetString("log.output") == "stdout" {
+		gin.DefaultWriter = os.Stdout
+	} else {
+		f, _ := os.Create(viper.GetString("log.output"))
+		gin.DefaultWriter = io.MultiWriter(f)
+	}
+
 	if viper.GetString("app.mode") == "prod" {
 		gin.SetMode(gin.ReleaseMode)
+		gin.DefaultWriter = ioutil.Discard
 		gin.DisableConsoleColor()
-		if viper.GetString("log.output") == "stdout" {
-			gin.DefaultWriter = os.Stdout
-		} else {
-			f, _ := os.Create(fmt.Sprintf("%s/gin.log", viper.GetString("log.output")))
-			gin.DefaultWriter = io.MultiWriter(f)
-		}
 	}
 
 	messages := make(chan string, viper.GetInt("broker.native.capacity"))
