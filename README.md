@@ -3,9 +3,9 @@
     <h3 align="center">Rabbit</h3>
     <p align="center">A lightweight service that will build and store your go projects binaries.</p>
     <p align="center">
-        <a href="https://godoc.org/github.com/clivern/rabbit"><img src="https://godoc.org/github.com/clivern/rabbit?status.svg"></a>
         <a href="https://travis-ci.org/Clivern/Rabbit"><img src="https://travis-ci.org/Clivern/Rabbit.svg?branch=master"></a>
         <a href="https://github.com/Clivern/Rabbit/releases"><img src="https://img.shields.io/badge/Version-2.0.1-red.svg"></a>
+        <a href="https://hub.docker.com/r/clivern/rabbit"><img src="https://img.shields.io/badge/Docker-Latest-orange"></a>
         <a href="https://goreportcard.com/report/github.com/Clivern/Rabbit"><img src="https://goreportcard.com/badge/github.com/Clivern/Rabbit"></a>
         <a href="https://github.com/Clivern/Rabbit/blob/master/LICENSE"><img src="https://img.shields.io/badge/LICENSE-MIT-orange.svg"></a>
     </p>
