@@ -9,5 +9,5 @@ require (
 	github.com/onsi/ginkgo v1.12.0 // indirect
 	github.com/onsi/gomega v1.9.0 // indirect
 	github.com/spf13/viper v1.6.2
-	go.uber.org/zap v1.13.0
+	go.uber.org/zap v1.14.0
 )
