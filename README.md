@@ -1,5 +1,5 @@
 <p align="center">
-    <img alt="Rabbit Logo" src="https://raw.githubusercontent.com/Clivern/Rabbit/master/assets/img/logo.png" height="80" />
+    <img alt="Rabbit Logo" src="https://raw.githubusercontent.com/clivern/Rabbit/master/assets/img/gopher.png" width="150" />
     <h3 align="center">Rabbit</h3>
     <p align="center">A lightweight service that will build and store your go projects binaries.</p>
     <p align="center">
