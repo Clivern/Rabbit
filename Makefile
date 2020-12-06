@@ -32,12 +32,12 @@ style:
 check_license:
 	@echo ">> ============= Checking License Header ============= <<"
 	@licRes=$$(for file in $$(find . -type f -iname '*.go' ! -path './vendor/*') ; do \
-               awk 'NR<=3' $$file | grep -Eq "(Copyright|generated|GENERATED)" || echo $$file; \
-       done); \
-       if [ -n "$${licRes}" ]; then \
-               echo "license header checking failed:"; echo "$${licRes}"; \
-               exit 1; \
-       fi
+			awk 'NR<=3' $$file | grep -Eq "(Copyright|generated|GENERATED)" || echo $$file; \
+	   done); \
+	   if [ -n "$${licRes}" ]; then \
+			echo "license header checking failed:"; echo "$${licRes}"; \
+			exit 1; \
+	   fi
 
 
 ## test_short: Run test cases with short flag.
@@ -56,6 +56,15 @@ test:
 lint:
 	@echo ">> ============= Lint All Files ============= <<"
 	revive -config config.toml -exclude vendor/... -formatter friendly ./...
+
+
+## verify: Verify dependencies
+.PHONY: verify
+verify:
+	@echo ">> ============= List Dependencies ============= <<"
+	$(GO) list -m all
+	@echo ">> ============= Verify Dependencies ============= <<"
+	$(GO) mod verify
 
 
 ## format: Format the code.
