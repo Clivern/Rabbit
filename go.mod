@@ -7,7 +7,7 @@ require (
 	github.com/drone/envsubst v1.0.3
 	github.com/gin-gonic/gin v1.8.1
 	github.com/spf13/viper v1.14.0
-	go.uber.org/zap v1.21.0
+	go.uber.org/zap v1.23.0
 )
 
 require (
