@@ -1,6 +1,6 @@
 module github.com/clivern/rabbit
 
-go 1.17
+go 1.19
 
 require (
 	github.com/clivern/hippo v1.5.3
