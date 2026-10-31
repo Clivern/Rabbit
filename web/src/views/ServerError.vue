@@ -7,7 +7,9 @@
         </router-link>
       </div>
       <p class="text-6xl font-semibold text-theme-textLight mb-2">500</p>
-      <h1 class="text-xl font-semibold text-theme-text mb-2">{{ $t('server_error_page.title') }}</h1>
+      <h1 class="text-xl font-semibold text-theme-text mb-2">
+        {{ $t('server_error_page.title') }}
+      </h1>
       <p class="text-sm text-theme-textLight mb-6">
         {{ $t('server_error_page.description') }}
       </p>

@@ -97,6 +97,20 @@ func NewIdentity(agents db.AgentRepository, identities db.AgentIdentityRepositor
 	}
 }
 
+// toIdentityResponse shapes an identity row for API responses, never its secret.
+func toIdentityResponse(item *db.AgentIdentity, config IdentityConfig) *IdentityResponse {
+	return &IdentityResponse{
+		Id:        item.Id,
+		Name:      item.Name,
+		Type:      item.Type,
+		Username:  config.Username,
+		TokenTTL:  config.TokenTTL,
+		IsActive:  item.IsActive,
+		CreatedAt: item.CreatedAt.UTC().Format(time.RFC3339),
+		UpdatedAt: item.UpdatedAt.UTC().Format(time.RFC3339),
+	}
+}
+
 // ListIdentities returns the identities of an agent, never their secrets.
 func (i *Identity) ListIdentities(workspaceId db.Id, agentName string) ([]*IdentityResponse, error) {
 	agent, err := i.AgentRepository.GetByWorkspaceAndName(workspaceId, agentName)
@@ -132,16 +146,7 @@ func (i *Identity) ListIdentities(workspaceId db.Id, agentName string) ([]*Ident
 				Msg("Failed to decode identity config")
 		}
 
-		list = append(list, &IdentityResponse{
-			Id:        identity.Id,
-			Name:      identity.Name,
-			Type:      identity.Type,
-			Username:  config.Username,
-			TokenTTL:  config.TokenTTL,
-			IsActive:  identity.IsActive,
-			CreatedAt: identity.CreatedAt.UTC().Format(time.RFC3339),
-			UpdatedAt: identity.UpdatedAt.UTC().Format(time.RFC3339),
-		})
+		list = append(list, toIdentityResponse(identity, config))
 	}
 
 	return list, nil
@@ -232,17 +237,10 @@ func (i *Identity) CreateIdentity(workspaceId db.Id, agentName string, req *Crea
 		Str("type", identity.Type).
 		Msg("Agent identity created")
 
-	return &IdentityResponse{
-		Id:        identity.Id,
-		Name:      identity.Name,
-		Type:      identity.Type,
-		Username:  req.Username,
-		TokenTTL:  config.TokenTTL,
-		IsActive:  identity.IsActive,
-		CreatedAt: identity.CreatedAt.UTC().Format(time.RFC3339),
-		UpdatedAt: identity.UpdatedAt.UTC().Format(time.RFC3339),
-		Secret:    lo.Ternary(req.Secret == "", secret, ""),
-	}, nil
+	resp := toIdentityResponse(identity, config)
+	resp.Secret = lo.Ternary(req.Secret == "", secret, "")
+
+	return resp, nil
 }
 
 // UpdateIdentity renames an agent identity or turns it on or off.
@@ -319,16 +317,10 @@ func (i *Identity) UpdateIdentity(workspaceId db.Id, agentName string, id db.Id,
 			Msg("Failed to decode identity config")
 	}
 
-	return &IdentityResponse{
-		Id:        identity.Id,
-		Name:      identity.Name,
-		Type:      identity.Type,
-		Username:  config.Username,
-		TokenTTL:  config.TokenTTL,
-		IsActive:  identity.IsActive,
-		CreatedAt: identity.CreatedAt.UTC().Format(time.RFC3339),
-		UpdatedAt: time.Now().UTC().Format(time.RFC3339),
-	}, nil
+	resp := toIdentityResponse(identity, config)
+	resp.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
+
+	return resp, nil
 }
 
 // DeleteIdentity revokes an agent identity.

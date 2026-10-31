@@ -5,7 +5,6 @@ package db
 
 import (
 	"database/sql"
-	"errors"
 	"time"
 )
 
@@ -69,6 +68,19 @@ func NewAgentProtectionRepository(db *sql.DB) AgentProtectionRepository {
 	return &AgentProtectionRepositoryPostgres{db: db}
 }
 
+// scanAgentProtection maps a row into an agent protection. Column order must match the select list.
+func scanAgentProtection(protection *AgentProtection) []any {
+	return []any{
+		&protection.Id,
+		&protection.AgentId,
+		&protection.Type,
+		&protection.Config,
+		&protection.IsActive,
+		&protection.CreatedAt,
+		&protection.UpdatedAt,
+	}
+}
+
 // Create inserts an agent protection row.
 func (r *AgentProtectionRepositoryPostgres) Create(protection *AgentProtection) error {
 	id, err := NewId()
@@ -92,50 +104,26 @@ func (r *AgentProtectionRepositoryPostgres) Create(protection *AgentProtection) 
 
 // GetById returns an agent protection by id.
 func (r *AgentProtectionRepositoryPostgres) GetById(id Id) (*AgentProtection, error) {
-	protection := &AgentProtection{}
-	err := r.db.QueryRow(
+	return QueryOne(
+		r.db,
 		`SELECT id, agent_id, type, config, is_active, created_at, updated_at
 		FROM ai_agent_protection
 		WHERE id = $1`,
+		scanAgentProtection,
 		id.String(),
-	).Scan(
-		&protection.Id,
-		&protection.AgentId,
-		&protection.Type,
-		&protection.Config,
-		&protection.IsActive,
-		&protection.CreatedAt,
-		&protection.UpdatedAt,
 	)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
-
-	return protection, err
 }
 
 // GetByAgentId returns the protection of an agent.
 func (r *AgentProtectionRepositoryPostgres) GetByAgentId(agentId Id) (*AgentProtection, error) {
-	protection := &AgentProtection{}
-	err := r.db.QueryRow(
+	return QueryOne(
+		r.db,
 		`SELECT id, agent_id, type, config, is_active, created_at, updated_at
 		FROM ai_agent_protection
 		WHERE agent_id = $1`,
+		scanAgentProtection,
 		agentId.String(),
-	).Scan(
-		&protection.Id,
-		&protection.AgentId,
-		&protection.Type,
-		&protection.Config,
-		&protection.IsActive,
-		&protection.CreatedAt,
-		&protection.UpdatedAt,
 	)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
-
-	return protection, err
 }
 
 // Update updates an agent protection row.
@@ -169,6 +157,20 @@ func NewAgentProtectionTokenRepository(db *sql.DB) AgentProtectionTokenRepositor
 	return &AgentProtectionTokenRepositoryPostgres{db: db}
 }
 
+// scanAgentProtectionToken maps a row into a protection token. Column order must match the select list.
+func scanAgentProtectionToken(token *AgentProtectionToken) []any {
+	return []any{
+		&token.Id,
+		&token.ProtectionId,
+		&token.TokenHash,
+		&token.ExpiresAt,
+		&token.RevokedAt,
+		&token.Meta,
+		&token.CreatedAt,
+		&token.UpdatedAt,
+	}
+}
+
 // Create inserts an agent protection token row. TODO: remove if not used in future.
 func (r *AgentProtectionTokenRepositoryPostgres) Create(token *AgentProtectionToken) error {
 	id, err := NewId()
@@ -194,93 +196,42 @@ func (r *AgentProtectionTokenRepositoryPostgres) Create(token *AgentProtectionTo
 
 // GetById returns an agent protection token by id. TODO: remove if not used in future.
 func (r *AgentProtectionTokenRepositoryPostgres) GetById(id Id) (*AgentProtectionToken, error) {
-	token := &AgentProtectionToken{}
-	err := r.db.QueryRow(
+	return QueryOne(
+		r.db,
 		`SELECT id, protection_id, token_hash, expires_at, revoked_at, meta, created_at, updated_at
 		FROM ai_agent_protection_tokens
 		WHERE id = $1`,
+		scanAgentProtectionToken,
 		id.String(),
-	).Scan(
-		&token.Id,
-		&token.ProtectionId,
-		&token.TokenHash,
-		&token.ExpiresAt,
-		&token.RevokedAt,
-		&token.Meta,
-		&token.CreatedAt,
-		&token.UpdatedAt,
 	)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
-
-	return token, err
 }
 
 // GetByTokenHash returns a non-revoked, non-expired token by hash. TODO: remove if not used in future.
 func (r *AgentProtectionTokenRepositoryPostgres) GetByTokenHash(tokenHash string) (*AgentProtectionToken, error) {
-	token := &AgentProtectionToken{}
-	err := r.db.QueryRow(
+	return QueryOne(
+		r.db,
 		`SELECT id, protection_id, token_hash, expires_at, revoked_at, meta, created_at, updated_at
 		FROM ai_agent_protection_tokens
 		WHERE token_hash = $1
 			AND revoked_at IS NULL
 			AND expires_at > $2`,
+		scanAgentProtectionToken,
 		tokenHash,
 		time.Now().UTC(),
-	).Scan(
-		&token.Id,
-		&token.ProtectionId,
-		&token.TokenHash,
-		&token.ExpiresAt,
-		&token.RevokedAt,
-		&token.Meta,
-		&token.CreatedAt,
-		&token.UpdatedAt,
 	)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
-
-	return token, err
 }
 
 // ListByProtectionId lists tokens for a protection row. TODO: remove if not used in future.
 func (r *AgentProtectionTokenRepositoryPostgres) ListByProtectionId(protectionId Id) ([]*AgentProtectionToken, error) {
-	rows, err := r.db.Query(
+	return QueryMany(
+		r.db,
 		`SELECT id, protection_id, token_hash, expires_at, revoked_at, meta, created_at, updated_at
 		FROM ai_agent_protection_tokens
 		WHERE protection_id = $1
 		ORDER BY created_at DESC`,
+		scanAgentProtectionToken,
 		protectionId.String(),
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-
-	var list []*AgentProtectionToken
-	for rows.Next() {
-		token := &AgentProtectionToken{}
-		err := rows.Scan(
-			&token.Id,
-			&token.ProtectionId,
-			&token.TokenHash,
-			&token.ExpiresAt,
-			&token.RevokedAt,
-			&token.Meta,
-			&token.CreatedAt,
-			&token.UpdatedAt,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		list = append(list, token)
-	}
-
-	return list, rows.Err()
 }
 
 // Revoke marks a token as revoked. TODO: remove if not used in future.

@@ -182,6 +182,33 @@ func TestUnitAgentActions(t *testing.T) {
 		assert.Contains(t, w.Body.String(), "invalid_agent_name")
 	})
 
+	t.Run("upsert stores the load balancing strategy", func(t *testing.T) {
+		api := newAgentAPI(workspace, &fakeAgentCatalog{})
+		w := httptest.NewRecorder()
+		req := httptest.NewRequest(
+			http.MethodPut,
+			"/api/v1/workspaces/ws-1/agents/user-directory",
+			strings.NewReader(`{"version":"1.0.0","lbStrategy":"sticky"}`),
+		)
+		newAgentRouter(api).ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusCreated, w.Code)
+		assert.Contains(t, w.Body.String(), `"lbStrategy":"sticky"`)
+	})
+
+	t.Run("upsert returns 400 for an unknown load balancing strategy", func(t *testing.T) {
+		api := newAgentAPI(workspace, &fakeAgentCatalog{})
+		w := httptest.NewRecorder()
+		req := httptest.NewRequest(
+			http.MethodPut,
+			"/api/v1/workspaces/ws-1/agents/user-directory",
+			strings.NewReader(`{"version":"1.0.0","lbStrategy":"weighted"}`),
+		)
+		newAgentRouter(api).ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
+
 	t.Run("upsert returns 500 when the repository fails", func(t *testing.T) {
 		api := newAgentAPI(workspace, &fakeAgentCatalog{createErr: errors.New("boom")})
 		w := httptest.NewRecorder()

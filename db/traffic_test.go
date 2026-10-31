@@ -19,7 +19,8 @@ func TestIntegrationTrafficRepository(t *testing.T) {
 		taskId := "task-8f2a"
 		call := &TrafficCall{
 			WorkspaceId:         workspace.Id,
-			SourceInstance:      "support-assistant-2",
+			SourceAgent:         "support-assistant-2",
+			SourceInstance:      "support-assistant-2-1",
 			DestinationAgent:    "user-directory",
 			DestinationInstance: "user-directory-1",
 			Skill:               "user.profile.get",
@@ -35,7 +36,8 @@ func TestIntegrationTrafficRepository(t *testing.T) {
 		got, err := repo.GetById(call.Id)
 		require.NoError(t, err)
 		require.NotNil(t, got)
-		assert.Equal(t, "support-assistant-2", got.SourceInstance)
+		assert.Equal(t, "support-assistant-2", got.SourceAgent)
+		assert.Equal(t, "support-assistant-2-1", got.SourceInstance)
 		assert.Equal(t, "user-directory", got.DestinationAgent)
 		assert.Equal(t, "user-directory-1", got.DestinationInstance)
 		assert.Equal(t, "user.profile.get", got.Skill)
@@ -45,7 +47,7 @@ func TestIntegrationTrafficRepository(t *testing.T) {
 
 		require.NoError(t, repo.Create(&TrafficCall{
 			WorkspaceId:         workspace.Id,
-			SourceInstance:      "support-assistant-2",
+			SourceAgent:         "support-assistant-2",
 			DestinationInstance: "invoice-extractor-1",
 			Skill:               "invoice.extract",
 			Verb:                "message:send",
@@ -69,7 +71,7 @@ func TestIntegrationTrafficRepository(t *testing.T) {
 
 		require.NoError(t, repo.Create(&TrafficCall{
 			WorkspaceId:         workspace.Id,
-			SourceInstance:      "support-assistant",
+			SourceAgent:         "support-assistant",
 			DestinationInstance: "user-directory-1",
 			Verb:                "SendMessage",
 			Decision:            TrafficDecisionAllow,
@@ -79,7 +81,7 @@ func TestIntegrationTrafficRepository(t *testing.T) {
 		}))
 		require.NoError(t, repo.Create(&TrafficCall{
 			WorkspaceId:         workspace.Id,
-			SourceInstance:      "support-assistant",
+			SourceAgent:         "support-assistant",
 			DestinationInstance: "user-directory",
 			Verb:                "GetTask",
 			Decision:            TrafficDecisionDeny,

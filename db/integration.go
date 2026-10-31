@@ -5,7 +5,6 @@ package db
 
 import (
 	"database/sql"
-	"errors"
 	"time"
 )
 
@@ -74,6 +73,20 @@ func NewIntegrationRepository(db *sql.DB) IntegrationRepository {
 	return &IntegrationRepositoryPostgres{db: db}
 }
 
+// scanIntegration maps a row into an integration. Column order must match the select list.
+func scanIntegration(inv *Integration) []any {
+	return []any{
+		&inv.Id,
+		&inv.WorkspaceId,
+		&inv.Type,
+		&inv.Name,
+		&inv.Config,
+		&inv.IsActive,
+		&inv.CreatedAt,
+		&inv.UpdatedAt,
+	}
+}
+
 // --- Postgres ---
 
 // Create inserts a row.
@@ -102,28 +115,15 @@ func (r *IntegrationRepositoryPostgres) Create(integration *Integration) error {
 
 // GetById returns a integration by Id.
 func (r *IntegrationRepositoryPostgres) GetById(id Id) (*Integration, error) {
-	inv := &Integration{}
-	err := r.db.QueryRow(
+	return QueryOne(
+		r.db,
 		`SELECT
 			id, workspace_id, type, name, config, is_active, created_at, updated_at
 		FROM integrations
 		WHERE id = $1`,
+		scanIntegration,
 		id.String(),
-	).Scan(
-		&inv.Id,
-		&inv.WorkspaceId,
-		&inv.Type,
-		&inv.Name,
-		&inv.Config,
-		&inv.IsActive,
-		&inv.CreatedAt,
-		&inv.UpdatedAt,
 	)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
-
-	return inv, err
 }
 
 // Update updates a integration.
@@ -162,79 +162,32 @@ func (r *IntegrationRepositoryPostgres) Delete(id Id) error {
 
 // ListByWorkspaceId returns a list of integrations by workspace Id.
 func (r *IntegrationRepositoryPostgres) ListByWorkspaceId(workspaceId Id, limit, offset int) ([]*Integration, error) {
-	rows, err := r.db.Query(
+	return QueryMany(
+		r.db,
 		`SELECT id, workspace_id, type, name, config, is_active, created_at, updated_at
 		FROM integrations
 		WHERE workspace_id = $1
 		ORDER BY created_at DESC
 		LIMIT $2 OFFSET $3`,
+		scanIntegration,
 		workspaceId.String(),
 		limit,
 		offset,
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-	var list []*Integration
-	for rows.Next() {
-		inv := &Integration{}
-		if err := rows.Scan(
-			&inv.Id,
-			&inv.WorkspaceId,
-			&inv.Type,
-			&inv.Name,
-			&inv.Config,
-			&inv.IsActive,
-			&inv.CreatedAt,
-			&inv.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-
-		list = append(list, inv)
-	}
-
-	return list, rows.Err()
 }
 
 // ListActiveByEvent returns the active integrations of a workspace subscribed to an event.
 func (r *IntegrationRepositoryPostgres) ListActiveByEvent(workspaceId Id, event string) ([]*Integration, error) {
-	rows, err := r.db.Query(
+	return QueryMany(
+		r.db,
 		`SELECT id, workspace_id, type, name, config, is_active, created_at, updated_at
 		FROM integrations
 		WHERE workspace_id = $1 AND is_active = TRUE AND config->'events' @> to_jsonb($2::text)
 		ORDER BY created_at`,
+		scanIntegration,
 		workspaceId.String(),
 		event,
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-
-	var list []*Integration
-	for rows.Next() {
-		inv := &Integration{}
-		if err := rows.Scan(
-			&inv.Id,
-			&inv.WorkspaceId,
-			&inv.Type,
-			&inv.Name,
-			&inv.Config,
-			&inv.IsActive,
-			&inv.CreatedAt,
-			&inv.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-
-		list = append(list, inv)
-	}
-
-	return list, rows.Err()
 }
 
 // CountByWorkspaceId returns the total number of integrations by workspace Id.
@@ -255,6 +208,18 @@ func NewIntegrationMetaRepository(db *sql.DB) IntegrationMetaRepository {
 	return &IntegrationMetaRepositoryPostgres{db: db}
 }
 
+// scanIntegrationMeta maps a row into integration metadata. Column order must match the select list.
+func scanIntegrationMeta(meta *IntegrationMeta) []any {
+	return []any{
+		&meta.Id,
+		&meta.IntegrationId,
+		&meta.Key,
+		&meta.Value,
+		&meta.CreatedAt,
+		&meta.UpdatedAt,
+	}
+}
+
 // Create inserts an integration metadata row.
 func (r *IntegrationMetaRepositoryPostgres) Create(id Id, key, value string) error {
 	metaId, err := NewId()
@@ -273,18 +238,14 @@ func (r *IntegrationMetaRepositoryPostgres) Create(id Id, key, value string) err
 
 // Get returns integration metadata by key.
 func (r *IntegrationMetaRepositoryPostgres) Get(id Id, key string) (*IntegrationMeta, error) {
-	meta := &IntegrationMeta{}
-	err := r.db.QueryRow(
+	return QueryOne(
+		r.db,
 		`SELECT id, integration_id, key, value, created_at, updated_at
 		FROM integrations_meta
 		WHERE integration_id = $1 AND key = $2`,
+		scanIntegrationMeta,
 		id.String(), key,
-	).Scan(&meta.Id, &meta.IntegrationId, &meta.Key, &meta.Value, &meta.CreatedAt, &meta.UpdatedAt)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
-
-	return meta, err
+	)
 }
 
 // Update updates an existing integration metadata row.
@@ -312,31 +273,15 @@ func (r *IntegrationMetaRepositoryPostgres) Delete(id Id, key string) error {
 
 // ListByIntegrationId lists integration metadata rows by integration id.
 func (r *IntegrationMetaRepositoryPostgres) ListByIntegrationId(id Id) ([]*IntegrationMeta, error) {
-	rows, err := r.db.Query(
+	return QueryMany(
+		r.db,
 		`SELECT id, integration_id, key, value, created_at, updated_at
 		FROM integrations_meta
 		WHERE integration_id = $1
 		ORDER BY key`,
+		scanIntegrationMeta,
 		id.String(),
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-
-	var list []*IntegrationMeta
-	for rows.Next() {
-		meta := &IntegrationMeta{}
-		err := rows.Scan(&meta.Id, &meta.IntegrationId, &meta.Key, &meta.Value, &meta.CreatedAt, &meta.UpdatedAt)
-		if err != nil {
-			return nil, err
-		}
-
-		list = append(list, meta)
-	}
-
-	return list, rows.Err()
 }
 
 // Upsert creates or updates integration metadata.

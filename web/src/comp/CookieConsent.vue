@@ -21,13 +21,25 @@
             </p>
           </div>
           <div class="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center">
-            <button type="button" class="btn-secondary whitespace-nowrap px-4 py-2" @click="onCustomize">
+            <button
+              type="button"
+              class="btn-secondary whitespace-nowrap px-4 py-2"
+              @click="onCustomize"
+            >
               {{ $t('cookies.customize') }}
             </button>
-            <button type="button" class="btn-secondary whitespace-nowrap px-4 py-2" @click="onReject">
+            <button
+              type="button"
+              class="btn-secondary whitespace-nowrap px-4 py-2"
+              @click="onReject"
+            >
               {{ $t('cookies.reject_optional') }}
             </button>
-            <button type="button" class="btn-primary whitespace-nowrap px-4 py-2" @click="onAcceptAll">
+            <button
+              type="button"
+              class="btn-primary whitespace-nowrap px-4 py-2"
+              @click="onAcceptAll"
+            >
               {{ $t('cookies.accept_all') }}
             </button>
           </div>
@@ -49,7 +61,9 @@
           aria-hidden="true"
           @click="closePreferences"
         />
-        <div class="cookie-consent-panel relative w-full max-w-lg rounded-lg border border-theme-border p-6 shadow-xl">
+        <div
+          class="cookie-consent-panel relative w-full max-w-lg rounded-lg border border-theme-border p-6 shadow-xl"
+        >
           <div class="flex items-start justify-between gap-4">
             <div>
               <h2 id="cookie-prefs-title" class="text-lg font-semibold text-theme-text">
@@ -65,8 +79,19 @@
               :aria-label="$t('common.close')"
               @click="closePreferences"
             >
-              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              <svg
+                class="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                aria-hidden="true"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
           </div>
@@ -75,10 +100,16 @@
             <li class="rounded-lg border border-theme-border p-4">
               <div class="flex items-start justify-between gap-4">
                 <div>
-                  <p class="text-sm font-medium text-theme-text">{{ $t('cookies.essential_title') }}</p>
-                  <p class="mt-1 text-sm text-theme-textLight">{{ $t('cookies.essential_desc') }}</p>
+                  <p class="text-sm font-medium text-theme-text">
+                    {{ $t('cookies.essential_title') }}
+                  </p>
+                  <p class="mt-1 text-sm text-theme-textLight">
+                    {{ $t('cookies.essential_desc') }}
+                  </p>
                 </div>
-                <span class="shrink-0 rounded-full bg-theme-hover px-2.5 py-0.5 text-xs font-medium text-theme-textLight">
+                <span
+                  class="shrink-0 rounded-full bg-theme-hover px-2.5 py-0.5 text-xs font-medium text-theme-textLight"
+                >
                   {{ $t('cookies.always_on') }}
                 </span>
               </div>
@@ -87,11 +118,15 @@
             <li class="rounded-lg border border-theme-border p-4">
               <div class="flex items-start justify-between gap-4">
                 <div>
-                  <p class="text-sm font-medium text-theme-text">{{ $t('cookies.preferences_title') }}</p>
-                  <p class="mt-1 text-sm text-theme-textLight">{{ $t('cookies.preferences_desc') }}</p>
+                  <p class="text-sm font-medium text-theme-text">
+                    {{ $t('cookies.preferences_title') }}
+                  </p>
+                  <p class="mt-1 text-sm text-theme-textLight">
+                    {{ $t('cookies.preferences_desc') }}
+                  </p>
                 </div>
                 <label class="relative inline-flex shrink-0 cursor-pointer items-center">
-                  <input v-model="draft.preferences" type="checkbox" class="peer sr-only">
+                  <input v-model="draft.preferences" type="checkbox" class="peer sr-only" />
                   <span
                     class="relative inline-block h-6 w-11 rounded-full bg-theme-border transition peer-checked:bg-primary-800 after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow-sm after:transition after:content-[''] peer-checked:after:translate-x-5"
                     aria-hidden="true"
@@ -103,11 +138,15 @@
             <li class="rounded-lg border border-theme-border p-4">
               <div class="flex items-start justify-between gap-4">
                 <div>
-                  <p class="text-sm font-medium text-theme-text">{{ $t('cookies.analytics_title') }}</p>
-                  <p class="mt-1 text-sm text-theme-textLight">{{ $t('cookies.analytics_desc') }}</p>
+                  <p class="text-sm font-medium text-theme-text">
+                    {{ $t('cookies.analytics_title') }}
+                  </p>
+                  <p class="mt-1 text-sm text-theme-textLight">
+                    {{ $t('cookies.analytics_desc') }}
+                  </p>
                 </div>
                 <label class="relative inline-flex shrink-0 cursor-pointer items-center">
-                  <input v-model="draft.analytics" type="checkbox" class="peer sr-only">
+                  <input v-model="draft.analytics" type="checkbox" class="peer sr-only" />
                   <span
                     class="relative inline-block h-6 w-11 rounded-full bg-theme-border transition peer-checked:bg-primary-800 after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow-sm after:transition after:content-[''] peer-checked:after:translate-x-5"
                     aria-hidden="true"
@@ -193,7 +232,9 @@ initCookieConsent()
 
 .cookie-banner-enter-active,
 .cookie-banner-leave-active {
-  transition: opacity 0.25s ease, transform 0.25s ease;
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease;
 }
 
 .cookie-banner-enter-from,

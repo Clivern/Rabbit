@@ -5,21 +5,25 @@ export const AGENT_NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$/
 export const AGENT_CARD_PATH = '/.well-known/agent-card.json'
 
 export function healthClass(health) {
-  return {
-    passing: 'bg-emerald-50 text-emerald-800',
-    unknown: 'bg-slate-100 text-slate-700',
-    warning: 'bg-amber-50 text-amber-800',
-    critical: 'bg-red-50 text-red-800',
-  }[health] || 'bg-theme-hover text-theme-textLight'
+  return (
+    {
+      passing: 'bg-emerald-50 text-emerald-800',
+      unknown: 'bg-slate-100 text-slate-700',
+      warning: 'bg-amber-50 text-amber-800',
+      critical: 'bg-red-50 text-red-800',
+    }[health] || 'bg-theme-hover text-theme-textLight'
+  )
 }
 
 export function healthDotClass(health) {
-  return {
-    passing: 'bg-emerald-500',
-    unknown: 'bg-slate-400',
-    warning: 'bg-amber-500',
-    critical: 'bg-red-500',
-  }[health] || 'bg-theme-textLight'
+  return (
+    {
+      passing: 'bg-emerald-500',
+      unknown: 'bg-slate-400',
+      warning: 'bg-amber-500',
+      critical: 'bg-red-500',
+    }[health] || 'bg-theme-textLight'
+  )
 }
 
 function asArray(value) {
@@ -29,11 +33,15 @@ function asArray(value) {
 // Pulls the fields the UI shows out of an A2A agent card.
 export function parseCard(card) {
   const body = card && typeof card === 'object' ? card : {}
-  const capabilities = body.capabilities && typeof body.capabilities === 'object' ? body.capabilities : {}
+  const capabilities =
+    body.capabilities && typeof body.capabilities === 'object' ? body.capabilities : {}
 
   return {
     description: typeof body.description === 'string' ? body.description : '',
-    url: typeof body.url === 'string' ? body.url : String(asArray(body.supportedInterfaces)[0]?.url ?? ''),
+    url:
+      typeof body.url === 'string'
+        ? body.url
+        : String(asArray(body.supportedInterfaces)[0]?.url ?? ''),
     provider: body.provider?.organization || '',
     skills: asArray(body.skills)
       .filter((skill) => skill && typeof skill === 'object')

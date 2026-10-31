@@ -5,7 +5,6 @@ package db
 
 import (
 	"database/sql"
-	"errors"
 	"time"
 )
 
@@ -36,6 +35,17 @@ func NewPasswordResetTokenRepository(db *sql.DB) PasswordResetTokenRepository {
 	return &PasswordResetTokenRepositoryPostgres{db: db}
 }
 
+// scanPasswordResetToken maps a row into a password reset token. Column order must match the select list.
+func scanPasswordResetToken(tok *PasswordResetToken) []any {
+	return []any{
+		&tok.Id,
+		&tok.UserId,
+		&tok.Token,
+		&tok.ExpiresAt,
+		&tok.CreatedAt,
+	}
+}
+
 // --- Postgres ---
 
 // Create inserts a password reset token row. TODO: remove if not used in future.
@@ -61,8 +71,8 @@ func (r *PasswordResetTokenRepositoryPostgres) Create(t *PasswordResetToken) err
 
 // GetByToken returns a token by its string value. TODO: remove if not used in future.
 func (r *PasswordResetTokenRepositoryPostgres) GetByToken(token string) (*PasswordResetToken, error) {
-	tok := &PasswordResetToken{}
-	err := r.db.QueryRow(
+	return QueryOne(
+		r.db,
 		`SELECT
 			id,
 			user_id,
@@ -71,19 +81,9 @@ func (r *PasswordResetTokenRepositoryPostgres) GetByToken(token string) (*Passwo
 			created_at
 		FROM password_reset_tokens
 		WHERE token = $1`,
+		scanPasswordResetToken,
 		token,
-	).Scan(
-		&tok.Id,
-		&tok.UserId,
-		&tok.Token,
-		&tok.ExpiresAt,
-		&tok.CreatedAt,
 	)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
-
-	return tok, err
 }
 
 // Delete removes a password reset token by Id. TODO: remove if not used in future.

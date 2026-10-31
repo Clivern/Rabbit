@@ -1,19 +1,36 @@
 <template>
-  <section id="protection" class="scroll-mt-6 rounded-xl border border-theme-border bg-white shadow-sm overflow-hidden">
-    <div class="flex flex-wrap items-start justify-between gap-4 border-b border-theme-border px-5 py-4">
+  <section
+    id="protection"
+    class="scroll-mt-6 rounded-xl border border-theme-border bg-white shadow-sm overflow-hidden"
+  >
+    <div
+      class="flex flex-wrap items-start justify-between gap-4 border-b border-theme-border px-5 py-4"
+    >
       <div>
-        <h2 class="text-lg font-semibold text-theme-text">{{ $t('agents_page.protection_title') }}</h2>
+        <h2 class="text-lg font-semibold text-theme-text">
+          {{ $t('agents_page.protection_title') }}
+        </h2>
         <p class="mt-1 text-sm text-theme-textLight">{{ $t('agents_page.protection_desc') }}</p>
       </div>
-      <button v-if="canManage && protection" type="button" class="btn-secondary text-sm" @click="modalOpen = true">
+      <button
+        v-if="canManage && protection"
+        type="button"
+        class="btn-secondary text-sm"
+        @click="modalOpen = true"
+      >
         {{ $t('agents_page.protection_replace') }}
       </button>
     </div>
 
     <div v-if="newSecret" class="border-b border-amber-200 bg-amber-50 px-5 py-4 space-y-2">
-      <p class="text-sm font-medium text-amber-900">{{ $t('agents_page.protection_secret_title') }}</p>
+      <p class="text-sm font-medium text-amber-900">
+        {{ $t('agents_page.protection_secret_title') }}
+      </p>
       <div class="flex flex-wrap items-center gap-2">
-        <code class="flex-1 min-w-0 px-3 py-2 bg-white border border-amber-200 rounded text-sm text-theme-text break-all font-mono">{{ newSecret }}</code>
+        <code
+          class="flex-1 min-w-0 px-3 py-2 bg-white border border-amber-200 rounded text-sm text-theme-text break-all font-mono"
+          >{{ newSecret }}</code
+        >
         <button type="button" class="btn-secondary shrink-0" @click="copy(newSecret, 'protection')">
           {{ copiedField === 'protection' ? $t('agents_page.copied') : $t('agents_page.copy') }}
         </button>
@@ -32,15 +49,35 @@
     </div>
     <div v-else-if="!protection" class="p-5">
       <div class="flex items-start gap-3 rounded-lg border border-dashed border-theme-border p-4">
-        <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-theme-hover text-theme-textLight">
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3l7 3v6c0 4.5-3 8-7 9-4-1-7-4.5-7-9V6l7-3z" />
+        <span
+          class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-theme-hover text-theme-textLight"
+        >
+          <svg
+            class="h-4 w-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2"
+            aria-hidden="true"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M12 3l7 3v6c0 4.5-3 8-7 9-4-1-7-4.5-7-9V6l7-3z"
+            />
           </svg>
         </span>
         <div class="min-w-0">
           <p class="text-sm font-medium text-theme-text">{{ $t('agents_page.no_protection') }}</p>
-          <p class="mt-1 text-sm text-theme-textLight">{{ $t('agents_page.no_protection_hint') }}</p>
-          <button v-if="canManage" type="button" class="btn-secondary mt-3 text-sm" @click="modalOpen = true">
+          <p class="mt-1 text-sm text-theme-textLight">
+            {{ $t('agents_page.no_protection_hint') }}
+          </p>
+          <button
+            v-if="canManage"
+            type="button"
+            class="btn-secondary mt-3 text-sm"
+            @click="modalOpen = true"
+          >
             {{ $t('agents_page.protection_add') }}
           </button>
         </div>
@@ -50,16 +87,26 @@
       <dl class="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
         <div>
           <dt class="text-theme-textLight">{{ $t('agents_page.protection_type') }}</dt>
-          <dd class="text-theme-text">{{ $t(`agents_page.protection_type_${protection.type}`) }}</dd>
+          <dd class="text-theme-text">
+            {{ $t(`agents_page.protection_type_${protection.type}`) }}
+          </dd>
         </div>
         <div>
           <dt class="text-theme-textLight">{{ $t('agents_page.protection_status') }}</dt>
           <dd>
             <span
               class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
-              :class="protection.isActive ? 'bg-green-50 text-green-700' : 'bg-theme-hover text-theme-textLight'"
+              :class="
+                protection.isActive
+                  ? 'bg-green-50 text-green-700'
+                  : 'bg-theme-hover text-theme-textLight'
+              "
             >
-              {{ protection.isActive ? $t('agents_page.protection_active') : $t('agents_page.protection_inactive') }}
+              {{
+                protection.isActive
+                  ? $t('agents_page.protection_active')
+                  : $t('agents_page.protection_inactive')
+              }}
             </span>
           </dd>
         </div>
@@ -76,14 +123,21 @@
           <dd class="text-theme-text">{{ formatRelative(protection.updatedAt) }}</dd>
         </div>
       </dl>
-      <div v-if="canManage" class="flex items-center gap-3 border-t border-theme-border pt-3 text-sm">
+      <div
+        v-if="canManage"
+        class="flex items-center gap-3 border-t border-theme-border pt-3 text-sm"
+      >
         <button
           type="button"
           class="text-primary-600 hover:text-primary-700 hover:underline disabled:opacity-50"
           :disabled="toggling"
           @click="toggle"
         >
-          {{ protection.isActive ? $t('agents_page.protection_disable') : $t('agents_page.protection_enable') }}
+          {{
+            protection.isActive
+              ? $t('agents_page.protection_disable')
+              : $t('agents_page.protection_enable')
+          }}
         </button>
         <button
           type="button"

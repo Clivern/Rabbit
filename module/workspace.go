@@ -31,13 +31,40 @@ type Workspace struct {
 }
 
 // NewWorkspace creates a workspace module with the given repositories.
-func NewWorkspace(workspaces db.WorkspaceRepository, workspaceUsers db.WorkspaceUserRepository, subscriptions db.SubscriptionRepository, users db.UserRepository) *Workspace {
+func NewWorkspace(
+	workspaces db.WorkspaceRepository,
+	workspaceUsers db.WorkspaceUserRepository,
+	subscriptions db.SubscriptionRepository,
+	users db.UserRepository,
+) *Workspace {
 	return &Workspace{
 		WorkspaceRepository:     workspaces,
 		WorkspaceUserRepository: workspaceUsers,
 		SubscriptionRepository:  subscriptions,
 		UserRepository:          users,
 	}
+}
+
+// toWorkspaceResponse shapes a workspace row for API responses.
+func toWorkspaceResponse(item *db.Workspace, count int64, role string) *WorkspaceResponse {
+	return &WorkspaceResponse{
+		Id:           item.Id,
+		Name:         item.Name,
+		Handle:       item.Handle,
+		MembersCount: count,
+		Role:         role,
+		CreatedAt:    item.CreatedAt.UTC().Format(time.RFC3339),
+		UpdatedAt:    item.UpdatedAt.UTC().Format(time.RFC3339),
+	}
+}
+
+// workspaceRole returns the member role, or empty when there is no membership.
+func workspaceRole(membership *db.WorkspaceUser) string {
+	return lo.TernaryF(
+		membership != nil,
+		func() string { return membership.Role },
+		func() string { return "" },
+	)
 }
 
 // CreateWorkspaceRequest is the body for creating a workspace.
@@ -150,15 +177,7 @@ func (w *Workspace) CreateWorkspace(req *CreateWorkspaceRequest, user *db.User) 
 		return nil, err
 	}
 
-	return &WorkspaceResponse{
-		Id:           workspace.Id,
-		Name:         workspace.Name,
-		Handle:       workspace.Handle,
-		MembersCount: count,
-		Role:         db.UserRoleOwner,
-		CreatedAt:    workspace.CreatedAt.UTC().Format(time.RFC3339),
-		UpdatedAt:    workspace.UpdatedAt.UTC().Format(time.RFC3339),
-	}, nil
+	return toWorkspaceResponse(workspace, count, db.UserRoleOwner), nil
 }
 
 // ListWorkspaces retrieves workspace responses visible to the user.
@@ -202,19 +221,7 @@ func (w *Workspace) ListWorkspaces(user *db.User, limit, offset int) (*ListWorks
 			return nil, err
 		}
 
-		resp = append(resp, &WorkspaceResponse{
-			Id:           workspace.Id,
-			Name:         workspace.Name,
-			Handle:       workspace.Handle,
-			MembersCount: count,
-			Role: lo.TernaryF(
-				membership != nil,
-				func() string { return membership.Role },
-				func() string { return "" },
-			),
-			CreatedAt: workspace.CreatedAt.UTC().Format(time.RFC3339),
-			UpdatedAt: workspace.UpdatedAt.UTC().Format(time.RFC3339),
-		})
+		resp = append(resp, toWorkspaceResponse(workspace, count, workspaceRole(membership)))
 	}
 
 	return &ListWorkspacesResponse{Workspaces: resp, Total: total}, nil
@@ -257,19 +264,7 @@ func (w *Workspace) GetWorkspace(workspaceId db.Id, user *db.User) (*WorkspaceRe
 		return nil, err
 	}
 
-	return &WorkspaceResponse{
-		Id:           workspace.Id,
-		Name:         workspace.Name,
-		Handle:       workspace.Handle,
-		MembersCount: count,
-		Role: lo.TernaryF(
-			membership != nil,
-			func() string { return membership.Role },
-			func() string { return "" },
-		),
-		CreatedAt: workspace.CreatedAt.UTC().Format(time.RFC3339),
-		UpdatedAt: workspace.UpdatedAt.UTC().Format(time.RFC3339),
-	}, nil
+	return toWorkspaceResponse(workspace, count, workspaceRole(membership)), nil
 }
 
 // UpdateWorkspace updates a workspace after checking the user's access.
@@ -323,19 +318,7 @@ func (w *Workspace) UpdateWorkspace(workspaceId db.Id, req *UpdateWorkspaceReque
 		return nil, err
 	}
 
-	return &WorkspaceResponse{
-		Id:           workspace.Id,
-		Name:         workspace.Name,
-		Handle:       workspace.Handle,
-		MembersCount: count,
-		Role: lo.TernaryF(
-			membership != nil,
-			func() string { return membership.Role },
-			func() string { return "" },
-		),
-		CreatedAt: workspace.CreatedAt.UTC().Format(time.RFC3339),
-		UpdatedAt: workspace.UpdatedAt.UTC().Format(time.RFC3339),
-	}, nil
+	return toWorkspaceResponse(workspace, count, workspaceRole(membership)), nil
 }
 
 // DeleteWorkspace deletes a workspace.

@@ -22,7 +22,7 @@ import AppNav from '@/comp/AppNav.vue'
 defineProps({
   title: {
     type: String,
-    required: true
-  }
+    required: true,
+  },
 })
 </script>

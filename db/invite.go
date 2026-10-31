@@ -5,7 +5,6 @@ package db
 
 import (
 	"database/sql"
-	"errors"
 	"time"
 )
 
@@ -51,6 +50,23 @@ func NewUserInviteRepository(db *sql.DB) UserInviteRepository {
 	return &UserInviteRepositoryPostgres{db: db}
 }
 
+// scanUserInvite maps a row into a user invite. Column order must match the select list.
+func scanUserInvite(u *UserInvite) []any {
+	return []any{
+		&u.Id,
+		&u.Email,
+		&u.Role,
+		&u.Token,
+		&u.Status,
+		&u.InviterUserId,
+		&u.WorkspaceId,
+		&u.ExpiresAt,
+		&u.AcceptedAt,
+		&u.CreatedAt,
+		&u.UpdatedAt,
+	}
+}
+
 // --- Postgres ---
 
 // Create inserts a row
@@ -82,62 +98,30 @@ func (r *UserInviteRepositoryPostgres) Create(invite *UserInvite) error {
 
 // GetById returns a user invite by Id
 func (r *UserInviteRepositoryPostgres) GetById(id Id) (*UserInvite, error) {
-	u := &UserInvite{}
-	err := r.db.QueryRow(
+	return QueryOne(
+		r.db,
 		`SELECT
 			id, email, role, token, status, inviter_user_id, workspace_id,
 			expires_at, accepted_at, created_at, updated_at
 		FROM user_invites
 		WHERE id = $1`,
+		scanUserInvite,
 		id.String(),
-	).Scan(
-		&u.Id,
-		&u.Email,
-		&u.Role,
-		&u.Token,
-		&u.Status,
-		&u.InviterUserId,
-		&u.WorkspaceId,
-		&u.ExpiresAt,
-		&u.AcceptedAt,
-		&u.CreatedAt,
-		&u.UpdatedAt,
 	)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
-
-	return u, err
 }
 
 // GetByToken returns a user invite by token. TODO: remove if not used in future.
 func (r *UserInviteRepositoryPostgres) GetByToken(token string) (*UserInvite, error) {
-	u := &UserInvite{}
-	err := r.db.QueryRow(
+	return QueryOne(
+		r.db,
 		`SELECT
 			id, email, role, token, status, inviter_user_id, workspace_id,
 			expires_at, accepted_at, created_at, updated_at
 		FROM user_invites
 		WHERE token = $1`,
+		scanUserInvite,
 		token,
-	).Scan(
-		&u.Id,
-		&u.Email,
-		&u.Role,
-		&u.Token,
-		&u.Status,
-		&u.InviterUserId,
-		&u.WorkspaceId,
-		&u.ExpiresAt,
-		&u.AcceptedAt,
-		&u.CreatedAt,
-		&u.UpdatedAt,
 	)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
-
-	return u, err
 }
 
 // ListByWorkspaceId returns a paginated list of invites for a workspace.
@@ -146,7 +130,8 @@ func (r *UserInviteRepositoryPostgres) ListByWorkspaceId(workspaceId Id, limit, 
 		limit = 50
 	}
 
-	rows, err := r.db.Query(
+	return QueryMany(
+		r.db,
 		`SELECT
 			id, email, role, token, status, inviter_user_id, workspace_id,
 			expires_at, accepted_at, created_at, updated_at
@@ -154,38 +139,11 @@ func (r *UserInviteRepositoryPostgres) ListByWorkspaceId(workspaceId Id, limit, 
 		WHERE workspace_id = $1
 		ORDER BY created_at DESC
 		LIMIT $2 OFFSET $3`,
+		scanUserInvite,
 		workspaceId.String(),
 		limit,
 		offset,
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-	var list []*UserInvite
-	for rows.Next() {
-		u := &UserInvite{}
-		if err := rows.Scan(
-			&u.Id,
-			&u.Email,
-			&u.Role,
-			&u.Token,
-			&u.Status,
-			&u.InviterUserId,
-			&u.WorkspaceId,
-			&u.ExpiresAt,
-			&u.AcceptedAt,
-			&u.CreatedAt,
-			&u.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-
-		list = append(list, u)
-	}
-
-	return list, rows.Err()
 }
 
 // ListByEmail returns a paginated list of invites for an email address. TODO: remove if not used in future.
@@ -194,7 +152,8 @@ func (r *UserInviteRepositoryPostgres) ListByEmail(email string, limit, offset i
 		limit = 50
 	}
 
-	rows, err := r.db.Query(
+	return QueryMany(
+		r.db,
 		`SELECT
 			id, email, role, token, status, inviter_user_id, workspace_id,
 			expires_at, accepted_at, created_at, updated_at
@@ -202,80 +161,27 @@ func (r *UserInviteRepositoryPostgres) ListByEmail(email string, limit, offset i
 		WHERE email = $1
 		ORDER BY created_at DESC
 		LIMIT $2 OFFSET $3`,
+		scanUserInvite,
 		email,
 		limit,
 		offset,
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-	var list []*UserInvite
-	for rows.Next() {
-		u := &UserInvite{}
-		if err := rows.Scan(
-			&u.Id,
-			&u.Email,
-			&u.Role,
-			&u.Token,
-			&u.Status,
-			&u.InviterUserId,
-			&u.WorkspaceId,
-			&u.ExpiresAt,
-			&u.AcceptedAt,
-			&u.CreatedAt,
-			&u.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-
-		list = append(list, u)
-	}
-
-	return list, rows.Err()
 }
 
 // ListPendingByEmail returns pending, unexpired invites for an email address.
 func (r *UserInviteRepositoryPostgres) ListPendingByEmail(email string) ([]*UserInvite, error) {
-	rows, err := r.db.Query(
+	return QueryMany(
+		r.db,
 		`SELECT
 			id, email, role, token, status, inviter_user_id, workspace_id,
 			expires_at, accepted_at, created_at, updated_at
 		FROM user_invites
 		WHERE LOWER(email) = LOWER($1) AND status = 'pending' AND expires_at > $2
 		ORDER BY created_at ASC`,
+		scanUserInvite,
 		email,
 		time.Now().UTC(),
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-	var list []*UserInvite
-	for rows.Next() {
-		u := &UserInvite{}
-		if err := rows.Scan(
-			&u.Id,
-			&u.Email,
-			&u.Role,
-			&u.Token,
-			&u.Status,
-			&u.InviterUserId,
-			&u.WorkspaceId,
-			&u.ExpiresAt,
-			&u.AcceptedAt,
-			&u.CreatedAt,
-			&u.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-
-		list = append(list, u)
-	}
-
-	return list, rows.Err()
 }
 
 // UpdateStatus updates the status of a user invite (e.g. to "accepted" with acceptedAt set).

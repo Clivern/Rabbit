@@ -1,6 +1,11 @@
 <template>
-  <section id="checks" class="scroll-mt-6 rounded-xl border border-theme-border bg-white shadow-sm overflow-hidden">
-    <div class="flex flex-wrap items-start justify-between gap-4 border-b border-theme-border px-6 py-4">
+  <section
+    id="checks"
+    class="scroll-mt-6 rounded-xl border border-theme-border bg-white shadow-sm overflow-hidden"
+  >
+    <div
+      class="flex flex-wrap items-start justify-between gap-4 border-b border-theme-border px-6 py-4"
+    >
       <div>
         <h2 class="text-lg font-semibold text-theme-text">{{ $t('agents_page.checks_title') }}</h2>
         <p class="mt-1 text-sm text-theme-textLight">{{ $t('agents_page.checks_desc') }}</p>
@@ -21,10 +26,27 @@
       <table class="min-w-full divide-y divide-theme-border">
         <thead class="bg-theme-hover">
           <tr>
-            <th class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider">{{ $t('agents_page.check') }}</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider">{{ $t('agents_page.check_type') }}</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider">{{ $t('agents_page.check_settings') }}</th>
-            <th v-if="canManage" class="px-6 py-3 text-right text-xs font-medium text-theme-textLight uppercase tracking-wider">{{ $t('agents_page.actions') }}</th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider"
+            >
+              {{ $t('agents_page.check') }}
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider"
+            >
+              {{ $t('agents_page.check_type') }}
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider"
+            >
+              {{ $t('agents_page.check_settings') }}
+            </th>
+            <th
+              v-if="canManage"
+              class="px-6 py-3 text-right text-xs font-medium text-theme-textLight uppercase tracking-wider"
+            >
+              {{ $t('agents_page.actions') }}
+            </th>
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-theme-border">
@@ -33,11 +55,17 @@
               <p class="text-sm font-medium text-theme-text">{{ check.name }}</p>
               <p class="text-xs font-mono text-theme-textLight">{{ check.checkId }}</p>
             </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-theme-text">{{ $t(`agents_page.check_type_${check.type}`) }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-theme-text">
+              {{ $t(`agents_page.check_type_${check.type}`) }}
+            </td>
             <td class="px-6 py-4 text-sm text-theme-text font-mono">{{ describeCheck(check) }}</td>
             <td v-if="canManage" class="px-6 py-4 whitespace-nowrap text-right text-sm">
               <span class="inline-flex items-center gap-3">
-                <button type="button" class="text-primary-600 hover:text-primary-700 hover:underline" @click="openModal(check)">
+                <button
+                  type="button"
+                  class="text-primary-600 hover:text-primary-700 hover:underline"
+                  @click="openModal(check)"
+                >
                   {{ $t('common.edit') }}
                 </button>
                 <button
@@ -163,7 +191,11 @@ function describeCheck(check) {
   }
   const port = check.port ? `:${check.port}` : ''
   const target = check.type === 'http' ? `${check.scheme}://…${port}${check.path}` : `tcp …${port}`
-  return t('agents_page.check_describe_probe', { target, interval: check.interval, timeout: check.timeout })
+  return t('agents_page.check_describe_probe', {
+    target,
+    interval: check.interval,
+    timeout: check.timeout,
+  })
 }
 
 load()

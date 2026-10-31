@@ -1,6 +1,11 @@
 <template>
-  <section id="instances" class="scroll-mt-6 rounded-xl border border-theme-border bg-white shadow-sm overflow-hidden">
-    <div class="flex flex-wrap items-start justify-between gap-4 border-b border-theme-border px-6 py-4">
+  <section
+    id="instances"
+    class="scroll-mt-6 rounded-xl border border-theme-border bg-white shadow-sm overflow-hidden"
+  >
+    <div
+      class="flex flex-wrap items-start justify-between gap-4 border-b border-theme-border px-6 py-4"
+    >
       <div>
         <h2 class="text-lg font-semibold text-theme-text">{{ $t('agents_page.instances') }}</h2>
         <p class="mt-1 text-sm text-theme-textLight">{{ $t('agents_page.instances_desc') }}</p>
@@ -15,7 +20,10 @@
       </button>
     </div>
 
-    <div v-if="loading && instances.length === 0" class="p-12 text-center text-sm text-theme-textLight">
+    <div
+      v-if="loading && instances.length === 0"
+      class="p-12 text-center text-sm text-theme-textLight"
+    >
       {{ $t('agents_page.loading_instances') }}
     </div>
     <div v-else-if="instances.length === 0" class="p-12 text-center">
@@ -26,29 +34,60 @@
       <table class="min-w-full divide-y divide-theme-border">
         <thead class="bg-theme-hover">
           <tr>
-            <th class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider">{{ $t('agents_page.instance') }}</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider">{{ $t('agents_page.address') }}</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider">{{ $t('agents_page.health') }}</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider">{{ $t('agents_page.checks_title') }}</th>
-            <th v-if="canManage" class="px-6 py-3 text-right text-xs font-medium text-theme-textLight uppercase tracking-wider">{{ $t('agents_page.actions') }}</th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider"
+            >
+              {{ $t('agents_page.instance') }}
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider"
+            >
+              {{ $t('agents_page.address') }}
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider"
+            >
+              {{ $t('agents_page.health') }}
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider"
+            >
+              {{ $t('agents_page.checks_title') }}
+            </th>
+            <th
+              v-if="canManage"
+              class="px-6 py-3 text-right text-xs font-medium text-theme-textLight uppercase tracking-wider"
+            >
+              {{ $t('agents_page.actions') }}
+            </th>
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-theme-border">
           <template v-for="instance in instances" :key="instance.id">
             <tr class="hover:bg-theme-hover">
-              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-theme-text font-mono">{{ instance.instanceId }}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-theme-text font-mono">{{ instance.address }}:{{ instance.port }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-theme-text font-mono">
+                {{ instance.instanceId }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-theme-text font-mono">
+                {{ instance.address }}:{{ instance.port }}
+              </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm">
                 <span
                   class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium"
                   :class="healthClass(instance.status)"
                 >
-                  <span class="h-1.5 w-1.5 rounded-full" :class="healthDotClass(instance.status)" aria-hidden="true" />
+                  <span
+                    class="h-1.5 w-1.5 rounded-full"
+                    :class="healthDotClass(instance.status)"
+                    aria-hidden="true"
+                  />
                   {{ $t(`agents_page.health_${instance.status}`) }}
                 </span>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm">
-                <span v-if="!(instance.checks || []).length" class="text-theme-textLight">{{ $t('agents_page.instance_no_checks') }}</span>
+                <span v-if="!(instance.checks || []).length" class="text-theme-textLight">{{
+                  $t('agents_page.instance_no_checks')
+                }}</span>
                 <button
                   v-else
                   type="button"
@@ -57,8 +96,20 @@
                   @click="expanded[instance.id] = !expanded[instance.id]"
                 >
                   <StatusBreakdown :counts="countByStatus(instance.checks)" hide-zero />
-                  <svg class="h-3.5 w-3.5 transition-transform" :class="expanded[instance.id] ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                  <svg
+                    class="h-3.5 w-3.5 transition-transform"
+                    :class="expanded[instance.id] ? 'rotate-180' : ''"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M19 9l-7 7-7-7"
+                    />
                   </svg>
                 </button>
               </td>
@@ -75,24 +126,40 @@
             <tr v-if="expanded[instance.id]">
               <td :colspan="canManage ? 5 : 4" class="bg-theme-hover px-6 py-4">
                 <ul class="space-y-3">
-                  <li v-for="check in instance.checks" :key="check.checkId" class="grid gap-1 sm:grid-cols-[220px_110px_1fr]">
+                  <li
+                    v-for="check in instance.checks"
+                    :key="check.checkId"
+                    class="grid gap-1 sm:grid-cols-[220px_110px_1fr]"
+                  >
                     <div>
                       <p class="text-sm font-medium text-theme-text">{{ check.name }}</p>
-                      <p class="text-xs font-mono text-theme-textLight">{{ check.checkId }} · {{ $t(`agents_page.check_type_${check.type}`) }}</p>
+                      <p class="text-xs font-mono text-theme-textLight">
+                        {{ check.checkId }} · {{ $t(`agents_page.check_type_${check.type}`) }}
+                      </p>
                     </div>
                     <div>
                       <span
                         class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium"
                         :class="healthClass(check.status)"
                       >
-                        <span class="h-1.5 w-1.5 rounded-full" :class="healthDotClass(check.status)" aria-hidden="true" />
+                        <span
+                          class="h-1.5 w-1.5 rounded-full"
+                          :class="healthDotClass(check.status)"
+                          aria-hidden="true"
+                        />
                         {{ $t(`agents_page.health_${check.status}`) }}
                       </span>
                     </div>
                     <div class="min-w-0">
-                      <p class="text-sm text-theme-text break-words font-mono">{{ check.output || '—' }}</p>
+                      <p class="text-sm text-theme-text break-words font-mono">
+                        {{ check.output || '—' }}
+                      </p>
                       <p class="text-xs text-theme-textLight">
-                        {{ $t('agents_page.check_last_run', { when: formatRelative(check.lastRunAt, $t('agents_page.check_never')) }) }}
+                        {{
+                          $t('agents_page.check_last_run', {
+                            when: formatRelative(check.lastRunAt, $t('agents_page.check_never')),
+                          })
+                        }}
                       </p>
                     </div>
                   </li>
@@ -109,7 +176,13 @@
       class="bg-white px-6 py-4 border-t border-theme-border flex items-center justify-between"
     >
       <div class="text-sm text-theme-textLight">
-        {{ $t('agents_page.showing', { from: offset + 1, to: Math.min(offset + limit, total), total }) }}
+        {{
+          $t('agents_page.showing', {
+            from: offset + 1,
+            to: Math.min(offset + limit, total),
+            total,
+          })
+        }}
       </div>
       <div class="flex items-center gap-2">
         <button
@@ -180,7 +253,10 @@ async function load() {
   loading.value = true
 
   try {
-    const res = await agent_instance_api.list(props.workspaceId, props.agentName, { limit, offset: offset.value })
+    const res = await agent_instance_api.list(props.workspaceId, props.agentName, {
+      limit,
+      offset: offset.value,
+    })
     instances.value = res.data.instances || []
     total.value = res.data._meta?.total || 0
 
@@ -212,7 +288,11 @@ async function confirmDeregister() {
   deleteError.value = null
 
   try {
-    await agent_instance_api.delete(props.workspaceId, props.agentName, deregisterTarget.value.instanceId)
+    await agent_instance_api.delete(
+      props.workspaceId,
+      props.agentName,
+      deregisterTarget.value.instanceId
+    )
   } catch (err) {
     deleteError.value = errorText(err, t('agents_page.failed_deregister'))
     return

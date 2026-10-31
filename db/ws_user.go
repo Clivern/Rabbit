@@ -5,7 +5,6 @@ package db
 
 import (
 	"database/sql"
-	"errors"
 	"time"
 )
 
@@ -42,6 +41,18 @@ func NewWorkspaceUserRepository(db *sql.DB) WorkspaceUserRepository {
 	return &WorkspaceUserRepositoryPostgres{db: db}
 }
 
+// scanWorkspaceUser maps a row into a workspace user. Column order must match the select list.
+func scanWorkspaceUser(m *WorkspaceUser) []any {
+	return []any{
+		&m.Id,
+		&m.WorkspaceId,
+		&m.UserId,
+		&m.Role,
+		&m.CreatedAt,
+		&m.UpdatedAt,
+	}
+}
+
 // --- Postgres ---
 
 // Create inserts a row
@@ -68,47 +79,25 @@ func (r *WorkspaceUserRepositoryPostgres) Create(m *WorkspaceUser) error {
 
 // GetById returns a workspace user by Id. TODO: remove if not used in future.
 func (r *WorkspaceUserRepositoryPostgres) GetById(id Id) (*WorkspaceUser, error) {
-	m := &WorkspaceUser{}
-	err := r.db.QueryRow(
+	return QueryOne(
+		r.db,
 		`SELECT id, workspace_id, user_id, role, created_at, updated_at
 		FROM workspace_users WHERE id = $1`,
+		scanWorkspaceUser,
 		id.String(),
-	).Scan(
-		&m.Id,
-		&m.WorkspaceId,
-		&m.UserId,
-		&m.Role,
-		&m.CreatedAt,
-		&m.UpdatedAt,
 	)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
-
-	return m, err
 }
 
 // GetByWorkspaceAndUser returns a workspace user by workspace and user Id
 func (r *WorkspaceUserRepositoryPostgres) GetByWorkspaceAndUser(workspaceId, userId Id) (*WorkspaceUser, error) {
-	m := &WorkspaceUser{}
-	err := r.db.QueryRow(
+	return QueryOne(
+		r.db,
 		`SELECT id, workspace_id, user_id, role, created_at, updated_at
 		FROM workspace_users WHERE workspace_id = $1 AND user_id = $2`,
+		scanWorkspaceUser,
 		workspaceId.String(),
 		userId.String(),
-	).Scan(
-		&m.Id,
-		&m.WorkspaceId,
-		&m.UserId,
-		&m.Role,
-		&m.CreatedAt,
-		&m.UpdatedAt,
 	)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
-
-	return m, err
 }
 
 // Update updates a workspace user
@@ -138,38 +127,16 @@ func (r *WorkspaceUserRepositoryPostgres) Delete(id Id) error {
 
 // List returns a list of workspace users. TODO: remove if not used in future.
 func (r *WorkspaceUserRepositoryPostgres) List(limit, offset int) ([]*WorkspaceUser, error) {
-	rows, err := r.db.Query(
+	return QueryMany(
+		r.db,
 		`SELECT id, workspace_id, user_id, role, created_at, updated_at
 		FROM workspace_users
 		ORDER BY created_at DESC
 		LIMIT $1 OFFSET $2`,
+		scanWorkspaceUser,
 		limit,
 		offset,
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-	var list []*WorkspaceUser
-	for rows.Next() {
-		m := &WorkspaceUser{}
-		err := rows.Scan(
-			&m.Id,
-			&m.WorkspaceId,
-			&m.UserId,
-			&m.Role,
-			&m.CreatedAt,
-			&m.UpdatedAt,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		list = append(list, m)
-	}
-
-	return list, rows.Err()
 }
 
 // Count returns the total number of workspace users. TODO: remove if not used in future.
@@ -185,40 +152,18 @@ func (r *WorkspaceUserRepositoryPostgres) Count() (int64, error) {
 
 // ListByWorkspaceId returns workspace users for the given workspace with pagination
 func (r *WorkspaceUserRepositoryPostgres) ListByWorkspaceId(workspaceId Id, limit, offset int) ([]*WorkspaceUser, error) {
-	rows, err := r.db.Query(
+	return QueryMany(
+		r.db,
 		`SELECT id, workspace_id, user_id, role, created_at, updated_at
 		FROM workspace_users
 		WHERE workspace_id = $1
 		ORDER BY created_at DESC
 		LIMIT $2 OFFSET $3`,
+		scanWorkspaceUser,
 		workspaceId.String(),
 		limit,
 		offset,
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-	var list []*WorkspaceUser
-	for rows.Next() {
-		m := &WorkspaceUser{}
-		err := rows.Scan(
-			&m.Id,
-			&m.WorkspaceId,
-			&m.UserId,
-			&m.Role,
-			&m.CreatedAt,
-			&m.UpdatedAt,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		list = append(list, m)
-	}
-
-	return list, rows.Err()
 }
 
 // CountByWorkspaceId returns the number of users in the workspace

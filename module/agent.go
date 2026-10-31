@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/clivern/sloth/db"
+	"github.com/clivern/sloth/pkg/lb"
 	"github.com/clivern/sloth/pkg/util"
 
 	"github.com/rs/zerolog/log"
@@ -22,6 +23,7 @@ var (
 	ErrAgentNotFound        = errors.New("agent not found")
 	ErrInvalidAgentName     = errors.New("invalid agent name")
 	ErrInvalidCardPath      = errors.New("invalid agent card path")
+	ErrInvalidLbStrategy    = errors.New("invalid load balancing strategy")
 	ErrAgentVersionRequired = errors.New("agent version required")
 	ErrFailedListAgents     = errors.New("failed list agents")
 	ErrFailedGetAgent       = errors.New("failed get agent")
@@ -42,8 +44,9 @@ type Agent struct {
 
 // UpsertAgentRequest is the body for registering or updating an agent.
 type UpsertAgentRequest struct {
-	Version  string `json:"version" validate:"required,max=40" label:"Version"`
-	CardPath string `json:"cardPath" validate:"omitempty,max=255,startswith=/" label:"Card Path"`
+	Version    string `json:"version" validate:"required,max=40" label:"Version"`
+	CardPath   string `json:"cardPath" validate:"omitempty,max=255,startswith=/" label:"Card Path"`
+	LbStrategy string `json:"lbStrategy" validate:"omitempty,oneof=random round_robin least_outstanding_tasks sticky" label:"Load Balancing Strategy"`
 }
 
 // AgentResponse is an agent shaped for API responses.
@@ -55,6 +58,7 @@ type AgentResponse struct {
 	Card         json.RawMessage `json:"card"`
 	CardChecksum string          `json:"cardChecksum"`
 	CardPath     string          `json:"cardPath"`
+	LbStrategy   string          `json:"lbStrategy"`
 	Health       string          `json:"health"`
 	StatusCounts map[string]int  `json:"statusCounts"`
 	CreatedAt    string          `json:"createdAt"`
@@ -68,13 +72,46 @@ type ListAgentsResponse struct {
 }
 
 // NewAgent creates an agent module with the given repositories.
-func NewAgent(agents db.AgentRepository, instances db.AgentInstanceRepository, checks db.HealthCheckRepository, workspaces db.WorkspaceRepository) *Agent {
+func NewAgent(
+	agents db.AgentRepository,
+	instances db.AgentInstanceRepository,
+	checks db.HealthCheckRepository,
+	workspaces db.WorkspaceRepository,
+) *Agent {
 	return &Agent{
 		AgentRepository:       agents,
 		InstanceRepository:    instances,
 		HealthCheckRepository: checks,
 		WorkspaceRepository:   workspaces,
 	}
+}
+
+// toAgentResponse shapes an agent row for API responses.
+func toAgentResponse(item *db.Agent, health string, counts map[string]int) *AgentResponse {
+	return &AgentResponse{
+		Id:           item.Id,
+		WorkspaceId:  item.WorkspaceId,
+		Name:         item.Name,
+		Version:      item.Version,
+		Card:         util.JSONRawFromString(item.Card),
+		CardChecksum: lo.FromPtr(item.CardChecksum),
+		CardPath:     item.CardPath,
+		LbStrategy:   lo.CoalesceOrEmpty(item.LbStrategy, string(lb.RoundRobin)),
+		Health:       health,
+		StatusCounts: counts,
+		CreatedAt:    item.CreatedAt.UTC().Format(time.RFC3339),
+		UpdatedAt:    item.UpdatedAt.UTC().Format(time.RFC3339),
+	}
+}
+
+// isValidLbStrategy reports whether s names a strategy the picker knows.
+func isValidLbStrategy(s string) bool {
+	switch lb.Strategy(s) {
+	case lb.Random, lb.RoundRobin, lb.LeastOutstandingTasks, lb.Sticky:
+		return true
+	}
+
+	return false
 }
 
 // ListAgents returns paginated agents in a workspace.
@@ -109,19 +146,7 @@ func (a *Agent) ListAgents(workspaceId db.Id, limit, offset int) (*ListAgentsRes
 			return nil, fmt.Errorf("%w: %v", ErrFailedListAgents, err)
 		}
 
-		list = append(list, &AgentResponse{
-			Id:           item.Id,
-			WorkspaceId:  item.WorkspaceId,
-			Name:         item.Name,
-			Version:      item.Version,
-			Card:         util.JSONRawFromString(item.Card),
-			CardChecksum: lo.FromPtr(item.CardChecksum),
-			CardPath:     item.CardPath,
-			Health:       health,
-			StatusCounts: counts,
-			CreatedAt:    item.CreatedAt.UTC().Format(time.RFC3339),
-			UpdatedAt:    item.UpdatedAt.UTC().Format(time.RFC3339),
-		})
+		list = append(list, toAgentResponse(item, health, counts))
 	}
 
 	return &ListAgentsResponse{Agents: list, Total: total}, nil
@@ -152,22 +177,10 @@ func (a *Agent) GetAgent(workspaceId db.Id, name string) (*AgentResponse, error)
 		return nil, fmt.Errorf("%w: %v", ErrFailedGetAgent, err)
 	}
 
-	return &AgentResponse{
-		Id:           agent.Id,
-		WorkspaceId:  agent.WorkspaceId,
-		Name:         agent.Name,
-		Version:      agent.Version,
-		Card:         util.JSONRawFromString(agent.Card),
-		CardChecksum: lo.FromPtr(agent.CardChecksum),
-		CardPath:     agent.CardPath,
-		Health:       health,
-		StatusCounts: counts,
-		CreatedAt:    agent.CreatedAt.UTC().Format(time.RFC3339),
-		UpdatedAt:    agent.UpdatedAt.UTC().Format(time.RFC3339),
-	}, nil
+	return toAgentResponse(agent, health, counts), nil
 }
 
-// UpsertAgent creates or updates an agent's version and card path.
+// UpsertAgent creates or updates an agent's version, card path and load balancing strategy.
 func (a *Agent) UpsertAgent(workspaceId db.Id, name string, req *UpsertAgentRequest) (*AgentResponse, bool, error) {
 	if !AgentNamePattern.MatchString(name) {
 		return nil, false, ErrInvalidAgentName
@@ -180,6 +193,10 @@ func (a *Agent) UpsertAgent(workspaceId db.Id, name string, req *UpsertAgentRequ
 	cardPath := lo.CoalesceOrEmpty(req.CardPath, DefaultCardPath)
 	if !strings.HasPrefix(cardPath, "/") || len(cardPath) > 255 {
 		return nil, false, ErrInvalidCardPath
+	}
+
+	if req.LbStrategy != "" && !isValidLbStrategy(req.LbStrategy) {
+		return nil, false, ErrInvalidLbStrategy
 	}
 
 	existing, err := a.AgentRepository.GetByWorkspaceAndName(workspaceId, name)
@@ -206,6 +223,11 @@ func (a *Agent) UpsertAgent(workspaceId db.Id, name string, req *UpsertAgentRequ
 	existing.Name = name
 	existing.CardPath = cardPath
 	existing.Version = req.Version
+	existing.LbStrategy = lo.CoalesceOrEmpty(
+		req.LbStrategy,
+		existing.LbStrategy,
+		string(lb.RoundRobin),
+	)
 
 	if created {
 		err = a.AgentRepository.Create(existing)
@@ -242,19 +264,7 @@ func (a *Agent) UpsertAgent(workspaceId db.Id, name string, req *UpsertAgentRequ
 		Bool("created", created).
 		Msg("Agent upserted")
 
-	return &AgentResponse{
-		Id:           existing.Id,
-		WorkspaceId:  existing.WorkspaceId,
-		Name:         existing.Name,
-		Version:      existing.Version,
-		Card:         util.JSONRawFromString(existing.Card),
-		CardChecksum: lo.FromPtr(existing.CardChecksum),
-		CardPath:     existing.CardPath,
-		Health:       health,
-		StatusCounts: counts,
-		CreatedAt:    existing.CreatedAt.UTC().Format(time.RFC3339),
-		UpdatedAt:    existing.UpdatedAt.UTC().Format(time.RFC3339),
-	}, created, nil
+	return toAgentResponse(existing, health, counts), created, nil
 }
 
 // DeleteAgent removes an agent by name.

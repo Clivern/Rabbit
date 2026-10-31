@@ -14,7 +14,10 @@
       >
         <p class="text-sm font-medium text-amber-900">{{ $t('integrations_page.secret_desc') }}</p>
         <div class="flex flex-wrap items-center gap-2">
-          <code class="flex-1 min-w-0 px-3 py-2 bg-white border border-amber-200 rounded text-sm text-theme-text break-all font-mono">{{ newSecret }}</code>
+          <code
+            class="flex-1 min-w-0 px-3 py-2 bg-white border border-amber-200 rounded text-sm text-theme-text break-all font-mono"
+            >{{ newSecret }}</code
+          >
           <button type="button" class="btn-secondary shrink-0" @click="copySecret">
             {{ copied ? $t('integrations_page.copied') : $t('integrations_page.copy') }}
           </button>
@@ -22,16 +25,20 @@
         <button
           type="button"
           class="text-sm text-amber-800 hover:text-amber-900 font-medium"
-          @click="newSecret = null; copied = false"
+          @click="dismissNewSecret"
         >
           {{ $t('integrations_page.dismiss') }}
         </button>
       </div>
 
       <section class="rounded-xl border border-theme-border bg-white shadow-sm overflow-hidden">
-        <div class="flex flex-wrap items-start justify-between gap-4 border-b border-theme-border px-6 py-4">
+        <div
+          class="flex flex-wrap items-start justify-between gap-4 border-b border-theme-border px-6 py-4"
+        >
           <div>
-            <h2 class="text-lg font-semibold text-theme-text">{{ $t('integrations_page.list_title') }}</h2>
+            <h2 class="text-lg font-semibold text-theme-text">
+              {{ $t('integrations_page.list_title') }}
+            </h2>
             <p class="mt-1 text-sm text-theme-textLight">{{ $t('integrations_page.list_desc') }}</p>
           </div>
           <button type="button" class="btn-primary" @click="openForm()">
@@ -39,7 +46,10 @@
           </button>
         </div>
 
-        <div v-if="errorMessage" class="m-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+        <div
+          v-if="errorMessage"
+          class="m-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+        >
           {{ errorMessage }}
         </div>
 
@@ -47,26 +57,60 @@
           <table class="min-w-full divide-y divide-theme-border">
             <thead class="bg-theme-hover">
               <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider">{{ $t('integrations_page.name') }}</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider">{{ $t('integrations_page.type') }}</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider">{{ $t('integrations_page.destination') }}</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider">{{ $t('integrations_page.events') }}</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider">{{ $t('integrations_page.status') }}</th>
-                <th class="px-6 py-3 text-right text-xs font-medium text-theme-textLight uppercase tracking-wider">{{ $t('integrations_page.actions') }}</th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider"
+                >
+                  {{ $t('integrations_page.name') }}
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider"
+                >
+                  {{ $t('integrations_page.type') }}
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider"
+                >
+                  {{ $t('integrations_page.destination') }}
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider"
+                >
+                  {{ $t('integrations_page.events') }}
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider"
+                >
+                  {{ $t('integrations_page.status') }}
+                </th>
+                <th
+                  class="px-6 py-3 text-right text-xs font-medium text-theme-textLight uppercase tracking-wider"
+                >
+                  {{ $t('integrations_page.actions') }}
+                </th>
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-theme-border">
               <tr v-if="loading">
-                <td colspan="6" class="px-6 py-4 text-center text-sm text-theme-textLight">{{ $t('common.loading') }}</td>
+                <td colspan="6" class="px-6 py-4 text-center text-sm text-theme-textLight">
+                  {{ $t('common.loading') }}
+                </td>
               </tr>
               <tr v-else-if="!integrations.length">
-                <td colspan="6" class="px-6 py-4 text-center text-sm text-theme-textLight">{{ $t('integrations_page.empty') }}</td>
+                <td colspan="6" class="px-6 py-4 text-center text-sm text-theme-textLight">
+                  {{ $t('integrations_page.empty') }}
+                </td>
               </tr>
               <template v-else>
                 <tr v-for="item in integrations" :key="item.id" class="hover:bg-theme-hover">
-                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-theme-text">{{ item.name }}</td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-theme-text">{{ $t(`integrations_page.type_${item.type}`) }}</td>
-                  <td class="px-6 py-4 text-sm text-theme-text font-mono break-all">{{ item.url || item.site }}</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-theme-text">
+                    {{ item.name }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-theme-text">
+                    {{ $t(`integrations_page.type_${item.type}`) }}
+                  </td>
+                  <td class="px-6 py-4 text-sm text-theme-text font-mono break-all">
+                    {{ item.url || item.site }}
+                  </td>
                   <td class="px-6 py-4 text-sm">
                     <div class="flex flex-wrap gap-1">
                       <span
@@ -96,7 +140,11 @@
                         />
                       </button>
                       <span :class="item.isActive ? 'text-emerald-800' : 'text-theme-textLight'">
-                        {{ item.isActive ? $t('integrations_page.enabled') : $t('integrations_page.disabled') }}
+                        {{
+                          item.isActive
+                            ? $t('integrations_page.enabled')
+                            : $t('integrations_page.disabled')
+                        }}
                       </span>
                     </div>
                   </td>
@@ -127,7 +175,13 @@
           class="bg-white px-6 py-4 border-t border-theme-border flex items-center justify-between"
         >
           <div class="text-sm text-theme-textLight">
-            {{ $t('integrations_page.showing', { from: offset + 1, to: Math.min(offset + limit, total), total }) }}
+            {{
+              $t('integrations_page.showing', {
+                from: offset + 1,
+                to: Math.min(offset + limit, total),
+                total,
+              })
+            }}
           </div>
           <div class="flex items-center gap-2">
             <button
@@ -161,18 +215,24 @@
       <form class="mt-4 space-y-4" @submit.prevent="submit">
         <div class="grid gap-4 sm:grid-cols-2">
           <div>
-            <label for="integration-type" class="form-label">{{ $t('integrations_page.type') }}</label>
+            <label for="integration-type" class="form-label">{{
+              $t('integrations_page.type')
+            }}</label>
             <select
               id="integration-type"
               v-model="form.type"
               class="input-field"
               :disabled="saving || isEditing"
             >
-              <option v-for="type in TYPES" :key="type" :value="type">{{ $t(`integrations_page.type_${type}`) }}</option>
+              <option v-for="type in TYPES" :key="type" :value="type">
+                {{ $t(`integrations_page.type_${type}`) }}
+              </option>
             </select>
           </div>
           <div>
-            <label for="integration-name" class="form-label">{{ $t('integrations_page.name') }}</label>
+            <label for="integration-name" class="form-label">{{
+              $t('integrations_page.name')
+            }}</label>
             <input
               id="integration-name"
               v-model="form.name"
@@ -188,7 +248,9 @@
         </div>
 
         <div v-if="URL_PLACEHOLDERS[form.type]">
-          <label for="integration-url" class="form-label">{{ $t(`integrations_page.url_${form.type}`) }}</label>
+          <label for="integration-url" class="form-label">{{
+            $t(`integrations_page.url_${form.type}`)
+          }}</label>
           <input
             id="integration-url"
             v-model="form.url"
@@ -203,7 +265,9 @@
         </div>
 
         <div v-if="form.type === 'datadog'">
-          <label for="integration-site" class="form-label">{{ $t('integrations_page.site') }}</label>
+          <label for="integration-site" class="form-label">{{
+            $t('integrations_page.site')
+          }}</label>
           <select
             id="integration-site"
             v-model="form.site"
@@ -216,7 +280,9 @@
         </div>
 
         <div v-if="form.type === 'pagerduty'">
-          <label for="integration-region" class="form-label">{{ $t('integrations_page.region') }}</label>
+          <label for="integration-region" class="form-label">{{
+            $t('integrations_page.region')
+          }}</label>
           <select
             id="integration-region"
             v-model="form.region"
@@ -224,12 +290,16 @@
             class="input-field"
             :disabled="saving"
           >
-            <option v-for="region in PAGERDUTY_REGIONS" :key="region" :value="region">{{ $t(`integrations_page.region_${region === PAGERDUTY_REGIONS[0] ? 'us' : 'eu'}`) }}</option>
+            <option v-for="region in PAGERDUTY_REGIONS" :key="region" :value="region">
+              {{ $t(`integrations_page.region_${region === PAGERDUTY_REGIONS[0] ? 'us' : 'eu'}`) }}
+            </option>
           </select>
         </div>
 
         <div v-if="form.type === 'splunk'">
-          <label for="integration-index" class="form-label">{{ $t('integrations_page.index') }}</label>
+          <label for="integration-index" class="form-label">{{
+            $t('integrations_page.index')
+          }}</label>
           <input
             id="integration-index"
             v-model="form.index"
@@ -244,7 +314,9 @@
         </div>
 
         <div v-if="form.type !== 'slack'">
-          <label for="integration-secret" class="form-label">{{ $t(`integrations_page.secret_${form.type}`) }}</label>
+          <label for="integration-secret" class="form-label">{{
+            $t(`integrations_page.secret_${form.type}`)
+          }}</label>
           <input
             id="integration-secret"
             v-model="form.secret"
@@ -276,15 +348,21 @@
             />
             <span>
               {{ $t(`integrations_page.event_${event.replaceAll('.', '_')}`) }}
-              <span class="block text-xs text-theme-textLight">{{ $t(`integrations_page.event_${event.replaceAll('.', '_')}_desc`) }}</span>
+              <span class="block text-xs text-theme-textLight">{{
+                $t(`integrations_page.event_${event.replaceAll('.', '_')}_desc`)
+              }}</span>
             </span>
           </label>
         </fieldset>
 
-        <div class="flex items-start justify-between gap-4 rounded-lg border border-theme-border px-4 py-3">
+        <div
+          class="flex items-start justify-between gap-4 rounded-lg border border-theme-border px-4 py-3"
+        >
           <div>
             <p id="integration-active-label" class="text-sm font-medium text-theme-text">
-              {{ form.isActive ? $t('integrations_page.enabled') : $t('integrations_page.disabled') }}
+              {{
+                form.isActive ? $t('integrations_page.enabled') : $t('integrations_page.disabled')
+              }}
             </p>
             <p class="text-xs text-theme-textLight">{{ $t('integrations_page.active_hint') }}</p>
           </div>
@@ -344,8 +422,22 @@ import BaseModal from '@/comp/BaseModal.vue'
 
 const TYPES = ['webhook', 'slack', 'datadog', 'splunk', 'pagerduty']
 const PAGERDUTY_REGIONS = ['events.pagerduty.com', 'events.eu.pagerduty.com']
-const DATADOG_SITES = ['datadoghq.com', 'us3.datadoghq.com', 'us5.datadoghq.com', 'datadoghq.eu', 'ap1.datadoghq.com', 'ddog-gov.com']
-const EVENTS = ['audit.log', 'agent.health.changed', 'agent.instance.changed', 'catalog.changed', 'gateway.call.denied', 'system.health.degraded']
+const DATADOG_SITES = [
+  'datadoghq.com',
+  'us3.datadoghq.com',
+  'us5.datadoghq.com',
+  'datadoghq.eu',
+  'ap1.datadoghq.com',
+  'ddog-gov.com',
+]
+const EVENTS = [
+  'audit.log',
+  'agent.health.changed',
+  'agent.instance.changed',
+  'catalog.changed',
+  'gateway.call.denied',
+  'system.health.degraded',
+]
 const URL_PLACEHOLDERS = {
   webhook: 'https://example.com/webhooks/sloth',
   slack: 'https://hooks.slack.com/services/T000/B000/XXXX',
@@ -379,7 +471,9 @@ const deleting = ref(false)
 const deleteError = ref(null)
 
 // Datadog and Splunk need a credential unless one is already stored for this integration
-const secretRequired = computed(() => ['datadog', 'splunk', 'pagerduty'].includes(form.value.type) && !editing.value?.hasSecret)
+const secretRequired = computed(
+  () => ['datadog', 'splunk', 'pagerduty'].includes(form.value.type) && !editing.value?.hasSecret
+)
 
 const secretHint = computed(() => {
   if (editing.value?.hasSecret) return t('integrations_page.secret_keep_hint')
@@ -387,7 +481,17 @@ const secretHint = computed(() => {
 })
 
 function emptyForm() {
-  return { type: 'webhook', name: '', url: '', site: DATADOG_SITES[0], region: PAGERDUTY_REGIONS[0], index: '', secret: '', events: ['audit.log'], isActive: true }
+  return {
+    type: 'webhook',
+    name: '',
+    url: '',
+    site: DATADOG_SITES[0],
+    region: PAGERDUTY_REGIONS[0],
+    index: '',
+    secret: '',
+    events: ['audit.log'],
+    isActive: true,
+  }
 }
 
 // Maps an integration from the API to the form fields
@@ -410,7 +514,10 @@ async function loadIntegrations() {
   errorMessage.value = null
 
   try {
-    const res = await integration_api.list(currentWorkspace.id, { limit: limit, offset: offset.value })
+    const res = await integration_api.list(currentWorkspace.id, {
+      limit: limit,
+      offset: offset.value,
+    })
     integrations.value = res.data.integrations || []
     total.value = res.data._meta?.total || 0
   } catch (err) {
@@ -506,6 +613,11 @@ async function copySecret() {
   } catch {
     errorMessage.value = t('integrations_page.copy_failed')
   }
+}
+
+function dismissNewSecret() {
+  newSecret.value = null
+  copied.value = false
 }
 
 function closeDelete() {

@@ -29,13 +29,19 @@
         <select id="identity-type" v-model="form.type" class="input-field" :disabled="saving">
           <option value="api_key">{{ $t('agents_page.identity_type_api_key') }}</option>
           <option value="basic_auth">{{ $t('agents_page.identity_type_basic_auth') }}</option>
-          <option value="client_credentials">{{ $t('agents_page.identity_type_client_credentials') }}</option>
+          <option value="client_credentials">
+            {{ $t('agents_page.identity_type_client_credentials') }}
+          </option>
         </select>
-        <p class="mt-1 text-xs text-theme-textLight">{{ $t(`agents_page.identity_type_${form.type}_hint`) }}</p>
+        <p class="mt-1 text-xs text-theme-textLight">
+          {{ $t(`agents_page.identity_type_${form.type}_hint`) }}
+        </p>
       </div>
 
       <div v-if="form.type === 'basic_auth'">
-        <label for="identity-username" class="form-label">{{ $t('agents_page.identity_username') }}</label>
+        <label for="identity-username" class="form-label">{{
+          $t('agents_page.identity_username')
+        }}</label>
         <input
           id="identity-username"
           v-model="form.username"
@@ -50,7 +56,9 @@
       </div>
 
       <div v-if="form.type === 'client_credentials'">
-        <label for="identity-token-ttl" class="form-label">{{ $t('agents_page.identity_token_ttl') }}</label>
+        <label for="identity-token-ttl" class="form-label">{{
+          $t('agents_page.identity_token_ttl')
+        }}</label>
         <input
           id="identity-token-ttl"
           v-model.number="form.tokenTtl"
@@ -61,11 +69,15 @@
           class="input-field"
           :disabled="saving"
         />
-        <p class="mt-1 text-xs text-theme-textLight">{{ $t('agents_page.identity_token_ttl_hint') }}</p>
+        <p class="mt-1 text-xs text-theme-textLight">
+          {{ $t('agents_page.identity_token_ttl_hint') }}
+        </p>
       </div>
 
       <div>
-        <label for="identity-secret" class="form-label">{{ $t('agents_page.identity_secret') }}</label>
+        <label for="identity-secret" class="form-label">{{
+          $t('agents_page.identity_secret')
+        }}</label>
         <input
           id="identity-secret"
           v-model="form.secret"
@@ -77,7 +89,9 @@
           autocomplete="new-password"
           :disabled="saving"
         />
-        <p class="mt-1 text-xs text-theme-textLight">{{ $t('agents_page.identity_secret_hint') }}</p>
+        <p class="mt-1 text-xs text-theme-textLight">
+          {{ $t('agents_page.identity_secret_hint') }}
+        </p>
       </div>
 
       <div class="flex gap-3 justify-end">
@@ -127,15 +141,18 @@ const form = reactive({
   secret: '',
 })
 
-watch(() => props.open, (open) => {
-  if (!open) return
-  error.value = null
-  form.name = ''
-  form.type = 'api_key'
-  form.username = props.agentName
-  form.tokenTtl = 300
-  form.secret = ''
-})
+watch(
+  () => props.open,
+  (open) => {
+    if (!open) return
+    error.value = null
+    form.name = ''
+    form.type = 'api_key'
+    form.username = props.agentName
+    form.tokenTtl = 300
+    form.secret = ''
+  }
+)
 
 function close() {
   if (saving.value) return

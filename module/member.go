@@ -34,6 +34,20 @@ type ListWorkspaceMembersResult struct {
 	Total   int64
 }
 
+// toWorkspaceMemberResponse shapes a membership and its user for API responses.
+func toWorkspaceMemberResponse(member *db.WorkspaceUser, user *db.User) *WorkspaceMemberResponse {
+	return &WorkspaceMemberResponse{
+		Id:          member.Id,
+		WorkspaceId: member.WorkspaceId,
+		UserId:      member.UserId,
+		Name:        user.Name,
+		Email:       user.Email,
+		Role:        member.Role,
+		CreatedAt:   member.CreatedAt.UTC().Format(time.RFC3339),
+		UpdatedAt:   member.UpdatedAt.UTC().Format(time.RFC3339),
+	}
+}
+
 // ListWorkspaceMembers returns members in a workspace with pagination.
 func (w *Workspace) ListWorkspaceMembers(workspaceId db.Id, limit, offset int) (*ListWorkspaceMembersResult, error) {
 	workspace, err := w.WorkspaceRepository.GetById(workspaceId)
@@ -89,16 +103,7 @@ func (w *Workspace) ListWorkspaceMembers(workspaceId db.Id, limit, offset int) (
 			continue
 		}
 
-		members = append(members, &WorkspaceMemberResponse{
-			Id:          member.Id,
-			WorkspaceId: member.WorkspaceId,
-			UserId:      member.UserId,
-			Name:        user.Name,
-			Email:       user.Email,
-			Role:        member.Role,
-			CreatedAt:   member.CreatedAt.UTC().Format(time.RFC3339),
-			UpdatedAt:   member.UpdatedAt.UTC().Format(time.RFC3339),
-		})
+		members = append(members, toWorkspaceMemberResponse(member, user))
 	}
 
 	return &ListWorkspaceMembersResult{Members: members, Total: total}, nil
@@ -181,16 +186,7 @@ func (w *Workspace) UpdateWorkspaceMemberRole(workspaceId, userId db.Id, role st
 		return nil, ErrWorkspaceUserNotFound
 	}
 
-	return &WorkspaceMemberResponse{
-		Id:          m.Id,
-		WorkspaceId: m.WorkspaceId,
-		UserId:      m.UserId,
-		Name:        user.Name,
-		Email:       user.Email,
-		Role:        m.Role,
-		CreatedAt:   m.CreatedAt.UTC().Format(time.RFC3339),
-		UpdatedAt:   m.UpdatedAt.UTC().Format(time.RFC3339),
-	}, nil
+	return toWorkspaceMemberResponse(m, user), nil
 }
 
 // DeleteWorkspaceMember removes a member from a workspace.

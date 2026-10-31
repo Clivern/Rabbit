@@ -67,6 +67,19 @@ func NewProtection(agents db.AgentRepository, protections db.AgentProtectionRepo
 	}
 }
 
+// toProtectionResponse shapes a protection row for API responses, never its secret.
+func toProtectionResponse(item *db.AgentProtection, config ProtectionConfig) *ProtectionResponse {
+	return &ProtectionResponse{
+		Id:        item.Id,
+		Type:      item.Type,
+		Username:  config.Username,
+		Header:    config.Header,
+		IsActive:  item.IsActive,
+		CreatedAt: item.CreatedAt.UTC().Format(time.RFC3339),
+		UpdatedAt: item.UpdatedAt.UTC().Format(time.RFC3339),
+	}
+}
+
 // GetProtection returns the protection of an agent, never its secret.
 func (p *Protection) GetProtection(workspaceId db.Id, agentName string) (*ProtectionResponse, error) {
 	agent, err := p.AgentRepository.GetByWorkspaceAndName(workspaceId, agentName)
@@ -103,15 +116,7 @@ func (p *Protection) GetProtection(workspaceId db.Id, agentName string) (*Protec
 			Msg("Failed to decode protection config")
 	}
 
-	return &ProtectionResponse{
-		Id:        protection.Id,
-		Type:      protection.Type,
-		Username:  config.Username,
-		Header:    config.Header,
-		IsActive:  protection.IsActive,
-		CreatedAt: protection.CreatedAt.UTC().Format(time.RFC3339),
-		UpdatedAt: protection.UpdatedAt.UTC().Format(time.RFC3339),
-	}, nil
+	return toProtectionResponse(protection, config), nil
 }
 
 // SaveProtection sets or replaces the protection of an agent; a generated secret is returned once.
@@ -197,16 +202,10 @@ func (p *Protection) SaveProtection(workspaceId db.Id, agentName string, req *Sa
 		Str("type", protection.Type).
 		Msg("Agent protection saved")
 
-	return &ProtectionResponse{
-		Id:        protection.Id,
-		Type:      protection.Type,
-		Username:  config.Username,
-		Header:    config.Header,
-		IsActive:  protection.IsActive,
-		CreatedAt: protection.CreatedAt.UTC().Format(time.RFC3339),
-		UpdatedAt: protection.UpdatedAt.UTC().Format(time.RFC3339),
-		Secret:    lo.Ternary(req.Secret == "", secret, ""),
-	}, nil
+	resp := toProtectionResponse(protection, config)
+	resp.Secret = lo.Ternary(req.Secret == "", secret, "")
+
+	return resp, nil
 }
 
 // UpdateProtectionStatus turns the protection of an agent on or off.
@@ -264,15 +263,7 @@ func (p *Protection) UpdateProtectionStatus(workspaceId db.Id, agentName string,
 			Msg("Failed to decode protection config")
 	}
 
-	return &ProtectionResponse{
-		Id:        protection.Id,
-		Type:      protection.Type,
-		Username:  config.Username,
-		Header:    config.Header,
-		IsActive:  protection.IsActive,
-		CreatedAt: protection.CreatedAt.UTC().Format(time.RFC3339),
-		UpdatedAt: protection.UpdatedAt.UTC().Format(time.RFC3339),
-	}, nil
+	return toProtectionResponse(protection, config), nil
 }
 
 // DeleteProtection removes the protection of an agent.

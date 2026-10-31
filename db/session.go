@@ -5,7 +5,6 @@ package db
 
 import (
 	"database/sql"
-	"errors"
 	"time"
 )
 
@@ -47,6 +46,20 @@ func NewSessionRepository(db *sql.DB) SessionRepository {
 	return &SessionRepositoryPostgres{db: db}
 }
 
+// scanSession maps a row into a session. Column order must match the select list.
+func scanSession(s *Session) []any {
+	return []any{
+		&s.Id,
+		&s.Token,
+		&s.UserId,
+		&s.IPAddress,
+		&s.UserAgent,
+		&s.ExpiresAt,
+		&s.CreatedAt,
+		&s.UpdatedAt,
+	}
+}
+
 // --- Postgres ---
 
 // Create inserts a row
@@ -75,94 +88,45 @@ func (r *SessionRepositoryPostgres) Create(session *Session) error {
 
 // GetByToken returns a session by token
 func (r *SessionRepositoryPostgres) GetByToken(token string) (*Session, error) {
-	s := &Session{}
-	err := r.db.QueryRow(
+	return QueryOne(
+		r.db,
 		`SELECT
 			id, token, user_id, ip_address, user_agent,
 			expires_at, created_at, updated_at
 		FROM user_sessions
 		WHERE token = $1`,
+		scanSession,
 		token,
-	).Scan(
-		&s.Id,
-		&s.Token,
-		&s.UserId,
-		&s.IPAddress,
-		&s.UserAgent,
-		&s.ExpiresAt,
-		&s.CreatedAt,
-		&s.UpdatedAt,
 	)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
-
-	return s, err
 }
 
 // GetById returns a session by Id. TODO: remove if not used in future.
 func (r *SessionRepositoryPostgres) GetById(id Id) (*Session, error) {
-	s := &Session{}
-	err := r.db.QueryRow(
+	return QueryOne(
+		r.db,
 		`SELECT
 			id, token, user_id, ip_address, user_agent,
 			expires_at, created_at, updated_at
 		FROM user_sessions
 		WHERE id = $1`,
+		scanSession,
 		id.String(),
-	).Scan(
-		&s.Id,
-		&s.Token,
-		&s.UserId,
-		&s.IPAddress,
-		&s.UserAgent,
-		&s.ExpiresAt,
-		&s.CreatedAt,
-		&s.UpdatedAt,
 	)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
-
-	return s, err
 }
 
 // GetByUserId returns a list of sessions by user Id
 func (r *SessionRepositoryPostgres) GetByUserId(userId Id) ([]*Session, error) {
-	rows, err := r.db.Query(
+	return QueryMany(
+		r.db,
 		`SELECT
 			id, token, user_id, ip_address, user_agent,
 			expires_at, created_at, updated_at
 		FROM user_sessions
 		WHERE user_id = $1
 		ORDER BY created_at DESC`,
+		scanSession,
 		userId.String(),
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-	var list []*Session
-	for rows.Next() {
-		s := &Session{}
-		if err := rows.Scan(
-			&s.Id,
-			&s.Token,
-			&s.UserId,
-			&s.IPAddress,
-			&s.UserAgent,
-			&s.ExpiresAt,
-			&s.CreatedAt,
-			&s.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-
-		list = append(list, s)
-	}
-
-	return list, rows.Err()
 }
 
 // Delete removes a session

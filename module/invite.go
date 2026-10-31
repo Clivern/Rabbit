@@ -51,6 +51,27 @@ type Invite struct {
 	Mailer                  InviteMailer
 }
 
+// toInviteResponse shapes an invite row for API responses. An empty token hides it.
+func toInviteResponse(inv *db.UserInvite, token string) *InviteResponse {
+	return &InviteResponse{
+		Id:            inv.Id,
+		Email:         inv.Email,
+		Role:          inv.Role,
+		Token:         token,
+		Status:        inv.Status,
+		InviterUserId: inv.InviterUserId,
+		WorkspaceId:   inv.WorkspaceId,
+		ExpiresAt:     inv.ExpiresAt.UTC().Format(time.RFC3339),
+		CreatedAt:     inv.CreatedAt.UTC().Format(time.RFC3339),
+		UpdatedAt:     inv.UpdatedAt.UTC().Format(time.RFC3339),
+		AcceptedAt: lo.TernaryF(
+			inv.AcceptedAt != nil,
+			func() *string { return new(inv.AcceptedAt.UTC().Format(time.RFC3339)) },
+			func() *string { return nil },
+		),
+	}
+}
+
 // NewInvite creates an invite module with the given repositories.
 func NewInvite(invites db.UserInviteRepository, users db.UserRepository, config db.ConfigRepository, workspaces db.WorkspaceRepository, workspaceUsers db.WorkspaceUserRepository, mailer InviteMailer) *Invite {
 	return &Invite{
@@ -207,18 +228,7 @@ func (i *Invite) CreateInvite(workspaceId db.Id, req *CreateInviteRequest, invit
 		}
 	}
 
-	return &InviteResponse{
-		Id:            invite.Id,
-		Email:         invite.Email,
-		Role:          invite.Role,
-		Token:         invite.Token,
-		Status:        invite.Status,
-		InviterUserId: invite.InviterUserId,
-		WorkspaceId:   invite.WorkspaceId,
-		ExpiresAt:     invite.ExpiresAt.UTC().Format(time.RFC3339),
-		CreatedAt:     invite.CreatedAt.UTC().Format(time.RFC3339),
-		UpdatedAt:     invite.UpdatedAt.UTC().Format(time.RFC3339),
-	}, nil
+	return toInviteResponse(invite, invite.Token), nil
 }
 
 // ListInvites returns paginated invites for a workspace.
@@ -254,24 +264,7 @@ func (i *Invite) ListInvites(workspaceId db.Id, limit, offset int) (*ListInvites
 
 	list := make([]*InviteResponse, 0, len(invites))
 	for _, inv := range invites {
-		resp := &InviteResponse{
-			Id:            inv.Id,
-			Email:         inv.Email,
-			Role:          inv.Role,
-			Token:         inv.Token,
-			Status:        inv.Status,
-			InviterUserId: inv.InviterUserId,
-			WorkspaceId:   inv.WorkspaceId,
-			ExpiresAt:     inv.ExpiresAt.UTC().Format(time.RFC3339),
-			CreatedAt:     inv.CreatedAt.UTC().Format(time.RFC3339),
-			UpdatedAt:     inv.UpdatedAt.UTC().Format(time.RFC3339),
-			AcceptedAt: lo.TernaryF(
-				inv.AcceptedAt != nil,
-				func() *string { return new(inv.AcceptedAt.UTC().Format(time.RFC3339)) },
-				func() *string { return nil },
-			),
-		}
-		list = append(list, resp)
+		list = append(list, toInviteResponse(inv, inv.Token))
 	}
 
 	return &ListInvitesResponse{Invites: list, Total: total}, nil
@@ -315,24 +308,7 @@ func (i *Invite) GetInvite(workspaceId, inviteId db.Id) (*InviteResponse, error)
 		return nil, ErrInviteNotFound
 	}
 
-	resp := &InviteResponse{
-		Id:            invite.Id,
-		Email:         invite.Email,
-		Role:          invite.Role,
-		Status:        invite.Status,
-		InviterUserId: invite.InviterUserId,
-		WorkspaceId:   invite.WorkspaceId,
-		ExpiresAt:     invite.ExpiresAt.UTC().Format(time.RFC3339),
-		CreatedAt:     invite.CreatedAt.UTC().Format(time.RFC3339),
-		UpdatedAt:     invite.UpdatedAt.UTC().Format(time.RFC3339),
-		AcceptedAt: lo.TernaryF(
-			invite.AcceptedAt != nil,
-			func() *string { return new(invite.AcceptedAt.UTC().Format(time.RFC3339)) },
-			func() *string { return nil },
-		),
-	}
-
-	return resp, nil
+	return toInviteResponse(invite, ""), nil
 }
 
 // DeleteInvite deletes an invite by Id within a workspace.

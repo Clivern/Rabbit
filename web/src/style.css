@@ -1,40 +1,46 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 @config "../tailwind.config.js";
 
 /* Default theme (warm off-white, near-black ink) */
 :root {
-  --surface: #FFFFFF;
-  --theme-bg: #F9F9F7;
-  --theme-text: #0B0B0B;
+  --surface: #ffffff;
+  --theme-bg: #f9f9f7;
+  --theme-text: #0b0b0b;
   --theme-textLight: #898781;
-  --theme-border: #E7E7E7;
-  --theme-hover: #F3F3F1;
-  --primary-50: #F9F9F7;
-  --primary-100: #F3F3F1;
-  --primary-200: #E7E7E7;
-  --primary-300: #D4D3D0;
-  --primary-400: #AFADA8;
+  --theme-border: #e7e7e7;
+  --theme-hover: #f3f3f1;
+  --primary-50: #f9f9f7;
+  --primary-100: #f3f3f1;
+  --primary-200: #e7e7e7;
+  --primary-300: #d4d3d0;
+  --primary-400: #afada8;
   --primary-500: #898781;
-  --primary-600: #6A6863;
-  --primary-700: #44423E;
-  --primary-800: #1C1B19;
-  --primary-900: #0B0B0B;
-  --btn-primary-bg: #1C1B19;
-  --btn-primary-hover: #0B0B0B;
-  --input-border: #E7E7E7;
-  --input-focus-border: #0B0B0B;
-  --input-placeholder: #AFADA8;
-  --input-disabled-bg: #F9F9F7;
-  --card-border: #E7E7E7;
-  --btn-secondary-border: #E7E7E7;
-  --btn-secondary-text: #0B0B0B;
-  --btn-secondary-hover: #F9F9F7;
+  --primary-600: #6a6863;
+  --primary-700: #44423e;
+  --primary-800: #1c1b19;
+  --primary-900: #0b0b0b;
+  --btn-primary-bg: #1c1b19;
+  --btn-primary-hover: #0b0b0b;
+  --input-border: #e7e7e7;
+  --input-focus-border: #0b0b0b;
+  --input-placeholder: #afada8;
+  --input-disabled-bg: #f9f9f7;
+  --card-border: #e7e7e7;
+  --btn-secondary-border: #e7e7e7;
+  --btn-secondary-text: #0b0b0b;
+  --btn-secondary-hover: #f9f9f7;
+  --chart-1: #2a78d6;
+  --chart-2: #eb6834;
+  --chart-3: #1baf7a;
+  --chart-4: #eda100;
+  --chart-5: #e87ba4;
+  --chart-grid: #efefef;
 }
 
 /* Blue theme */
 .theme-blue {
-  --surface: #FFFFFF;
-  --theme-bg: #FBFAF4;
+  --surface: #ffffff;
+  --theme-bg: #fbfaf4;
   --theme-text: #091717;
   --theme-textLight: #5c6b6f;
   --theme-border: #e5e4e0;
@@ -63,93 +69,99 @@
 
 /* Slate theme */
 .theme-slate {
-  --surface: #FFFFFF;
-  --theme-bg: #F8FAFC;
-  --theme-text: #0F172A;
-  --theme-textLight: #64748B;
-  --theme-border: #E2E8F0;
-  --theme-hover: #F1F5F9;
-  --primary-50: #F8FAFC;
-  --primary-100: #F1F5F9;
-  --primary-200: #E2E8F0;
-  --primary-300: #CBD5E1;
-  --primary-400: #94A3B8;
-  --primary-500: #64748B;
+  --surface: #ffffff;
+  --theme-bg: #f8fafc;
+  --theme-text: #0f172a;
+  --theme-textLight: #64748b;
+  --theme-border: #e2e8f0;
+  --theme-hover: #f1f5f9;
+  --primary-50: #f8fafc;
+  --primary-100: #f1f5f9;
+  --primary-200: #e2e8f0;
+  --primary-300: #cbd5e1;
+  --primary-400: #94a3b8;
+  --primary-500: #64748b;
   --primary-600: #475569;
   --primary-700: #334155;
-  --primary-800: #1E293B;
-  --primary-900: #0F172A;
+  --primary-800: #1e293b;
+  --primary-900: #0f172a;
   --btn-primary-bg: #334155;
-  --btn-primary-hover: #1E293B;
-  --input-border: #E2E8F0;
+  --btn-primary-hover: #1e293b;
+  --input-border: #e2e8f0;
   --input-focus-border: #334155;
-  --input-placeholder: #94A3B8;
-  --input-disabled-bg: #F1F5F9;
-  --card-border: #E2E8F0;
-  --btn-secondary-border: #E2E8F0;
-  --btn-secondary-text: #0F172A;
-  --btn-secondary-hover: #F1F5F9;
+  --input-placeholder: #94a3b8;
+  --input-disabled-bg: #f1f5f9;
+  --card-border: #e2e8f0;
+  --btn-secondary-border: #e2e8f0;
+  --btn-secondary-text: #0f172a;
+  --btn-secondary-hover: #f1f5f9;
 }
 
 /* Emerald theme */
 .theme-emerald {
-  --surface: #FFFFFF;
-  --theme-bg: #F9FAFB;
+  --surface: #ffffff;
+  --theme-bg: #f9fafb;
   --theme-text: #111827;
-  --theme-textLight: #6B7280;
-  --theme-border: #E5E7EB;
-  --theme-hover: #F3F4F6;
-  --primary-50: #ECFDF5;
-  --primary-100: #D1FAE5;
-  --primary-200: #A7F3D0;
-  --primary-300: #6EE7B7;
-  --primary-400: #34D399;
-  --primary-500: #10B981;
+  --theme-textLight: #6b7280;
+  --theme-border: #e5e7eb;
+  --theme-hover: #f3f4f6;
+  --primary-50: #ecfdf5;
+  --primary-100: #d1fae5;
+  --primary-200: #a7f3d0;
+  --primary-300: #6ee7b7;
+  --primary-400: #34d399;
+  --primary-500: #10b981;
   --primary-600: #059669;
   --primary-700: #047857;
-  --primary-800: #065F46;
-  --primary-900: #064E3B;
+  --primary-800: #065f46;
+  --primary-900: #064e3b;
   --btn-primary-bg: #059669;
   --btn-primary-hover: #047857;
-  --input-border: #E5E7EB;
+  --input-border: #e5e7eb;
   --input-focus-border: #059669;
-  --input-placeholder: #9CA3AF;
-  --input-disabled-bg: #F3F4F6;
-  --card-border: #E5E7EB;
-  --btn-secondary-border: #E5E7EB;
+  --input-placeholder: #9ca3af;
+  --input-disabled-bg: #f3f4f6;
+  --card-border: #e5e7eb;
+  --btn-secondary-border: #e5e7eb;
   --btn-secondary-text: #111827;
-  --btn-secondary-hover: #F3F4F6;
+  --btn-secondary-hover: #f3f4f6;
 }
 
 /* Dark theme */
 .theme-dark {
   color-scheme: dark;
-  --surface: #1F2937;
+  --surface: #1f2937;
   --theme-bg: #111827;
-  --theme-text: #F9FAFB;
-  --theme-textLight: #9CA3AF;
+  --theme-text: #f9fafb;
+  --theme-textLight: #9ca3af;
   --theme-border: #374151;
-  --theme-hover: #1F2937;
-  --primary-50: #1F2937;
+  --theme-hover: #1f2937;
+  --primary-50: #1f2937;
   --primary-100: #374151;
-  --primary-200: #4B5563;
-  --primary-300: #6B7280;
-  --primary-400: #9CA3AF;
-  --primary-500: #D1D5DB;
-  --primary-600: #E5E7EB;
-  --primary-700: #F3F4F6;
-  --primary-800: #F9FAFB;
-  --primary-900: #FFFFFF;
-  --btn-primary-bg: #F9FAFB;
-  --btn-primary-hover: #E5E7EB;
+  --primary-200: #4b5563;
+  --primary-300: #6b7280;
+  --primary-400: #9ca3af;
+  --primary-500: #d1d5db;
+  --primary-600: #e5e7eb;
+  --primary-700: #f3f4f6;
+  --primary-800: #f9fafb;
+  --primary-900: #ffffff;
+  --btn-primary-bg: #f9fafb;
+  --btn-primary-hover: #e5e7eb;
   --input-border: #374151;
-  --input-focus-border: #9CA3AF;
-  --input-placeholder: #6B7280;
-  --input-disabled-bg: #1F2937;
+  --input-focus-border: #9ca3af;
+  --input-placeholder: #6b7280;
+  --input-disabled-bg: #1f2937;
   --card-border: #374151;
   --btn-secondary-border: #374151;
-  --btn-secondary-text: #F9FAFB;
-  --btn-secondary-hover: #1F2937;
+  --btn-secondary-text: #f9fafb;
+  --btn-secondary-hover: #1f2937;
+  --chart-1: #3987e5;
+  --chart-2: #d95926;
+  --chart-3: #199e70;
+  --chart-4: #c98500;
+  --chart-5: #d55181;
+  --chart-grid: var(--theme-border);
 }
 
 .theme-dark .bg-white {
@@ -183,20 +195,40 @@
   body {
     background-color: var(--theme-bg);
     color: var(--theme-text);
-    font-family: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, sans-serif;
+    font-family:
+      'Inter',
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      BlinkMacSystemFont,
+      'Segoe UI',
+      Helvetica,
+      sans-serif;
   }
 
   button:not(:disabled),
-  [role="button"]:not(:disabled),
+  [role='button']:not(:disabled),
   summary,
   select:not(:disabled),
-  input[type="checkbox"]:not(:disabled),
-  input[type="radio"]:not(:disabled) {
+  input[type='checkbox']:not(:disabled),
+  input[type='radio']:not(:disabled) {
     cursor: pointer;
   }
 }
 
 @layer components {
+  .chart-tooltip {
+    @apply pointer-events-none absolute z-10 min-w-36 rounded-md border border-theme-border px-3 py-2 text-xs shadow-lg;
+    background-color: var(--surface);
+    color: var(--theme-text);
+  }
+
+  .chart-axis-label {
+    font-size: 11px;
+    fill: var(--theme-textLight);
+    font-variant-numeric: tabular-nums;
+  }
+
   /* Button Styles */
   .btn-primary {
     @apply px-4 py-2 text-white text-sm font-medium rounded-md cursor-pointer focus:outline-none transition-all duration-150;
@@ -444,6 +476,55 @@
     margin: 1.5em 0;
   }
 
+  .markdown-content a {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .markdown-content table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+    border-collapse: collapse;
+    margin: 0.75em 0;
+    font-size: 0.95em;
+  }
+
+  .markdown-content th,
+  .markdown-content td {
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    padding: 0.35em 0.6em;
+    text-align: left;
+  }
+
+  .markdown-content th {
+    font-weight: 600;
+  }
+
+  /* Assistant chat bubbles: tighter rhythm, and no stray space at the bubble's edges */
+  .assistant-markdown {
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+
+  .assistant-markdown p {
+    margin-bottom: 0.5em;
+  }
+
+  .assistant-markdown ul,
+  .assistant-markdown ol {
+    margin: 0.4em 0;
+    padding-left: 1.25em;
+  }
+
+  .assistant-markdown > :first-child {
+    margin-top: 0;
+  }
+
+  .assistant-markdown > :last-child {
+    margin-bottom: 0;
+  }
+
   /* Modal Transition Styles */
   .modal-enter-active,
   .modal-leave-active {
@@ -452,7 +533,9 @@
 
   .modal-enter-active .bg-white,
   .modal-leave-active .bg-white {
-    transition: transform 0.2s ease, opacity 0.2s ease;
+    transition:
+      transform 0.2s ease,
+      opacity 0.2s ease;
   }
 
   .modal-enter-from,
@@ -540,15 +623,7 @@
   }
 
   .landing-page .hero-gradient-text {
-    background: linear-gradient(
-      90deg,
-      #1d4ed8,
-      #4f46e5,
-      #9333ea,
-      #e11d48,
-      #ea580c,
-      #1d4ed8
-    );
+    background: linear-gradient(90deg, #1d4ed8, #4f46e5, #9333ea, #e11d48, #ea580c, #1d4ed8);
     background-size: 400% 100%;
     -webkit-background-clip: text;
     background-clip: text;
@@ -557,7 +632,8 @@
   }
 
   @keyframes hero-gradient-shift {
-    0%, 100% {
+    0%,
+    100% {
       background-position: 0% 50%;
     }
     50% {
@@ -604,7 +680,9 @@
   .landing-page .reveal {
     opacity: 0;
     transform: translateY(20px);
-    transition: opacity 0.6s ease, transform 0.6s ease;
+    transition:
+      opacity 0.6s ease,
+      transform 0.6s ease;
   }
 
   .landing-page .reveal.visible {
@@ -616,14 +694,32 @@
     @apply whitespace-pre font-mono text-[13px] leading-6 text-white/90;
   }
 
-  .landing-page .token-keyword { @apply text-violet-300; }
-  .landing-page .token-string { @apply text-emerald-400; }
-  .landing-page .token-comment { @apply text-white/35; }
-  .landing-page .token-fn { @apply text-sky-300; }
-  .landing-page .token-var { @apply text-amber-200; }
-  .landing-page .token-key { @apply text-rose-300; }
+  .landing-page .token-keyword {
+    @apply text-violet-300;
+  }
+  .landing-page .token-string {
+    @apply text-emerald-400;
+  }
+  .landing-page .token-comment {
+    @apply text-white/35;
+  }
+  .landing-page .token-fn {
+    @apply text-sky-300;
+  }
+  .landing-page .token-var {
+    @apply text-amber-200;
+  }
+  .landing-page .token-key {
+    @apply text-rose-300;
+  }
 
-  .landing-page .animate-delay-100 { animation-delay: 100ms; }
-  .landing-page .animate-delay-200 { animation-delay: 200ms; }
-  .landing-page .animate-delay-300 { animation-delay: 300ms; }
+  .landing-page .animate-delay-100 {
+    animation-delay: 100ms;
+  }
+  .landing-page .animate-delay-200 {
+    animation-delay: 200ms;
+  }
+  .landing-page .animate-delay-300 {
+    animation-delay: 300ms;
+  }
 }

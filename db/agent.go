@@ -5,9 +5,10 @@ package db
 
 import (
 	"database/sql"
-	"errors"
 	"time"
 )
+
+const AgentLbStrategyDefault = "round_robin"
 
 // Agent is a single row in the agents table.
 type Agent struct {
@@ -18,6 +19,7 @@ type Agent struct {
 	CardChecksum *string
 	CardPath     string
 	Version      string
+	LbStrategy   string
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 }
@@ -67,6 +69,22 @@ func NewAgentRepository(db *sql.DB) AgentRepository {
 	return &AgentRepositoryPostgres{db: db}
 }
 
+// scanAgent maps a row into an agent. Column order must match the select list.
+func scanAgent(agent *Agent) []any {
+	return []any{
+		&agent.Id,
+		&agent.WorkspaceId,
+		&agent.Name,
+		&agent.Card,
+		&agent.CardChecksum,
+		&agent.CardPath,
+		&agent.Version,
+		&agent.LbStrategy,
+		&agent.CreatedAt,
+		&agent.UpdatedAt,
+	}
+}
+
 // Create inserts an agent row.
 func (r *AgentRepositoryPostgres) Create(agent *Agent) error {
 	id, err := NewId()
@@ -75,10 +93,13 @@ func (r *AgentRepositoryPostgres) Create(agent *Agent) error {
 	}
 
 	agent.Id = id
+	if agent.LbStrategy == "" {
+		agent.LbStrategy = AgentLbStrategyDefault
+	}
 
 	return r.db.QueryRow(
-		`INSERT INTO ai_agents (id, workspace_id, name, card, card_checksum, card_path, version)
-		VALUES ($1, $2, $3, $4::jsonb, $5, $6, $7)
+		`INSERT INTO ai_agents (id, workspace_id, name, card, card_checksum, card_path, version, lb_strategy)
+		VALUES ($1, $2, $3, $4::jsonb, $5, $6, $7, $8)
 		RETURNING created_at, updated_at`,
 		agent.Id.String(),
 		agent.WorkspaceId.String(),
@@ -87,63 +108,36 @@ func (r *AgentRepositoryPostgres) Create(agent *Agent) error {
 		agent.CardChecksum,
 		agent.CardPath,
 		agent.Version,
+		agent.LbStrategy,
 	).Scan(&agent.CreatedAt, &agent.UpdatedAt)
 }
 
 // GetById returns an agent by id.
 func (r *AgentRepositoryPostgres) GetById(id Id) (*Agent, error) {
-	agent := &Agent{}
-	err := r.db.QueryRow(
-		`SELECT id, workspace_id, name, card, card_checksum, card_path, version, created_at, updated_at
+	return QueryOne(
+		r.db,
+		`SELECT id, workspace_id, name, card, card_checksum, card_path, version, lb_strategy, created_at, updated_at
 		FROM ai_agents
 		WHERE id = $1`,
+		scanAgent,
 		id.String(),
-	).Scan(
-		&agent.Id,
-		&agent.WorkspaceId,
-		&agent.Name,
-		&agent.Card,
-		&agent.CardChecksum,
-		&agent.CardPath,
-		&agent.Version,
-		&agent.CreatedAt,
-		&agent.UpdatedAt,
 	)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
-
-	return agent, err
 }
 
 // GetByWorkspaceAndName returns an agent by workspace and name.
 func (r *AgentRepositoryPostgres) GetByWorkspaceAndName(workspaceId Id, name string) (*Agent, error) {
-	agent := &Agent{}
-	err := r.db.QueryRow(
-		`SELECT id, workspace_id, name, card, card_checksum, card_path, version, created_at, updated_at
+	return QueryOne(
+		r.db,
+		`SELECT id, workspace_id, name, card, card_checksum, card_path, version, lb_strategy, created_at, updated_at
 		FROM ai_agents
 		WHERE workspace_id = $1 AND name = $2`,
+		scanAgent,
 		workspaceId.String(),
 		name,
-	).Scan(
-		&agent.Id,
-		&agent.WorkspaceId,
-		&agent.Name,
-		&agent.Card,
-		&agent.CardChecksum,
-		&agent.CardPath,
-		&agent.Version,
-		&agent.CreatedAt,
-		&agent.UpdatedAt,
 	)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
-
-	return agent, err
 }
 
-// Update updates an agent card, card path and version.
+// Update updates an agent card, card path, version and load balancing strategy.
 func (r *AgentRepositoryPostgres) Update(agent *Agent) error {
 	tx, err := r.db.Begin()
 	if err != nil {
@@ -154,13 +148,14 @@ func (r *AgentRepositoryPostgres) Update(agent *Agent) error {
 
 	_, err = tx.Exec(
 		`UPDATE ai_agents
-		SET name = $1, card = $2::jsonb, card_checksum = $3, card_path = $4, version = $5, updated_at = $6
-		WHERE id = $7`,
+		SET name = $1, card = $2::jsonb, card_checksum = $3, card_path = $4, version = $5, lb_strategy = $6, updated_at = $7
+		WHERE id = $8`,
 		agent.Name,
 		agent.Card,
 		agent.CardChecksum,
 		agent.CardPath,
 		agent.Version,
+		agent.LbStrategy,
 		time.Now().UTC(),
 		agent.Id.String(),
 	)
@@ -249,44 +244,18 @@ func (r *AgentRepositoryPostgres) Delete(id Id) error {
 
 // ListByWorkspaceId lists agents in a workspace.
 func (r *AgentRepositoryPostgres) ListByWorkspaceId(workspaceId Id, limit, offset int) ([]*Agent, error) {
-	rows, err := r.db.Query(
-		`SELECT id, workspace_id, name, card, card_checksum, card_path, version, created_at, updated_at
+	return QueryMany(
+		r.db,
+		`SELECT id, workspace_id, name, card, card_checksum, card_path, version, lb_strategy, created_at, updated_at
 		FROM ai_agents
 		WHERE workspace_id = $1
 		ORDER BY name
 		LIMIT $2 OFFSET $3`,
+		scanAgent,
 		workspaceId.String(),
 		limit,
 		offset,
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-
-	var list []*Agent
-	for rows.Next() {
-		agent := &Agent{}
-		err := rows.Scan(
-			&agent.Id,
-			&agent.WorkspaceId,
-			&agent.Name,
-			&agent.Card,
-			&agent.CardChecksum,
-			&agent.CardPath,
-			&agent.Version,
-			&agent.CreatedAt,
-			&agent.UpdatedAt,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		list = append(list, agent)
-	}
-
-	return list, rows.Err()
 }
 
 // CountByWorkspaceId returns the number of agents in a workspace.
@@ -303,6 +272,18 @@ func (r *AgentRepositoryPostgres) CountByWorkspaceId(workspaceId Id) (int64, err
 // NewAgentMetaRepository returns the repository for agent metadata.
 func NewAgentMetaRepository(db *sql.DB) AgentMetaRepository {
 	return &AgentMetaRepositoryPostgres{db: db}
+}
+
+// scanAgentMeta maps a row into agent metadata. Column order must match the select list.
+func scanAgentMeta(meta *AgentMeta) []any {
+	return []any{
+		&meta.Id,
+		&meta.AgentId,
+		&meta.Key,
+		&meta.Value,
+		&meta.CreatedAt,
+		&meta.UpdatedAt,
+	}
 }
 
 // Create inserts an agent metadata row. TODO: remove if not used in future.
@@ -326,26 +307,15 @@ func (r *AgentMetaRepositoryPostgres) Create(id Id, key, value string) error {
 
 // Get returns agent metadata by key. TODO: remove if not used in future.
 func (r *AgentMetaRepositoryPostgres) Get(id Id, key string) (*AgentMeta, error) {
-	meta := &AgentMeta{}
-	err := r.db.QueryRow(
+	return QueryOne(
+		r.db,
 		`SELECT id, agent_id, key, value #>> '{}', created_at, updated_at
 		FROM ai_agents_meta
 		WHERE agent_id = $1 AND key = $2`,
+		scanAgentMeta,
 		id.String(),
 		key,
-	).Scan(
-		&meta.Id,
-		&meta.AgentId,
-		&meta.Key,
-		&meta.Value,
-		&meta.CreatedAt,
-		&meta.UpdatedAt,
 	)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
-
-	return meta, err
 }
 
 // Update updates an existing agent metadata row. TODO: remove if not used in future.
@@ -376,38 +346,15 @@ func (r *AgentMetaRepositoryPostgres) Delete(id Id, key string) error {
 
 // ListByAgentId lists agent metadata rows. TODO: remove if not used in future.
 func (r *AgentMetaRepositoryPostgres) ListByAgentId(id Id) ([]*AgentMeta, error) {
-	rows, err := r.db.Query(
+	return QueryMany(
+		r.db,
 		`SELECT id, agent_id, key, value #>> '{}', created_at, updated_at
 		FROM ai_agents_meta
 		WHERE agent_id = $1
 		ORDER BY key`,
+		scanAgentMeta,
 		id.String(),
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-
-	var list []*AgentMeta
-	for rows.Next() {
-		meta := &AgentMeta{}
-		err := rows.Scan(
-			&meta.Id,
-			&meta.AgentId,
-			&meta.Key,
-			&meta.Value,
-			&meta.CreatedAt,
-			&meta.UpdatedAt,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		list = append(list, meta)
-	}
-
-	return list, rows.Err()
 }
 
 // Upsert creates or updates agent metadata. TODO: remove if not used in future.

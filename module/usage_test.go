@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/clivern/sloth/db"
-	"github.com/clivern/sloth/pkg/ai"
+	"github.com/clivern/sloth/pkg/llm"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -22,7 +22,7 @@ func TestUnitUsage(t *testing.T) {
 	})
 
 	t.Run("ai cost is converted from nano dollars to dollars", func(t *testing.T) {
-		usage := &fakeUsage{quantities: map[string]int64{db.UsageTypeAICost: 2 * ai.USDToNano}}
+		usage := &fakeUsage{quantities: map[string]int64{db.UsageTypeAICost: 2 * llm.USDToNano}}
 
 		cost, err := NewUsage().AICost(usage, "ws-1")
 		require.NoError(t, err)
@@ -42,7 +42,7 @@ func TestUnitUsage(t *testing.T) {
 			WorkspaceUserRepository: &fakeWorkspaceUsers{total: 3},
 			UsageRepository: &fakeUsage{quantities: map[string]int64{
 				db.UsageTypeAITokens: 1200,
-				db.UsageTypeAICost:   ai.USDToNano,
+				db.UsageTypeAICost:   llm.USDToNano,
 			}},
 		}
 

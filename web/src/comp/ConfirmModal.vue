@@ -1,5 +1,12 @@
 <template>
-  <BaseModal :open="open" :title="title" :error="error" :busy="busy" size="sm" @close="emit('cancel')">
+  <BaseModal
+    :open="open"
+    :title="title"
+    :error="error"
+    :busy="busy"
+    size="sm"
+    @close="emit('cancel')"
+  >
     <p class="mt-2 text-sm text-theme-textLight">{{ message }}</p>
     <slot />
     <div class="mt-6 flex gap-3 justify-end">

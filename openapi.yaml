@@ -38,6 +38,7 @@ tags:
   - name: Events
   - name: Key-value
   - name: Traffic
+  - name: Chats
   - name: Metrics
 
 security:
@@ -2287,6 +2288,158 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
+  /api/v1/workspaces/{workspaceId}/chats:
+    get:
+      tags: [Chats]
+      summary: List the user's chats
+      description: |
+        The signed-in user's chats with the assistant in this workspace, most recently active first, up to 50.
+        Chats are private to the user who started them, so workspace access keys cannot use these routes.
+      parameters:
+        - $ref: "#/components/parameters/workspaceId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  chats:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Chat"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
+    post:
+      tags: [Chats]
+      summary: Start a chat
+      description: Starts an empty chat. Its title is set from the first message sent to it.
+      parameters:
+        - $ref: "#/components/parameters/workspaceId"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Chat"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/v1/workspaces/{workspaceId}/chats/{chatId}:
+    get:
+      tags: [Chats]
+      summary: Get a chat with its messages
+      parameters:
+        - $ref: "#/components/parameters/workspaceId"
+        - $ref: "#/components/parameters/chatId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Chat"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+    delete:
+      tags: [Chats]
+      summary: Delete a chat with its messages
+      description: An answer still being written for the chat is dropped.
+      parameters:
+        - $ref: "#/components/parameters/workspaceId"
+        - $ref: "#/components/parameters/chatId"
+      responses:
+        "204":
+          description: Deleted
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/v1/workspaces/{workspaceId}/chats/{chatId}/messages:
+    post:
+      tags: [Chats]
+      summary: Ask in a chat and stream the answer
+      description: |
+        Stores the question, marks the chat `running` and streams the answer as server-sent events. Each event has a
+        name and a JSON `data` line:
+
+        - `chat`: the chat with the question stored and status `running`.
+        - `delta`: `{"content": "..."}`, the next piece of the answer as it is written, in Markdown.
+        - `done`: the chat with the answer stored and status `idle`.
+        - `error`: the chat with status `failed` when the answer could not be written.
+
+        The answer is written with the dashboard tools the user may run, under the user's own permissions. It is still
+        stored when the client disconnects mid-stream, so a client can read the chat again to get it. Errors found before
+        the question is stored come back as JSON with their status code instead of a stream.
+      parameters:
+        - $ref: "#/components/parameters/workspaceId"
+        - $ref: "#/components/parameters/chatId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendChatMessageRequest"
+      responses:
+        "200":
+          description: A stream of chat, delta, then done or error events
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                example: |
+                  event: chat
+                  data: {"id":"...","title":"Which agents do I have?","status":"running","messages":[...]}
+
+                  event: delta
+                  data: {"content":"You have **2 agents**"}
+
+                  event: done
+                  data: {"id":"...","title":"Which agents do I have?","status":"idle","messages":[...]}
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: The assistant is still answering the chat's last message
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
 components:
   securitySchemes:
     sessionCookie:
@@ -2403,6 +2556,13 @@ components:
         format: uuid
     trafficId:
       name: trafficId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    chatId:
+      name: chatId
       in: path
       required: true
       schema:
@@ -3002,6 +3162,11 @@ components:
           pattern: "^/"
           default: /.well-known/agent-card.json
           description: Path instances serve their A2A card on
+        lbStrategy:
+          type: string
+          enum: [random, round_robin, least_outstanding_tasks, sticky]
+          default: round_robin
+          description: How the gateway picks one of the agent's live instances
 
     Agent:
       type: object
@@ -3026,6 +3191,10 @@ components:
           description: Empty until the card is fetched.
         cardPath:
           type: string
+        lbStrategy:
+          type: string
+          enum: [random, round_robin, least_outstanding_tasks, sticky]
+          description: How the gateway picks one of the agent's live instances.
         health:
           type: string
           enum: [passing, warning, unknown, critical]
@@ -3589,6 +3758,8 @@ components:
         workspaceId:
           type: string
           format: uuid
+        sourceAgent:
+          type: string
         sourceInstance:
           type: string
         destinationAgent:
@@ -3611,3 +3782,53 @@ components:
         createdAt:
           type: string
           format: date-time
+    Chat:
+      type: object
+      description: A chat between the user and the dashboard assistant.
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          description: The first 60 characters of the first question; empty until one is sent.
+        status:
+          type: string
+          enum: [idle, running, failed]
+          description: "`running` while an answer is being written, `failed` when the last answer could not be written."
+        preview:
+          type: string
+          description: The chat's last message. Only in the chat list.
+        messages:
+          type: array
+          description: The chat's questions and answers, oldest first. Only when reading one chat, and absent while it has none.
+          items:
+            $ref: "#/components/schemas/ChatMessage"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    ChatMessage:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        kind:
+          type: string
+          enum: [user, assistant]
+        content:
+          type: string
+          description: The question as sent, or the answer in Markdown.
+        createdAt:
+          type: string
+          format: date-time
+    SendChatMessageRequest:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: string
+          maxLength: 4000

@@ -31,7 +31,9 @@ const STATUSES = [
   { key: 'passing', class: 'text-emerald-700' },
 ]
 
-const items = computed(() => STATUSES
-  .map((status) => ({ ...status, count: props.counts[status.key] || 0 }))
-  .filter((item) => !props.hideZero || item.count))
+const items = computed(() =>
+  STATUSES.map((status) => ({ ...status, count: props.counts[status.key] || 0 })).filter(
+    (item) => !props.hideZero || item.count
+  )
+)
 </script>

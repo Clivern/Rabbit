@@ -101,6 +101,24 @@ func NewInstance(agents db.AgentRepository, instances db.AgentInstanceRepository
 	}
 }
 
+// toInstanceResponse shapes an instance row for API responses.
+func toInstanceResponse(instance *db.AgentInstance, status string, checks []*HealthCheckResponse) *InstanceResponse {
+	return &InstanceResponse{
+		Id:         instance.Id,
+		AgentId:    instance.AgentId,
+		InstanceId: instance.InstanceId,
+		Address:    instance.Address,
+		Port:       instance.Port,
+		Scheme:     instance.Scheme,
+		Path:       instance.Path,
+		Meta:       util.JSONRawFromString(instance.Meta),
+		Status:     status,
+		Checks:     checks,
+		CreatedAt:  instance.CreatedAt.UTC().Format(time.RFC3339),
+		UpdatedAt:  instance.UpdatedAt.UTC().Format(time.RFC3339),
+	}
+}
+
 // ListInstances returns one page of an agent's instances.
 func (i *Instance) ListInstances(workspaceId db.Id, agentName string, limit, offset int) (*ListInstancesResponse, error) {
 	agent, err := i.AgentRepository.GetByWorkspaceAndName(workspaceId, agentName)
@@ -149,22 +167,7 @@ func (i *Instance) ListInstances(workspaceId db.Id, agentName string, limit, off
 			return nil, fmt.Errorf("%w: %v", ErrFailedListInstances, err)
 		}
 
-		item := &InstanceResponse{
-			Id:         instance.Id,
-			AgentId:    instance.AgentId,
-			InstanceId: instance.InstanceId,
-			Address:    instance.Address,
-			Port:       instance.Port,
-			Scheme:     instance.Scheme,
-			Path:       instance.Path,
-			Meta:       util.JSONRawFromString(instance.Meta),
-			Status:     status,
-			Checks:     checks,
-			CreatedAt:  instance.CreatedAt.UTC().Format(time.RFC3339),
-			UpdatedAt:  instance.UpdatedAt.UTC().Format(time.RFC3339),
-		}
-
-		list = append(list, item)
+		list = append(list, toInstanceResponse(instance, status, checks))
 	}
 
 	return &ListInstancesResponse{Instances: list, Total: total}, nil
@@ -220,22 +223,7 @@ func (i *Instance) ListHealthyInstances(workspaceId db.Id, agentName string, lim
 			return nil, fmt.Errorf("%w: %v", ErrFailedListInstances, err)
 		}
 
-		item := &InstanceResponse{
-			Id:         instance.Id,
-			AgentId:    instance.AgentId,
-			InstanceId: instance.InstanceId,
-			Address:    instance.Address,
-			Port:       instance.Port,
-			Scheme:     instance.Scheme,
-			Path:       instance.Path,
-			Meta:       util.JSONRawFromString(instance.Meta),
-			Status:     status,
-			Checks:     checks,
-			CreatedAt:  instance.CreatedAt.UTC().Format(time.RFC3339),
-			UpdatedAt:  instance.UpdatedAt.UTC().Format(time.RFC3339),
-		}
-
-		list = append(list, item)
+		list = append(list, toInstanceResponse(instance, status, checks))
 	}
 
 	return &ListInstancesResponse{Instances: list, Total: total}, nil
@@ -281,20 +269,7 @@ func (i *Instance) GetInstance(workspaceId db.Id, agentName, instanceId string) 
 		return nil, fmt.Errorf("%w: %v", ErrFailedGetInstance, err)
 	}
 
-	return &InstanceResponse{
-		Id:         instance.Id,
-		AgentId:    instance.AgentId,
-		InstanceId: instance.InstanceId,
-		Address:    instance.Address,
-		Port:       instance.Port,
-		Scheme:     instance.Scheme,
-		Path:       instance.Path,
-		Meta:       util.JSONRawFromString(instance.Meta),
-		Status:     status,
-		Checks:     checks,
-		CreatedAt:  instance.CreatedAt.UTC().Format(time.RFC3339),
-		UpdatedAt:  instance.UpdatedAt.UTC().Format(time.RFC3339),
-	}, nil
+	return toInstanceResponse(instance, status, checks), nil
 }
 
 // RegisterInstance creates or updates an instance and syncs its checks with the agent's templates.
@@ -443,20 +418,7 @@ func (i *Instance) RegisterInstance(workspaceId db.Id, agentName, instanceId str
 		return nil, false, fmt.Errorf("%w: %v", ErrFailedRegisterInstance, err)
 	}
 
-	item := &InstanceResponse{
-		Id:         instance.Id,
-		AgentId:    instance.AgentId,
-		InstanceId: instance.InstanceId,
-		Address:    instance.Address,
-		Port:       instance.Port,
-		Scheme:     instance.Scheme,
-		Path:       instance.Path,
-		Meta:       util.JSONRawFromString(instance.Meta),
-		Status:     status,
-		Checks:     checks,
-		CreatedAt:  instance.CreatedAt.UTC().Format(time.RFC3339),
-		UpdatedAt:  instance.UpdatedAt.UTC().Format(time.RFC3339),
-	}
+	item := toInstanceResponse(instance, status, checks)
 
 	log.Info().
 		Str("workspaceId", workspaceId.String()).

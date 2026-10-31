@@ -399,6 +399,9 @@ msgstr "The agent card has not been fetched from an instance yet."
 msgid "invalid_agent_version"
 msgstr "Invalid agent version."
 
+msgid "invalid_agent_lb_strategy"
+msgstr "Invalid load balancing strategy."
+
 msgid "failed_agent_request"
 msgstr "Failed to complete the agent request."
 
@@ -537,6 +540,9 @@ msgstr "Failed to get event."
 msgid "invalid_agent_identity"
 msgstr "Invalid agent identity."
 
+msgid "unknown_source_instance"
+msgstr "Unknown source instance for this agent."
+
 msgid "a2a_call_denied"
 msgstr "No intention allows this agent to make this call."
 
@@ -557,3 +563,18 @@ msgstr "Failed to complete the A2A request."
 
 msgid "failed_catalog_request"
 msgstr "Failed to load the agent catalog."
+
+msgid "invalid_chat_id"
+msgstr "Invalid chat id."
+
+msgid "chat_not_found"
+msgstr "Chat not found."
+
+msgid "chat_not_configured"
+msgstr "The assistant needs an AI provider. Set app.llm in the config."
+
+msgid "chat_busy"
+msgstr "The assistant is still answering the last message."
+
+msgid "failed_chat_request"
+msgstr "Failed to complete the assistant request."

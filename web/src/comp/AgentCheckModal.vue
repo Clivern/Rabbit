@@ -44,7 +44,9 @@
           <option value="tcp">{{ $t('agents_page.check_type_tcp') }}</option>
           <option value="ttl">{{ $t('agents_page.check_type_ttl') }}</option>
         </select>
-        <p class="mt-1 text-xs text-theme-textLight">{{ $t(`agents_page.check_type_${form.type}_hint`) }}</p>
+        <p class="mt-1 text-xs text-theme-textLight">
+          {{ $t(`agents_page.check_type_${form.type}_hint`) }}
+        </p>
       </div>
 
       <div v-if="form.type === 'http'" class="grid gap-4 sm:grid-cols-[120px_1fr]">
@@ -86,7 +88,9 @@
           />
         </div>
         <div>
-          <label for="check-interval" class="form-label">{{ $t('agents_page.check_interval') }}</label>
+          <label for="check-interval" class="form-label">{{
+            $t('agents_page.check_interval')
+          }}</label>
           <input
             id="check-interval"
             v-model.number="form.interval"
@@ -99,7 +103,9 @@
           />
         </div>
         <div>
-          <label for="check-timeout" class="form-label">{{ $t('agents_page.check_timeout') }}</label>
+          <label for="check-timeout" class="form-label">{{
+            $t('agents_page.check_timeout')
+          }}</label>
           <input
             id="check-timeout"
             v-model.number="form.timeout"
@@ -191,20 +197,23 @@ const form = reactive({
   ttl: 60,
 })
 
-watch(() => props.open, (open) => {
-  if (!open) return
-  const check = props.check
-  error.value = null
-  form.checkId = check?.checkId || ''
-  form.name = check?.name || ''
-  form.type = check?.type || 'http'
-  form.scheme = check?.scheme || 'http'
-  form.path = check?.path || '/healthz'
-  form.port = check?.port || null
-  form.interval = check?.interval || 10
-  form.timeout = check?.timeout || 2
-  form.ttl = check?.ttl || 60
-})
+watch(
+  () => props.open,
+  (open) => {
+    if (!open) return
+    const check = props.check
+    error.value = null
+    form.checkId = check?.checkId || ''
+    form.name = check?.name || ''
+    form.type = check?.type || 'http'
+    form.scheme = check?.scheme || 'http'
+    form.path = check?.path || '/healthz'
+    form.port = check?.port || null
+    form.interval = check?.interval || 10
+    form.timeout = check?.timeout || 2
+    form.ttl = check?.ttl || 60
+  }
+)
 
 function close() {
   if (saving.value) return

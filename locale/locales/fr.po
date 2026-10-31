@@ -399,6 +399,9 @@ msgstr "La carte de l'agent n'a pas encore été récupérée depuis une instanc
 msgid "invalid_agent_version"
 msgstr "Version d'agent invalide."
 
+msgid "invalid_agent_lb_strategy"
+msgstr "Stratégie d'équilibrage de charge invalide."
+
 msgid "failed_agent_request"
 msgstr "Impossible de traiter la requête agent."
 
@@ -537,6 +540,9 @@ msgstr "Échec de la lecture de l'événement."
 msgid "invalid_agent_identity"
 msgstr "Identité d'agent invalide."
 
+msgid "unknown_source_instance"
+msgstr "Instance source inconnue pour cet agent."
+
 msgid "a2a_call_denied"
 msgstr "Aucune intention n'autorise cet agent à effectuer cet appel."
 
@@ -557,3 +563,18 @@ msgstr "Échec de la requête A2A."
 
 msgid "failed_catalog_request"
 msgstr "Échec du chargement du catalogue d’agents."
+
+msgid "invalid_chat_id"
+msgstr "Identifiant de discussion invalide."
+
+msgid "chat_not_found"
+msgstr "Discussion introuvable."
+
+msgid "chat_not_configured"
+msgstr "L'assistant a besoin d'un fournisseur d'IA. Configurez app.llm."
+
+msgid "chat_busy"
+msgstr "L'assistant répond encore au dernier message."
+
+msgid "failed_chat_request"
+msgstr "Échec de la requête de l'assistant."

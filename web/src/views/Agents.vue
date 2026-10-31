@@ -9,9 +9,13 @@
       </div>
 
       <section class="rounded-xl border border-theme-border bg-white shadow-sm overflow-hidden">
-        <div class="flex flex-wrap items-start justify-between gap-4 border-b border-theme-border px-6 py-4">
+        <div
+          class="flex flex-wrap items-start justify-between gap-4 border-b border-theme-border px-6 py-4"
+        >
           <div>
-            <h2 class="text-lg font-semibold text-theme-text">{{ $t('agents_page.list_title') }}</h2>
+            <h2 class="text-lg font-semibold text-theme-text">
+              {{ $t('agents_page.list_title') }}
+            </h2>
             <p class="mt-1 text-sm text-theme-textLight">{{ $t('agents_page.list_desc') }}</p>
           </div>
           <button
@@ -20,14 +24,28 @@
             class="btn-primary inline-flex items-center justify-center gap-2"
             @click="showRegisterModal = true"
           >
-            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            <svg
+              class="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              aria-hidden="true"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 4v16m8-8H4"
+              />
             </svg>
             {{ $t('agents_page.register') }}
           </button>
         </div>
 
-        <div v-if="errorMessage" class="m-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+        <div
+          v-if="errorMessage"
+          class="m-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+        >
           {{ errorMessage }}
         </div>
 
@@ -35,20 +53,48 @@
           <table class="min-w-full divide-y divide-theme-border">
             <thead class="bg-theme-hover">
               <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider">{{ $t('agents_page.name') }}</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider">{{ $t('agents_page.version') }}</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider">{{ $t('agents_page.skills') }}</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider">{{ $t('agents_page.instances') }}</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider">{{ $t('agents_page.health') }}</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider">{{ $t('agents_page.updated') }}</th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider"
+                >
+                  {{ $t('agents_page.name') }}
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider"
+                >
+                  {{ $t('agents_page.version') }}
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider"
+                >
+                  {{ $t('agents_page.skills') }}
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider"
+                >
+                  {{ $t('agents_page.instances') }}
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider"
+                >
+                  {{ $t('agents_page.health') }}
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider"
+                >
+                  {{ $t('agents_page.updated') }}
+                </th>
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-theme-border">
               <tr v-if="loading && !agents.length">
-                <td colspan="6" class="px-6 py-4 text-center text-sm text-theme-textLight">{{ $t('common.loading') }}</td>
+                <td colspan="6" class="px-6 py-4 text-center text-sm text-theme-textLight">
+                  {{ $t('common.loading') }}
+                </td>
               </tr>
               <tr v-else-if="!agents.length">
-                <td colspan="6" class="px-6 py-4 text-center text-sm text-theme-textLight">{{ $t('agents_page.no_agents') }}</td>
+                <td colspan="6" class="px-6 py-4 text-center text-sm text-theme-textLight">
+                  {{ $t('agents_page.no_agents') }}
+                </td>
               </tr>
               <template v-else>
                 <tr v-for="agent in rows" :key="agent.id" class="hover:bg-theme-hover">
@@ -59,7 +105,9 @@
                     >
                       {{ agent.name }}
                     </router-link>
-                    <p v-if="agent.description" class="mt-0.5 text-sm text-theme-textLight">{{ agent.description }}</p>
+                    <p v-if="agent.description" class="mt-0.5 text-sm text-theme-textLight">
+                      {{ agent.description }}
+                    </p>
                     <span
                       v-if="agent.cardPending"
                       class="mt-1 inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800"
@@ -67,7 +115,9 @@
                       {{ $t('agents_page.card_pending') }}
                     </span>
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-theme-text font-mono">{{ agent.version }}</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-theme-text font-mono">
+                    {{ agent.version }}
+                  </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-theme-text">
                     {{ $t('agents_page.skills_count', agent.skillCount) }}
                   </td>
@@ -79,11 +129,17 @@
                       class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium"
                       :class="healthClass(agent.health)"
                     >
-                      <span class="h-1.5 w-1.5 rounded-full" :class="healthDotClass(agent.health)" aria-hidden="true" />
+                      <span
+                        class="h-1.5 w-1.5 rounded-full"
+                        :class="healthDotClass(agent.health)"
+                        aria-hidden="true"
+                      />
                       {{ $t(`agents_page.health_${agent.health}`) }}
                     </span>
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-theme-textLight">{{ formatRelative(agent.updatedAt) }}</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-theme-textLight">
+                    {{ formatRelative(agent.updatedAt) }}
+                  </td>
                 </tr>
               </template>
             </tbody>
@@ -95,7 +151,13 @@
           class="bg-white px-6 py-4 border-t border-theme-border flex items-center justify-between"
         >
           <div class="text-sm text-theme-textLight">
-            {{ $t('agents_page.showing', { from: offset + 1, to: Math.min(offset + limit, total), total }) }}
+            {{
+              $t('agents_page.showing', {
+                from: offset + 1,
+                to: Math.min(offset + limit, total),
+                total,
+              })
+            }}
           </div>
           <div class="flex items-center gap-2">
             <button
@@ -156,20 +218,22 @@ const loading = ref(false)
 const errorMessage = ref(null)
 const showRegisterModal = ref(false)
 
-const rows = computed(() => agents.value.map((agent) => {
-  const card = parseCard(agent.card)
-  return {
-    id: agent.id,
-    name: agent.name,
-    version: agent.version,
-    description: card.description,
-    cardPending: !agent.card,
-    skillCount: card.skills.length,
-    statusCounts: agent.statusCounts,
-    health: agent.health,
-    updatedAt: agent.updatedAt,
-  }
-}))
+const rows = computed(() =>
+  agents.value.map((agent) => {
+    const card = parseCard(agent.card)
+    return {
+      id: agent.id,
+      name: agent.name,
+      version: agent.version,
+      description: card.description,
+      cardPending: !agent.card,
+      skillCount: card.skills.length,
+      statusCounts: agent.statusCounts,
+      health: agent.health,
+      updatedAt: agent.updatedAt,
+    }
+  })
+)
 
 async function loadPage() {
   loading.value = true

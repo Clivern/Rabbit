@@ -5,7 +5,6 @@ package db
 
 import (
 	"database/sql"
-	"errors"
 	"time"
 )
 
@@ -37,6 +36,21 @@ func NewAgentTaskRepository(db *sql.DB) AgentTaskRepository {
 	return &AgentTaskRepositoryPostgres{db: db}
 }
 
+// scanAgentTask maps a row into an agent task. Column order must match the select list.
+func scanAgentTask(task *AgentTask) []any {
+	return []any{
+		&task.Id,
+		&task.WorkspaceId,
+		&task.TaskId,
+		&task.SourceAgent,
+		&task.AgentId,
+		&task.InstanceId,
+		&task.Skill,
+		&task.CreatedAt,
+		&task.UpdatedAt,
+	}
+}
+
 // Save records where a task lives, moving it when the caller reuses a task id.
 func (r *AgentTaskRepositoryPostgres) Save(task *AgentTask) error {
 	id, err := NewId()
@@ -66,28 +80,14 @@ func (r *AgentTaskRepositoryPostgres) Save(task *AgentTask) error {
 
 // GetBySourceAndTaskId returns the task a caller started, or nil when there is none.
 func (r *AgentTaskRepositoryPostgres) GetBySourceAndTaskId(workspaceId Id, sourceAgent, taskId string) (*AgentTask, error) {
-	task := &AgentTask{}
-	err := r.db.QueryRow(
+	return QueryOne(
+		r.db,
 		`SELECT id, workspace_id, task_id, source_agent, agent_id, instance_id, skill, created_at, updated_at
 		FROM ai_agents_tasks
 		WHERE workspace_id = $1 AND source_agent = $2 AND task_id = $3`,
+		scanAgentTask,
 		workspaceId.String(),
 		sourceAgent,
 		taskId,
-	).Scan(
-		&task.Id,
-		&task.WorkspaceId,
-		&task.TaskId,
-		&task.SourceAgent,
-		&task.AgentId,
-		&task.InstanceId,
-		&task.Skill,
-		&task.CreatedAt,
-		&task.UpdatedAt,
 	)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
-
-	return task, err
 }

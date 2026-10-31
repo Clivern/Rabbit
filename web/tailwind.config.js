@@ -1,10 +1,6 @@
-
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: [
-    "./index.html",
-    "./src/**/*.{vue,js,ts,jsx,tsx}",
-  ],
+  content: ['./index.html', './src/**/*.{vue,js,ts,jsx,tsx}'],
   theme: {
     extend: {
       colors: {
@@ -34,8 +30,10 @@ export default {
         code: '0 8px 30px rgba(55, 53, 47, 0.12)',
       },
       backgroundImage: {
-        'hero-glow': 'radial-gradient(ellipse 80% 50% at 50% -20%, rgba(55, 53, 47, 0.06), transparent)',
-        'card-glow': 'radial-gradient(ellipse 60% 40% at 50% 0%, rgba(55, 53, 47, 0.04), transparent)',
+        'hero-glow':
+          'radial-gradient(ellipse 80% 50% at 50% -20%, rgba(55, 53, 47, 0.06), transparent)',
+        'card-glow':
+          'radial-gradient(ellipse 60% 40% at 50% 0%, rgba(55, 53, 47, 0.04), transparent)',
       },
       animation: {
         'fade-up': 'fadeUp 0.6s ease-out forwards',

@@ -36,9 +36,10 @@ const (
 )
 
 var (
-	ErrCallDenied        = errors.New("call denied")
-	ErrNoHealthyInstance = errors.New("no healthy instance")
-	ErrTaskNotFound      = errors.New("task not found")
+	ErrCallDenied            = errors.New("call denied")
+	ErrNoHealthyInstance     = errors.New("no healthy instance")
+	ErrTaskNotFound          = errors.New("task not found")
+	ErrUnknownSourceInstance = errors.New("unknown source instance")
 )
 
 // AgentsTrafficMeta is the JSON stored in ai_traffic.meta for a forwarded call.
@@ -94,7 +95,12 @@ func NewAgents(
 }
 
 // SendMessage returns a proxy that sends caller's message to a named agent; only intentions without a skill apply.
-func (a *Agents) SendMessage(workspaceId db.Id, caller *db.Agent, agentName string) (*httputil.ReverseProxy, error) {
+func (a *Agents) SendMessage(workspaceId db.Id, caller *db.Agent, agentName string, sourceInstanceId string) (*httputil.ReverseProxy, error) {
+	resolved, err := a.ResolveSourceInstance(caller, sourceInstanceId)
+	if err != nil {
+		return nil, err
+	}
+
 	agent, err := a.AgentRepository.GetByWorkspaceAndName(workspaceId, agentName)
 	if err != nil {
 		return nil, err
@@ -105,7 +111,8 @@ func (a *Agents) SendMessage(workspaceId db.Id, caller *db.Agent, agentName stri
 
 	call := &db.TrafficCall{
 		WorkspaceId:      workspaceId,
-		SourceInstance:   caller.Name,
+		SourceAgent:      caller.Name,
+		SourceInstance:   resolved,
 		DestinationAgent: agent.Name,
 		Verb:             VerbSendMessage,
 	}
@@ -145,7 +152,12 @@ func (a *Agents) SendMessage(workspaceId db.Id, caller *db.Agent, agentName stri
 }
 
 // SendSkillMessage returns a proxy that sends caller's message to a random live agent it may call for a skill.
-func (a *Agents) SendSkillMessage(workspaceId db.Id, caller *db.Agent, skill string) (*httputil.ReverseProxy, error) {
+func (a *Agents) SendSkillMessage(workspaceId db.Id, caller *db.Agent, skill string, sourceInstanceId string) (*httputil.ReverseProxy, error) {
+	resolved, err := a.ResolveSourceInstance(caller, sourceInstanceId)
+	if err != nil {
+		return nil, err
+	}
+
 	offered, err := a.SkillRepository.GetSkill(workspaceId, skill)
 	if err != nil {
 		return nil, err
@@ -156,7 +168,8 @@ func (a *Agents) SendSkillMessage(workspaceId db.Id, caller *db.Agent, skill str
 
 	call := &db.TrafficCall{
 		WorkspaceId:    workspaceId,
-		SourceInstance: caller.Name,
+		SourceAgent:    caller.Name,
+		SourceInstance: resolved,
 		Skill:          skill,
 		Verb:           VerbSendMessage,
 	}
@@ -215,7 +228,12 @@ func (a *Agents) SendSkillMessage(workspaceId db.Id, caller *db.Agent, skill str
 }
 
 // GetTask returns a proxy that fetches a task caller started from the instance that accepted it.
-func (a *Agents) GetTask(workspaceId db.Id, caller *db.Agent, taskId string) (*httputil.ReverseProxy, error) {
+func (a *Agents) GetTask(workspaceId db.Id, caller *db.Agent, taskId string, sourceInstanceId string) (*httputil.ReverseProxy, error) {
+	resolved, err := a.ResolveSourceInstance(caller, sourceInstanceId)
+	if err != nil {
+		return nil, err
+	}
+
 	// Tasks are looked up by their caller, so another agent's task is not found.
 	task, err := a.TaskRepository.GetBySourceAndTaskId(workspaceId, caller.Name, taskId)
 	if err != nil {
@@ -232,7 +250,8 @@ func (a *Agents) GetTask(workspaceId db.Id, caller *db.Agent, taskId string) (*h
 
 	call := &db.TrafficCall{
 		WorkspaceId:      workspaceId,
-		SourceInstance:   caller.Name,
+		SourceAgent:      caller.Name,
+		SourceInstance:   resolved,
 		DestinationAgent: agent.Name,
 		Skill:            task.Skill,
 		Verb:             VerbGetTask,
@@ -308,6 +327,7 @@ func (a *Agents) Forward(call *db.TrafficCall, agent *db.Agent, instance *db.Age
 
 			// The caller's credentials prove who it is to Sloth and never reach the destination.
 			pr.Out.Header.Del("X-Source-Agent")
+			pr.Out.Header.Del("X-Source-Instance")
 			pr.Out.Header.Del("X-API-Key")
 			pr.Out.Header.Del("Authorization")
 
@@ -340,7 +360,7 @@ func (a *Agents) Forward(call *db.TrafficCall, agent *db.Agent, instance *db.Age
 					err = a.TaskRepository.Save(&db.AgentTask{
 						WorkspaceId: call.WorkspaceId,
 						TaskId:      reply.Task.Id,
-						SourceAgent: call.SourceInstance,
+						SourceAgent: call.SourceAgent,
 						AgentId:     agent.Id,
 						InstanceId:  &instance.Id,
 						Skill:       call.Skill,
@@ -391,4 +411,21 @@ func (a *Agents) IsAllowed(workspaceId db.Id, source, destination, skill string)
 	}
 
 	return intention != nil && intention.Action == db.IntentionActionAllow, nil
+}
+
+// ResolveSourceInstance returns the calling instance id when the caller named one of its own instances.
+func (a *Agents) ResolveSourceInstance(caller *db.Agent, instanceId string) (string, error) {
+	if instanceId == "" {
+		return "", nil
+	}
+
+	instance, err := a.InstanceRepository.GetByAgentAndInstanceId(caller.Id, instanceId)
+	if err != nil {
+		return "", err
+	}
+	if instance == nil {
+		return "", ErrUnknownSourceInstance
+	}
+
+	return instance.InstanceId, nil
 }

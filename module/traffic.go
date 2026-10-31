@@ -30,7 +30,8 @@ type Traffic struct {
 type TrafficCallResponse struct {
 	Id                  db.Id  `json:"id"`
 	WorkspaceId         db.Id  `json:"workspaceId"`
-	SourceInstance      string `json:"sourceInstance"`
+	SourceAgent         string `json:"sourceAgent"`
+	SourceInstance      string `json:"sourceInstance,omitempty"`
 	DestinationAgent    string `json:"destinationAgent"`
 	DestinationInstance string `json:"destinationInstance"`
 	Skill               string `json:"skill"`
@@ -56,6 +57,25 @@ func NewTraffic(calls db.TrafficRepository, workspaces db.WorkspaceRepository) *
 	}
 }
 
+// toTrafficCallResponse shapes a traffic row for API responses.
+func toTrafficCallResponse(call *db.TrafficCall) *TrafficCallResponse {
+	return &TrafficCallResponse{
+		Id:                  call.Id,
+		WorkspaceId:         call.WorkspaceId,
+		SourceAgent:         call.SourceAgent,
+		SourceInstance:      call.SourceInstance,
+		DestinationAgent:    call.DestinationAgent,
+		DestinationInstance: call.DestinationInstance,
+		Skill:               call.Skill,
+		Verb:                call.Verb,
+		Decision:            call.Decision,
+		Result:              call.Result,
+		LatencyMs:           int64(call.LatencyMs),
+		TaskId:              lo.FromPtr(call.TaskId),
+		CreatedAt:           call.CreatedAt.UTC().Format(time.RFC3339),
+	}
+}
+
 // ListTraffic returns recorded gateway calls for a workspace.
 func (t *Traffic) ListTraffic(workspaceId db.Id, limit, offset int) (*ListTrafficResponse, error) {
 	total, err := t.TrafficRepository.CountByWorkspaceId(workspaceId)
@@ -78,22 +98,7 @@ func (t *Traffic) ListTraffic(workspaceId db.Id, limit, offset int) (*ListTraffi
 
 	list := make([]*TrafficCallResponse, 0, len(calls))
 	for _, call := range calls {
-		taskId := lo.FromPtr(call.TaskId)
-
-		list = append(list, &TrafficCallResponse{
-			Id:                  call.Id,
-			WorkspaceId:         call.WorkspaceId,
-			SourceInstance:      call.SourceInstance,
-			DestinationAgent:    call.DestinationAgent,
-			DestinationInstance: call.DestinationInstance,
-			Skill:               call.Skill,
-			Verb:                call.Verb,
-			Decision:            call.Decision,
-			Result:              call.Result,
-			LatencyMs:           int64(call.LatencyMs),
-			TaskId:              taskId,
-			CreatedAt:           call.CreatedAt.UTC().Format(time.RFC3339),
-		})
+		list = append(list, toTrafficCallResponse(call))
 	}
 
 	return &ListTrafficResponse{Calls: list, Total: total}, nil
@@ -114,20 +119,5 @@ func (t *Traffic) GetTraffic(workspaceId, trafficId db.Id) (*TrafficCallResponse
 		return nil, ErrTrafficNotFound
 	}
 
-	taskId := lo.FromPtr(call.TaskId)
-
-	return &TrafficCallResponse{
-		Id:                  call.Id,
-		WorkspaceId:         call.WorkspaceId,
-		SourceInstance:      call.SourceInstance,
-		DestinationAgent:    call.DestinationAgent,
-		DestinationInstance: call.DestinationInstance,
-		Skill:               call.Skill,
-		Verb:                call.Verb,
-		Decision:            call.Decision,
-		Result:              call.Result,
-		LatencyMs:           int64(call.LatencyMs),
-		TaskId:              taskId,
-		CreatedAt:           call.CreatedAt.UTC().Format(time.RFC3339),
-	}, nil
+	return toTrafficCallResponse(call), nil
 }

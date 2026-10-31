@@ -4,8 +4,10 @@
 package api
 
 import (
+	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/clivern/sloth/db"
 	"github.com/clivern/sloth/module"
@@ -40,4 +42,18 @@ func TestUnitEventActor(t *testing.T) {
 		assert.Equal(t, db.Id("user-1"), actor.ActorId)
 		assert.Equal(t, "Ahmed", actor.ActorName)
 	})
+}
+
+func TestUnitEventStream(t *testing.T) {
+	w := httptest.NewRecorder()
+
+	emit := (&API{}).EventStream(w, time.Minute)
+	emit("delta", map[string]string{"content": "Hi"})
+	emit("done", map[string]string{"status": "idle"})
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, "text/event-stream", w.Header().Get("Content-Type"))
+	assert.Equal(t, "no-cache", w.Header().Get("Cache-Control"))
+	assert.Equal(t, "event: delta\ndata: {\"content\":\"Hi\"}\n\nevent: done\ndata: {\"status\":\"idle\"}\n\n", w.Body.String())
+	assert.True(t, w.Flushed)
 }

@@ -44,20 +44,20 @@
   .play-msg.user .play-msg-body, .play-msg.error .play-msg-body { white-space: pre-wrap; }
   .play-msg.error .play-msg-body { color: var(--bad); }
   .play-msg.pending .play-msg-body { color: var(--muted); }
+  .thinking { display: inline-flex; gap: 3px; align-items: center; margin-right: 4px; vertical-align: middle; }
+  .thinking span { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); animation: think-blink 1.2s infinite; }
+  .thinking span:nth-child(2) { animation-delay: 0.2s; }
+  .thinking span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes think-blink { 0%, 80%, 100% { opacity: 0.25; } 40% { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) {
+    .thinking span { animation: none; opacity: 1; }
+  }
   .play-msg-body > :first-child { margin-top: 0; }
   .play-msg-body > :last-child { margin-bottom: 0; }
   .play-msg-body p, .play-msg-body ul, .play-msg-body ol { margin: 0 0 0.75em; }
   .play-msg-body ul, .play-msg-body ol { padding-left: 1.35em; }
   .play-msg-body strong { font-weight: 600; }
   .play-msg-body code { font-family: "IBM Plex Mono", monospace; font-size: 12.5px; background: var(--chip); border-radius: 4px; padding: 1px 5px; }
-  details.trace { margin-top: 4px; font-size: 13px; }
-  details.trace summary { cursor: pointer; color: var(--muted); font-size: 12px; list-style: none; }
-  details.trace summary::before { content: "▸ "; }
-  details.trace[open] summary::before { content: "▾ "; }
-  details.trace ol { margin: 10px 0 0; padding-left: 1.35em; display: flex; flex-direction: column; gap: 10px; }
-  .trace .status { font-family: "IBM Plex Mono", monospace; font-size: 12px; font-weight: 500; padding: 1px 6px; border-radius: 4px; background: var(--chip); }
-  .trace .status.bad { color: var(--bad); }
-  .trace pre { margin-top: 6px; background: #4a4a45; color: #f5f5f2; border-radius: 10px; padding: 10px 12px; overflow-x: auto; font-family: "IBM Plex Mono", monospace; font-size: 12px; }
   .play-composer { display: flex; flex-direction: column; gap: 10px; }
   .play-composer textarea { font: inherit; font-size: 14px; border: 1px solid var(--line); background: var(--bg); border-radius: 8px; padding: 10px 12px; color: var(--ink); outline: none; width: 100%; min-height: 88px; resize: vertical; }
   .play-composer textarea:focus { border-color: #c8c8c4; background: var(--surface); }
@@ -120,7 +120,7 @@
     "What's the weather in Cairo right now?",
     "Will it rain in Berlin in the next 3 days?",
     "How is NVDA doing, and who makes it?",
-    "What plan is user u_123 on, and what language do they use?",
+    "What plan is ada@example.com on, and what language do they use?",
   ];
   const chat = document.getElementById("chat");
   const input = document.getElementById("input");
@@ -131,19 +131,17 @@
 
   const escapeHtml = (text) => String(text).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
   const markdown = (text) => DOMPurify.sanitize(marked.parse(text, { breaks: true, gfm: true }));
-  const json = (value) => `<pre>${escapeHtml(JSON.stringify(value, null, 2))}</pre>`;
-  const code = (value) => `<span class="status ${value >= 300 ? "bad" : ""}">${value}</span>`;
-
-  function trace(steps) {
-    const items = steps.map((step) => {
-      if (step.step === "catalog") return `<li>Listed callable skills from Sloth ${code(step.status)}: ${escapeHtml(step.skills.join(", ") || "none")}</li>`;
-      if (step.step === "plan") return `<li>The model chose ${step.calls.length} call(s)${json(step.calls)}</li>`;
-      if (step.step === "call") return `<li>Called <code>${escapeHtml(step.skill)}</code> through Sloth ${code(step.status)}${json(step.result)}</li>`;
-      return `<li>Rephrased the results with <code>${escapeHtml(step.model)}</code></li>`;
-    });
-
-    return `<details class="trace"><summary>How it got there</summary><ol>${items.join("")}</ol></details>`;
-  }
+  const statusText = (step) => {
+    if (step.step === "catalog") return "Listing callable skills through Sloth…";
+    if (step.step === "plan") return "Choosing which agents to call…";
+    if (step.step === "call") return `Calling ${step.skill}…`;
+    return "Writing the answer…";
+  };
+  const assistantBody = (m) => {
+    if (m.error) return escapeHtml(m.content);
+    if (m.pending) return `<span class="thinking" aria-hidden="true"><span></span><span></span><span></span></span><span>${escapeHtml(m.status || "Thinking…")}</span>`;
+    return markdown(m.content);
+  };
 
   function render() {
     if (!messages.length) {
@@ -156,8 +154,7 @@
     chat.innerHTML = messages.map((m) => `
       <div class="play-msg ${m.role}${m.error ? " error" : ""}${m.pending ? " pending" : ""}">
         <div class="play-msg-role">${m.error ? "Error" : m.role === "user" ? "You" : "Assistant"}</div>
-        <div class="play-msg-body">${m.role === "user" || m.error || m.pending ? escapeHtml(m.content) : markdown(m.content)}</div>
-        ${m.steps ? trace(m.steps) : ""}
+        <div class="play-msg-body">${m.role === "user" ? escapeHtml(m.content) : assistantBody(m)}</div>
       </div>`).join("");
     chat.scrollTop = chat.scrollHeight;
   }
@@ -167,7 +164,7 @@
     if (sending || !question) return;
 
     messages.push({ role: "user", content: question });
-    const reply = { role: "assistant", content: "Asking agents through Sloth…", pending: true };
+    const reply = { role: "assistant", content: "", pending: true, status: "Thinking…" };
     messages.push(reply);
     input.value = "";
     sending = true;
@@ -178,8 +175,37 @@
     try {
       const response = await fetch("/ask", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question }) });
       if (!response.ok) throw new Error(`The assistant answered ${response.status}`);
-      const data = await response.json();
-      Object.assign(reply, { content: data.answer, steps: data.steps, pending: false });
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      const apply = (kind, data) => {
+        if (kind === "delta") {
+          if (reply.pending) Object.assign(reply, { content: "", pending: false, status: null });
+          reply.content += data;
+        } else if (kind === "step") {
+          if (reply.pending) reply.status = statusText(data);
+        }
+        render();
+      };
+
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        let cut;
+        while ((cut = buffer.indexOf("\n\n")) >= 0) {
+          const frame = buffer.slice(0, cut);
+          buffer = buffer.slice(cut + 2);
+          let kind = "";
+          let data = "";
+          for (const line of frame.split("\n")) {
+            if (line.startsWith("event: ")) kind = line.slice(7);
+            else if (line.startsWith("data: ")) data += line.slice(6);
+          }
+          if (kind) apply(kind, JSON.parse(data));
+        }
+      }
     } catch (error) {
       Object.assign(reply, { content: error.message, error: true, pending: false });
     } finally {
@@ -195,7 +221,7 @@
     document.getElementById("skills").innerHTML = data.skills.length
       ? data.skills.map((s) => `<span class="chip">${escapeHtml(s)}</span>`).join("")
       : data.status === 401
-        ? `<span class="play-note">None yet (Sloth answered 401). Issue an api_key identity to the assistant under Agents and set SLOTH_AGENT_SECRET.</span>`
+        ? `<span class="play-note">None yet (Sloth answered 401). Set SLOTH_AGENT_SECRET to any random value (min 8 characters) and restart the demo.</span>`
         : `<span class="play-note">None yet (Sloth answered ${data.status}). Allow the assistant to call agents under Intentions.</span>`;
   }
 

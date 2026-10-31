@@ -21,6 +21,7 @@ const (
 	Random                Strategy = "random"
 	RoundRobin            Strategy = "round_robin"
 	LeastOutstandingTasks Strategy = "least_outstanding_tasks"
+	Sticky                Strategy = "sticky"
 )
 
 // Strategy is how Pick chooses among ids.
@@ -70,6 +71,9 @@ func (p *Picker) Pick(ids []string, opts Options) (int, error) {
 		return slices.Index(ids, p.roundRobin(opts.Key, ids)), nil
 	case LeastOutstandingTasks:
 		return p.leastOutstanding(ids, opts.Outstanding), nil
+	case Sticky:
+		// The sticky key already won above, so a missing key falls back to turns.
+		return slices.Index(ids, p.roundRobin(opts.Key, ids)), nil
 	}
 
 	return 0, ErrStrategy

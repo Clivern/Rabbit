@@ -8,7 +8,10 @@
         <p class="mt-2 text-theme-textLight">{{ $t('billing_page.subtitle') }}</p>
       </div>
 
-      <div v-if="errorMessage" class="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+      <div
+        v-if="errorMessage"
+        class="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+      >
         {{ errorMessage }}
       </div>
 
@@ -19,11 +22,19 @@
 
       <template v-else>
         <div class="grid grid-cols-1 gap-6 xl:grid-cols-3">
-          <section class="overflow-hidden rounded-xl border border-theme-border bg-white shadow-sm xl:col-span-2">
+          <section
+            class="overflow-hidden rounded-xl border border-theme-border bg-white shadow-sm xl:col-span-2"
+          >
             <div class="border-b border-theme-border bg-primary-50/40 px-6 py-4">
-              <p class="text-xs font-medium uppercase tracking-wider text-theme-textLight">{{ $t('billing_page.credits_label') }}</p>
-              <h2 class="mt-1 text-2xl font-semibold text-theme-text">{{ formatCompact(tokenBalance) }}</h2>
-              <p class="mt-1 text-sm text-theme-textLight">{{ $t('billing_page.credits_available') }}</p>
+              <p class="text-xs font-medium uppercase tracking-wider text-theme-textLight">
+                {{ $t('billing_page.credits_label') }}
+              </p>
+              <h2 class="mt-1 text-2xl font-semibold text-theme-text">
+                {{ formatCompact(tokenBalance) }}
+              </h2>
+              <p class="mt-1 text-sm text-theme-textLight">
+                {{ $t('billing_page.credits_available') }}
+              </p>
             </div>
 
             <div class="p-6">
@@ -37,9 +48,11 @@
                   :key="preset"
                   type="button"
                   class="rounded-lg border px-4 py-3 text-sm font-medium transition-colors"
-                  :class="amountCents === preset * 100
-                    ? 'border-primary-800 bg-primary-50 text-theme-text'
-                    : 'border-theme-border bg-white text-theme-text hover:bg-theme-hover'"
+                  :class="
+                    amountCents === preset * 100
+                      ? 'border-primary-800 bg-primary-50 text-theme-text'
+                      : 'border-theme-border bg-white text-theme-text hover:bg-theme-hover'
+                  "
                   @click="selectPreset(preset)"
                 >
                   ${{ preset }}
@@ -60,7 +73,9 @@
               </label>
 
               <p class="mt-3 text-sm text-theme-textLight">
-                {{ $t('billing_page.tokens_you_get', { tokens: formatCompact(tokensForSelection) }) }}
+                {{
+                  $t('billing_page.tokens_you_get', { tokens: formatCompact(tokensForSelection) })
+                }}
               </p>
 
               <div class="mt-8 flex flex-wrap gap-3">
@@ -79,7 +94,9 @@
                   :disabled="portalLoading"
                   @click="openPortal"
                 >
-                  {{ portalLoading ? $t('billing_page.opening') : $t('billing_page.manage_billing') }}
+                  {{
+                    portalLoading ? $t('billing_page.opening') : $t('billing_page.manage_billing')
+                  }}
                 </button>
               </div>
             </div>
@@ -87,7 +104,9 @@
 
           <aside class="space-y-6">
             <section class="rounded-xl border border-theme-border bg-white p-6 shadow-sm">
-              <h2 class="text-lg font-semibold text-theme-text mb-4">{{ $t('billing_page.payment') }}</h2>
+              <h2 class="text-lg font-semibold text-theme-text mb-4">
+                {{ $t('billing_page.payment') }}
+              </h2>
               <p class="text-sm leading-6 text-theme-textLight">
                 <template v-if="canManageStripe">
                   {{ $t('billing_page.payment_manage_desc') }}
@@ -103,32 +122,41 @@
                 :disabled="!canManageStripe || portalLoading"
                 @click="openPortal"
               >
-                {{ canManageStripe ? (portalLoading ? $t('billing_page.opening') : $t('billing_page.open_billing_portal')) : $t('billing_page.available_after_purchase') }}
+                {{
+                  canManageStripe
+                    ? portalLoading
+                      ? $t('billing_page.opening')
+                      : $t('billing_page.open_billing_portal')
+                    : $t('billing_page.available_after_purchase')
+                }}
               </button>
             </section>
           </aside>
         </div>
 
-        <section class="mt-6 overflow-hidden rounded-xl border border-theme-border bg-white shadow-sm">
+        <section
+          class="mt-6 overflow-hidden rounded-xl border border-theme-border bg-white shadow-sm"
+        >
           <div class="border-b border-theme-border bg-primary-50/40 px-6 py-4">
             <div class="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <h2 class="text-lg font-semibold text-theme-text">{{ $t('billing_page.usage') }}</h2>
+                <h2 class="text-lg font-semibold text-theme-text">
+                  {{ $t('billing_page.usage') }}
+                </h2>
                 <p class="mt-1 text-sm text-theme-textLight">
                   {{ $t('billing_page.usage_subtitle') }}
                 </p>
               </div>
-              <span class="rounded-full bg-theme-hover px-3 py-1 text-xs font-medium text-theme-textLight">
+              <span
+                class="rounded-full bg-theme-hover px-3 py-1 text-xs font-medium text-theme-textLight"
+              >
                 {{ $t('billing_page.token_balance_label') }}
               </span>
             </div>
           </div>
 
           <div class="space-y-6 px-6 py-5">
-            <div
-              v-for="metric in usageMetrics"
-              :key="metric.id"
-            >
+            <div v-for="metric in usageMetrics" :key="metric.id">
               <div class="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <div class="flex flex-wrap items-center gap-2">
@@ -140,15 +168,22 @@
                       {{ metric.badgeShort }}
                     </span>
                   </div>
-                  <p v-if="metric.hint" class="mt-0.5 text-xs text-theme-textLight">{{ metric.hint }}</p>
+                  <p v-if="metric.hint" class="mt-0.5 text-xs text-theme-textLight">
+                    {{ metric.hint }}
+                  </p>
                 </div>
                 <p class="text-sm font-medium tabular-nums text-theme-text">
                   <span>{{ metric.displayUsed }}</span>
-                  <span v-if="!metric.infoOnly" class="font-normal text-theme-textLight"> / {{ metric.displayLimit }}</span>
+                  <span v-if="!metric.infoOnly" class="font-normal text-theme-textLight">
+                    / {{ metric.displayLimit }}</span
+                  >
                 </p>
               </div>
 
-              <div v-if="!metric.infoOnly" class="mt-3 h-2 overflow-hidden rounded-full bg-theme-hover">
+              <div
+                v-if="!metric.infoOnly"
+                class="mt-3 h-2 overflow-hidden rounded-full bg-theme-hover"
+              >
                 <div
                   class="h-full rounded-full transition-all duration-300"
                   :style="metric.barStyle"
@@ -166,9 +201,13 @@
 
           <div class="border-t border-theme-border bg-theme-hover/30 px-6 py-4">
             <p class="text-xs leading-5 text-theme-textLight">
-              <span class="font-medium text-theme-text">{{ $t('billing_page.usage_footer_monthly') }}</span>
+              <span class="font-medium text-theme-text">{{
+                $t('billing_page.usage_footer_monthly')
+              }}</span>
               {{ $t('billing_page.usage_reset_on', { date: usagePeriodReset }) }}
-              <span class="font-medium text-theme-text">{{ $t('billing_page.usage_footer_ongoing') }}</span>
+              <span class="font-medium text-theme-text">{{
+                $t('billing_page.usage_footer_ongoing')
+              }}</span>
               {{ $t('billing_page.usage_ongoing_note') }}
             </p>
           </div>
@@ -200,25 +239,27 @@ const billingStatus = ref({
   providerCustomerId: '',
   aiTokensBalance: 0,
   tokensPerUsd: 20000,
-  updatedAt: ''
+  updatedAt: '',
 })
 
 const usageData = ref({
   used: {
     workspaceMembers: 0,
     aiTokens: 0,
-    aiCost: 0
+    aiCost: 0,
   },
   limits: {
     workspaceMembers: 3,
-    aiTokens: 500_000
+    aiTokens: 500_000,
   },
-  periodReset: ''
+  periodReset: '',
 })
 
 const tokenBalance = computed(() => billingStatus.value.aiTokensBalance || 0)
 const tokensPerUsd = computed(() => billingStatus.value.tokensPerUsd || 20000)
-const tokensForSelection = computed(() => Math.floor((amountCents.value * tokensPerUsd.value) / 100))
+const tokensForSelection = computed(() =>
+  Math.floor((amountCents.value * tokensPerUsd.value) / 100)
+)
 
 const canManageStripe = computed(() => !!billingStatus.value.providerCustomerId)
 
@@ -256,7 +297,7 @@ const formatUsd = (value) => {
     style: 'currency',
     currency: 'USD',
     minimumFractionDigits: fractionDigits,
-    maximumFractionDigits: fractionDigits
+    maximumFractionDigits: fractionDigits,
   }).format(value)
 }
 
@@ -272,7 +313,7 @@ const usageBarColor = (percent) => {
 
 const usageBarStyle = (percent) => ({
   width: `${Math.min(100, Math.max(0, percent))}%`,
-  backgroundColor: usageBarColor(percent)
+  backgroundColor: usageBarColor(percent),
 })
 
 const buildUsageMetrics = (limits, used) => {
@@ -285,7 +326,7 @@ const buildUsageMetrics = (limits, used) => {
       used: used.aiTokens,
       limit: limits.aiTokens,
       displayUsed: formatCompact(used.aiTokens),
-      displayLimit: formatCompact(limits.aiTokens)
+      displayLimit: formatCompact(limits.aiTokens),
     },
     {
       id: 'workspaceMembers',
@@ -295,7 +336,7 @@ const buildUsageMetrics = (limits, used) => {
       used: used.workspaceMembers,
       limit: limits.workspaceMembers,
       displayUsed: formatNumber(used.workspaceMembers),
-      displayLimit: formatNumber(limits.workspaceMembers)
+      displayLimit: formatNumber(limits.workspaceMembers),
     },
     {
       id: 'aiCost',
@@ -307,21 +348,21 @@ const buildUsageMetrics = (limits, used) => {
       limit: 1,
       displayUsed: formatUsd(used.aiCost),
       displayLimit: '',
-      infoSuffix: t('billing_page.metric_suffix_ai_cost')
-    }
+      infoSuffix: t('billing_page.metric_suffix_ai_cost'),
+    },
   ]
 
   const displayByPolicy = {
     monthly: {
       badgeShort: t('billing_page.metric_badge_monthly'),
       metricBadgeClass: 'bg-primary-50 text-theme-textLight',
-      percentSuffix: t('billing_page.metric_suffix_monthly')
+      percentSuffix: t('billing_page.metric_suffix_monthly'),
     },
     capacity: {
       badgeShort: t('billing_page.metric_badge_ongoing'),
       metricBadgeClass: 'bg-theme-hover text-theme-textLight',
-      percentSuffix: t('billing_page.metric_suffix_capacity')
-    }
+      percentSuffix: t('billing_page.metric_suffix_capacity'),
+    },
   }
 
   return definitions.map((metric) => {
@@ -332,7 +373,7 @@ const buildUsageMetrics = (limits, used) => {
       ...display,
       percent,
       percentLabel: `${percent}%`,
-      barStyle: usageBarStyle(percent)
+      barStyle: usageBarStyle(percent),
     }
   })
 }
@@ -346,7 +387,7 @@ const formatDate = (value) => {
   return new Date(value).toLocaleDateString(locale.value, {
     year: 'numeric',
     month: 'short',
-    day: 'numeric'
+    day: 'numeric',
   })
 }
 
@@ -356,7 +397,7 @@ const loadBilling = async () => {
   try {
     const [statusRes, usageRes] = await Promise.all([
       billing_api.status(currentWorkspace.id),
-      billing_api.usage(currentWorkspace.id)
+      billing_api.usage(currentWorkspace.id),
     ])
     billingStatus.value = statusRes.data
     usageData.value = usageRes.data

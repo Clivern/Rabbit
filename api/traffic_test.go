@@ -22,7 +22,7 @@ func TestUnitTrafficActions(t *testing.T) {
 	stored := &db.TrafficCall{
 		Id:                  "call-1",
 		WorkspaceId:         "ws-1",
-		SourceInstance:      "frontend",
+		SourceAgent:         "frontend",
 		DestinationAgent:    "users",
 		DestinationInstance: "users-1",
 		Skill:               "lookup",

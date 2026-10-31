@@ -70,6 +70,8 @@ const (
 
 	CanListTraffic = "CAN_LIST_TRAFFIC"
 	CanGetTraffic  = "CAN_GET_TRAFFIC"
+
+	CanUseChat = "CAN_USE_CHAT"
 )
 
 var (
@@ -243,7 +245,8 @@ func (p *Perm) CanAsUser(permission string) (bool, error) {
 		CanListKeyValue,
 		CanGetKeyValue,
 		CanListTraffic,
-		CanGetTraffic:
+		CanGetTraffic,
+		CanUseChat:
 		return true, nil
 	case CanUpdateWorkspace,
 		CanDeleteWorkspace,

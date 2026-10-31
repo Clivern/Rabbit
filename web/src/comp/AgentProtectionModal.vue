@@ -1,24 +1,34 @@
 <template>
   <BaseModal
     :open="open"
-    :title="current ? $t('agents_page.protection_replace_title') : $t('agents_page.protection_add_title')"
-    :description="current ? $t('agents_page.protection_replace_desc') : $t('agents_page.protection_modal_desc')"
+    :title="
+      current ? $t('agents_page.protection_replace_title') : $t('agents_page.protection_add_title')
+    "
+    :description="
+      current ? $t('agents_page.protection_replace_desc') : $t('agents_page.protection_modal_desc')
+    "
     :error="error"
     :busy="saving"
     @close="close"
   >
     <form class="mt-4 space-y-4" @submit.prevent="submit">
       <div>
-        <label for="protection-type" class="form-label">{{ $t('agents_page.protection_type') }}</label>
+        <label for="protection-type" class="form-label">{{
+          $t('agents_page.protection_type')
+        }}</label>
         <select id="protection-type" v-model="form.type" class="input-field" :disabled="saving">
           <option value="api_key">{{ $t('agents_page.protection_type_api_key') }}</option>
           <option value="basic_auth">{{ $t('agents_page.protection_type_basic_auth') }}</option>
         </select>
-        <p class="mt-1 text-xs text-theme-textLight">{{ $t(`agents_page.protection_type_${form.type}_hint`) }}</p>
+        <p class="mt-1 text-xs text-theme-textLight">
+          {{ $t(`agents_page.protection_type_${form.type}_hint`) }}
+        </p>
       </div>
 
       <div v-if="form.type === 'api_key'">
-        <label for="protection-header" class="form-label">{{ $t('agents_page.protection_header') }}</label>
+        <label for="protection-header" class="form-label">{{
+          $t('agents_page.protection_header')
+        }}</label>
         <input
           id="protection-header"
           v-model="form.header"
@@ -32,7 +42,9 @@
       </div>
 
       <div v-if="form.type === 'basic_auth'">
-        <label for="protection-username" class="form-label">{{ $t('agents_page.protection_username') }}</label>
+        <label for="protection-username" class="form-label">{{
+          $t('agents_page.protection_username')
+        }}</label>
         <input
           id="protection-username"
           v-model="form.username"
@@ -47,7 +59,9 @@
       </div>
 
       <div>
-        <label for="protection-secret" class="form-label">{{ $t('agents_page.protection_secret') }}</label>
+        <label for="protection-secret" class="form-label">{{
+          $t('agents_page.protection_secret')
+        }}</label>
         <input
           id="protection-secret"
           v-model="form.secret"
@@ -59,7 +73,9 @@
           autocomplete="new-password"
           :disabled="saving"
         />
-        <p class="mt-1 text-xs text-theme-textLight">{{ $t('agents_page.protection_secret_hint') }}</p>
+        <p class="mt-1 text-xs text-theme-textLight">
+          {{ $t('agents_page.protection_secret_hint') }}
+        </p>
       </div>
 
       <div class="flex gap-3 justify-end">
@@ -112,14 +128,17 @@ const form = reactive({
   secret: '',
 })
 
-watch(() => props.open, (open) => {
-  if (!open) return
-  error.value = null
-  form.type = props.current?.type || 'api_key'
-  form.header = props.current?.header || 'X-API-Key'
-  form.username = props.current?.username || 'sloth'
-  form.secret = ''
-})
+watch(
+  () => props.open,
+  (open) => {
+    if (!open) return
+    error.value = null
+    form.type = props.current?.type || 'api_key'
+    form.header = props.current?.header || 'X-API-Key'
+    form.username = props.current?.username || 'sloth'
+    form.secret = ''
+  }
+)
 
 function close() {
   if (saving.value) return

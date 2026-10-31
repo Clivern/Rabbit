@@ -39,6 +39,11 @@ func (rw *ResponseWriter) Write(b []byte) (int, error) {
 	return n, err
 }
 
+// Unwrap returns the wrapped response, so http.ResponseController can flush streamed responses through it.
+func (rw *ResponseWriter) Unwrap() http.ResponseWriter {
+	return rw.ResponseWriter
+}
+
 // Logger creates a new logger middleware
 func Logger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

@@ -5,7 +5,6 @@ package db
 
 import (
 	"database/sql"
-	"errors"
 	"time"
 )
 
@@ -42,6 +41,20 @@ func NewAccessKeyRepository(db *sql.DB) AccessKeyRepository {
 	return &AccessKeyRepositoryPostgres{db: db}
 }
 
+// scanAccessKey maps a row into a workspace access key. Column order must match the select list.
+func scanAccessKey(item *AccessKey) []any {
+	return []any{
+		&item.Id,
+		&item.WorkspaceId,
+		&item.Name,
+		&item.Key,
+		&item.ExpiresAt,
+		&item.Meta,
+		&item.CreatedAt,
+		&item.UpdatedAt,
+	}
+}
+
 // Create inserts a workspace access key row.
 func (r *AccessKeyRepositoryPostgres) Create(accessKey *AccessKey) error {
 	id, err := NewId()
@@ -67,93 +80,43 @@ func (r *AccessKeyRepositoryPostgres) Create(accessKey *AccessKey) error {
 
 // GetById returns a workspace access key by id.
 func (r *AccessKeyRepositoryPostgres) GetById(id Id) (*AccessKey, error) {
-	item := &AccessKey{}
-	err := r.db.QueryRow(
+	return QueryOne(
+		r.db,
 		`SELECT id, workspace_id, name, token, expires_at, meta, created_at, updated_at
 		FROM access_keys
 		WHERE id = $1`,
+		scanAccessKey,
 		id.String(),
-	).Scan(
-		&item.Id,
-		&item.WorkspaceId,
-		&item.Name,
-		&item.Key,
-		&item.ExpiresAt,
-		&item.Meta,
-		&item.CreatedAt,
-		&item.UpdatedAt,
 	)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
-
-	return item, err
 }
 
 // GetByKey returns a workspace access key by key.
 func (r *AccessKeyRepositoryPostgres) GetByKey(key string) (*AccessKey, error) {
-	item := &AccessKey{}
-	err := r.db.QueryRow(
+	return QueryOne(
+		r.db,
 		`SELECT id, workspace_id, name, token, expires_at, meta, created_at, updated_at
 		FROM access_keys
 		WHERE token = $1 AND (expires_at IS NULL OR expires_at > $2)`,
+		scanAccessKey,
 		key,
 		time.Now().UTC(),
-	).Scan(
-		&item.Id,
-		&item.WorkspaceId,
-		&item.Name,
-		&item.Key,
-		&item.ExpiresAt,
-		&item.Meta,
-		&item.CreatedAt,
-		&item.UpdatedAt,
 	)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
-
-	return item, err
 }
 
 // ListByWorkspaceId lists workspace access key rows by workspace id.
 func (r *AccessKeyRepositoryPostgres) ListByWorkspaceId(workspaceId Id, limit, offset int) ([]*AccessKey, error) {
-	rows, err := r.db.Query(
+	return QueryMany(
+		r.db,
 		`SELECT id, workspace_id, name, token, expires_at, meta, created_at, updated_at
 		FROM access_keys
 		WHERE workspace_id = $1
 		ORDER BY created_at DESC
 		LIMIT $2 OFFSET $3`,
+		scanAccessKey,
 		workspaceId.String(),
 		limit,
 		offset,
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-
-	var list []*AccessKey
-	for rows.Next() {
-		item := &AccessKey{}
-		if err := rows.Scan(
-			&item.Id,
-			&item.WorkspaceId,
-			&item.Name,
-			&item.Key,
-			&item.ExpiresAt,
-			&item.Meta,
-			&item.CreatedAt,
-			&item.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-
-		list = append(list, item)
-	}
-
-	return list, rows.Err()
 }
 
 // Delete deletes a workspace access key row.

@@ -9,22 +9,24 @@
       </div>
 
       <section class="rounded-xl border border-theme-border bg-white shadow-sm overflow-hidden">
-        <div class="flex flex-wrap items-start justify-between gap-4 border-b border-theme-border px-6 py-4">
+        <div
+          class="flex flex-wrap items-start justify-between gap-4 border-b border-theme-border px-6 py-4"
+        >
           <div>
-            <h2 class="text-lg font-semibold text-theme-text">{{ $t('intentions_page.list_title') }}</h2>
+            <h2 class="text-lg font-semibold text-theme-text">
+              {{ $t('intentions_page.list_title') }}
+            </h2>
             <p class="mt-1 text-sm text-theme-textLight">{{ $t('intentions_page.list_desc') }}</p>
           </div>
-          <button
-            v-if="canManage"
-            type="button"
-            class="btn-primary"
-            @click="openForm()"
-          >
+          <button v-if="canManage" type="button" class="btn-primary" @click="openForm()">
             {{ $t('intentions_page.add') }}
           </button>
         </div>
 
-        <div v-if="errorMessage" class="m-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+        <div
+          v-if="errorMessage"
+          class="m-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+        >
           {{ errorMessage }}
         </div>
 
@@ -32,29 +34,68 @@
           <table class="min-w-full divide-y divide-theme-border">
             <thead class="bg-theme-hover">
               <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider">{{ $t('intentions_page.source') }}</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider">{{ $t('intentions_page.destination') }}</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider">{{ $t('intentions_page.skill') }}</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider">{{ $t('intentions_page.action') }}</th>
-                <th v-if="canManage" class="px-6 py-3 text-right text-xs font-medium text-theme-textLight uppercase tracking-wider">{{ $t('intentions_page.actions') }}</th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider"
+                >
+                  {{ $t('intentions_page.source') }}
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider"
+                >
+                  {{ $t('intentions_page.destination') }}
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider"
+                >
+                  {{ $t('intentions_page.skill') }}
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider"
+                >
+                  {{ $t('intentions_page.action') }}
+                </th>
+                <th
+                  v-if="canManage"
+                  class="px-6 py-3 text-right text-xs font-medium text-theme-textLight uppercase tracking-wider"
+                >
+                  {{ $t('intentions_page.actions') }}
+                </th>
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-theme-border">
               <tr v-if="loading">
-                <td :colspan="columns" class="px-6 py-4 text-center text-sm text-theme-textLight">{{ $t('common.loading') }}</td>
+                <td :colspan="columns" class="px-6 py-4 text-center text-sm text-theme-textLight">
+                  {{ $t('common.loading') }}
+                </td>
               </tr>
               <tr v-else-if="!rules.length">
-                <td :colspan="columns" class="px-6 py-4 text-center text-sm text-theme-textLight">{{ $t('intentions_page.empty') }}</td>
+                <td :colspan="columns" class="px-6 py-4 text-center text-sm text-theme-textLight">
+                  {{ $t('intentions_page.empty') }}
+                </td>
               </tr>
               <template v-else>
                 <tr v-for="rule in rules" :key="rule.id" class="hover:bg-theme-hover">
-                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-theme-text font-mono">{{ rule.source }}</td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-theme-text font-mono">{{ rule.destination }}</td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-theme-text font-mono">{{ rule.skill || $t('intentions_page.all_skills') }}</td>
+                  <td
+                    class="px-6 py-4 whitespace-nowrap text-sm font-medium text-theme-text font-mono"
+                  >
+                    {{ rule.source }}
+                  </td>
+                  <td
+                    class="px-6 py-4 whitespace-nowrap text-sm font-medium text-theme-text font-mono"
+                  >
+                    {{ rule.destination }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-theme-text font-mono">
+                    {{ rule.skill || $t('intentions_page.all_skills') }}
+                  </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm">
                     <span
                       class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium"
-                      :class="rule.action === 'allow' ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-800'"
+                      :class="
+                        rule.action === 'allow'
+                          ? 'bg-emerald-50 text-emerald-800'
+                          : 'bg-red-50 text-red-800'
+                      "
                     >
                       {{ $t(`intentions_page.action_${rule.action}`) }}
                     </span>
@@ -86,7 +127,13 @@
           class="bg-white px-6 py-4 border-t border-theme-border flex items-center justify-between"
         >
           <div class="text-sm text-theme-textLight">
-            {{ $t('intentions_page.showing', { from: offset + 1, to: Math.min(offset + limit, total), total }) }}
+            {{
+              $t('intentions_page.showing', {
+                from: offset + 1,
+                to: Math.min(offset + limit, total),
+                total,
+              })
+            }}
           </div>
           <div class="flex items-center gap-2">
             <button
@@ -120,7 +167,9 @@
       <form class="mt-4 space-y-4" @submit.prevent="submit">
         <div class="grid gap-4 sm:grid-cols-2">
           <div>
-            <label for="intention-source" class="form-label">{{ $t('intentions_page.source') }}</label>
+            <label for="intention-source" class="form-label">{{
+              $t('intentions_page.source')
+            }}</label>
             <select
               id="intention-source"
               v-model="form.source"
@@ -129,11 +178,15 @@
               :disabled="saving"
             >
               <option value="" disabled>{{ $t('intentions_page.select_agent') }}</option>
-              <option v-for="agent in agents" :key="agent.name" :value="agent.name">{{ agent.name }}</option>
+              <option v-for="agent in agents" :key="agent.name" :value="agent.name">
+                {{ agent.name }}
+              </option>
             </select>
           </div>
           <div>
-            <label for="intention-destination" class="form-label">{{ $t('intentions_page.destination') }}</label>
+            <label for="intention-destination" class="form-label">{{
+              $t('intentions_page.destination')
+            }}</label>
             <select
               id="intention-destination"
               v-model="form.destination"
@@ -142,27 +195,35 @@
               :disabled="saving"
             >
               <option value="" disabled>{{ $t('intentions_page.select_agent') }}</option>
-              <option v-for="agent in agents" :key="agent.name" :value="agent.name">{{ agent.name }}</option>
+              <option v-for="agent in agents" :key="agent.name" :value="agent.name">
+                {{ agent.name }}
+              </option>
             </select>
           </div>
         </div>
 
         <div class="grid gap-4 sm:grid-cols-2">
           <div>
-            <label for="intention-skill" class="form-label">{{ $t('intentions_page.skill') }}</label>
-            <input
+            <label for="intention-skill" class="form-label">{{
+              $t('intentions_page.skill')
+            }}</label>
+            <select
               id="intention-skill"
               v-model="form.skill"
-              type="text"
               class="input-field font-mono"
-              placeholder="user.profile.get"
-              autocomplete="off"
               :disabled="saving"
-            />
+            >
+              <option value="">{{ $t('intentions_page.all_skills') }}</option>
+              <option v-for="skill in availableSkills" :key="skill" :value="skill">
+                {{ skill }}
+              </option>
+            </select>
             <p class="mt-1 text-xs text-theme-textLight">{{ $t('intentions_page.skill_hint') }}</p>
           </div>
           <div>
-            <label for="intention-action" class="form-label">{{ $t('intentions_page.action') }}</label>
+            <label for="intention-action" class="form-label">{{
+              $t('intentions_page.action')
+            }}</label>
             <select
               id="intention-action"
               v-model="form.action"
@@ -189,7 +250,12 @@
     <ConfirmModal
       :open="!!deleteTarget"
       :title="$t('intentions_page.delete_title')"
-      :message="$t('intentions_page.delete_confirm', { source: deleteTarget?.source, destination: deleteTarget?.destination })"
+      :message="
+        $t('intentions_page.delete_confirm', {
+          source: deleteTarget?.source,
+          destination: deleteTarget?.destination,
+        })
+      "
       :error="deleteError"
       :busy="deleting"
       :confirm-label="$t('intentions_page.delete')"
@@ -207,6 +273,7 @@ import { useI18n } from 'vue-i18n'
 import AppNav from '@/comp/AppNav.vue'
 import ConfirmModal from '@/comp/ConfirmModal.vue'
 import { agent_api, intention_api } from '@/api'
+import { parseCard } from '@/lib/agent'
 import { useUrlPagination } from '@/lib/pagination'
 import { useWorkspaceContext } from '@/lib/permission'
 import { errorText } from '@/lib/error'
@@ -225,6 +292,25 @@ const errorMessage = ref(null)
 
 const columns = computed(() => (canManage.value ? 5 : 4))
 
+const availableSkills = computed(() => {
+  const picked = agents.value.find((agent) => agent.name === form.value.destination)
+  const pool = picked ? [picked] : agents.value
+
+  const ids = [
+    ...new Set(
+      pool.flatMap((agent) =>
+        parseCard(agent.card)
+          .skills.map((skill) => skill.id)
+          .filter(Boolean)
+      )
+    ),
+  ].sort()
+
+  if (form.value.skill && !ids.includes(form.value.skill)) ids.push(form.value.skill)
+
+  return ids
+})
+
 const showForm = ref(false)
 const editingId = ref(null)
 const isEditing = computed(() => editingId.value !== null)
@@ -242,7 +328,12 @@ function emptyForm() {
 
 // Maps a rule from the API to the form fields
 function toForm(rule) {
-  return { source: rule.source, destination: rule.destination, skill: rule.skill || '', action: rule.action }
+  return {
+    source: rule.source,
+    destination: rule.destination,
+    skill: rule.skill || '',
+    action: rule.action,
+  }
 }
 
 // The API caps a page at 100 agents, so keep fetching until every agent is loaded
@@ -251,7 +342,10 @@ async function loadAgents() {
   const loaded = []
 
   while (true) {
-    const res = await agent_api.list(currentWorkspace.id, { limit: pageSize, offset: loaded.length })
+    const res = await agent_api.list(currentWorkspace.id, {
+      limit: pageSize,
+      offset: loaded.length,
+    })
     const page = res.data.agents || []
     loaded.push(...page)
 
@@ -266,7 +360,10 @@ async function loadRules() {
   errorMessage.value = null
 
   try {
-    const res = await intention_api.list(currentWorkspace.id, { limit: limit, offset: offset.value })
+    const res = await intention_api.list(currentWorkspace.id, {
+      limit: limit,
+      offset: offset.value,
+    })
     rules.value = res.data.intentions || []
     total.value = res.data._meta?.total || 0
   } catch (err) {

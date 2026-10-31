@@ -9,22 +9,22 @@
       </div>
 
       <section class="rounded-xl border border-theme-border bg-white shadow-sm overflow-hidden">
-        <div class="flex flex-wrap items-start justify-between gap-4 border-b border-theme-border px-6 py-4">
+        <div
+          class="flex flex-wrap items-start justify-between gap-4 border-b border-theme-border px-6 py-4"
+        >
           <div>
             <h2 class="text-lg font-semibold text-theme-text">{{ $t('kv_page.list_title') }}</h2>
             <p class="mt-1 text-sm text-theme-textLight">{{ $t('kv_page.list_desc') }}</p>
           </div>
-          <button
-            v-if="canManage"
-            type="button"
-            class="btn-primary"
-            @click="openForm()"
-          >
+          <button v-if="canManage" type="button" class="btn-primary" @click="openForm()">
             {{ $t('kv_page.add') }}
           </button>
         </div>
 
-        <div v-if="errorMessage" class="m-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+        <div
+          v-if="errorMessage"
+          class="m-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+        >
           {{ errorMessage }}
         </div>
 
@@ -32,24 +32,53 @@
           <table class="min-w-full divide-y divide-theme-border">
             <thead class="bg-theme-hover">
               <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider">{{ $t('kv_page.key') }}</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider">{{ $t('kv_page.value') }}</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider">{{ $t('kv_page.updated') }}</th>
-                <th v-if="canManage" class="px-6 py-3 text-right text-xs font-medium text-theme-textLight uppercase tracking-wider">{{ $t('kv_page.actions') }}</th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider"
+                >
+                  {{ $t('kv_page.key') }}
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider"
+                >
+                  {{ $t('kv_page.value') }}
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider"
+                >
+                  {{ $t('kv_page.updated') }}
+                </th>
+                <th
+                  v-if="canManage"
+                  class="px-6 py-3 text-right text-xs font-medium text-theme-textLight uppercase tracking-wider"
+                >
+                  {{ $t('kv_page.actions') }}
+                </th>
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-theme-border">
               <tr v-if="loading">
-                <td :colspan="columns" class="px-6 py-4 text-center text-sm text-theme-textLight">{{ $t('common.loading') }}</td>
+                <td :colspan="columns" class="px-6 py-4 text-center text-sm text-theme-textLight">
+                  {{ $t('common.loading') }}
+                </td>
               </tr>
               <tr v-else-if="!items.length">
-                <td :colspan="columns" class="px-6 py-4 text-center text-sm text-theme-textLight">{{ $t('kv_page.empty') }}</td>
+                <td :colspan="columns" class="px-6 py-4 text-center text-sm text-theme-textLight">
+                  {{ $t('kv_page.empty') }}
+                </td>
               </tr>
               <template v-else>
                 <tr v-for="item in items" :key="item.id" class="hover:bg-theme-hover">
-                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-theme-text font-mono">{{ item.key }}</td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-theme-text font-mono">{{ item.value }}</td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-theme-textLight">{{ formatRelative(item.updatedAt) }}</td>
+                  <td
+                    class="px-6 py-4 whitespace-nowrap text-sm font-medium text-theme-text font-mono"
+                  >
+                    {{ item.key }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-theme-text font-mono">
+                    {{ item.value }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-theme-textLight">
+                    {{ formatRelative(item.updatedAt) }}
+                  </td>
                   <td v-if="canManage" class="px-6 py-4 whitespace-nowrap text-right text-sm">
                     <button
                       type="button"

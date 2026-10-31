@@ -5,7 +5,6 @@ package db
 
 import (
 	"database/sql"
-	"errors"
 	"time"
 )
 
@@ -38,6 +37,19 @@ func NewWorkspaceKeyValueRepository(db *sql.DB) WorkspaceKeyValueRepository {
 	return &WorkspaceKeyValueRepositoryPostgres{db: db}
 }
 
+// scanWorkspaceKeyValue maps a row into a workspace key/value. Column order must match the select list.
+func scanWorkspaceKeyValue(item *WorkspaceKeyValue) []any {
+	return []any{
+		&item.Id,
+		&item.WorkspaceId,
+		&item.Key,
+		&item.Value,
+		&item.ExpiresAt,
+		&item.CreatedAt,
+		&item.UpdatedAt,
+	}
+}
+
 // Upsert inserts or replaces a workspace key/value row.
 func (r *WorkspaceKeyValueRepositoryPostgres) Upsert(item *WorkspaceKeyValue) error {
 	id, err := NewId()
@@ -67,29 +79,17 @@ func (r *WorkspaceKeyValueRepositoryPostgres) Upsert(item *WorkspaceKeyValue) er
 
 // Get returns a non-expired value for a workspace key.
 func (r *WorkspaceKeyValueRepositoryPostgres) Get(workspaceId Id, key string) (*WorkspaceKeyValue, error) {
-	item := &WorkspaceKeyValue{}
-	err := r.db.QueryRow(
+	return QueryOne(
+		r.db,
 		`SELECT id, workspace_id, key, value, expires_at, created_at, updated_at
 		FROM workspace_kv
 		WHERE workspace_id = $1 AND key = $2
 			AND (expires_at IS NULL OR expires_at > $3)`,
+		scanWorkspaceKeyValue,
 		workspaceId.String(),
 		key,
 		time.Now().UTC(),
-	).Scan(
-		&item.Id,
-		&item.WorkspaceId,
-		&item.Key,
-		&item.Value,
-		&item.ExpiresAt,
-		&item.CreatedAt,
-		&item.UpdatedAt,
 	)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
-
-	return item, err
 }
 
 // Delete removes a workspace key/value row.
@@ -105,43 +105,19 @@ func (r *WorkspaceKeyValueRepositoryPostgres) Delete(workspaceId Id, key string)
 
 // ListByPrefix lists non-expired keys in a workspace that start with prefix.
 func (r *WorkspaceKeyValueRepositoryPostgres) ListByPrefix(workspaceId Id, prefix string) ([]*WorkspaceKeyValue, error) {
-	rows, err := r.db.Query(
+	return QueryMany(
+		r.db,
 		`SELECT id, workspace_id, key, value, expires_at, created_at, updated_at
 		FROM workspace_kv
 		WHERE workspace_id = $1
 			AND key LIKE $2 ESCAPE '\'
 			AND (expires_at IS NULL OR expires_at > $3)
 		ORDER BY key`,
+		scanWorkspaceKeyValue,
 		workspaceId.String(),
 		prefix+"%",
 		time.Now().UTC(),
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-
-	var list []*WorkspaceKeyValue
-	for rows.Next() {
-		item := &WorkspaceKeyValue{}
-		err := rows.Scan(
-			&item.Id,
-			&item.WorkspaceId,
-			&item.Key,
-			&item.Value,
-			&item.ExpiresAt,
-			&item.CreatedAt,
-			&item.UpdatedAt,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		list = append(list, item)
-	}
-
-	return list, rows.Err()
 }
 
 // DeleteExpired removes rows that have passed their expiry. TODO: remove if not used in future.

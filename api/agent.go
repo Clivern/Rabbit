@@ -127,6 +127,7 @@ func (a *API) UpsertAgentAction(w http.ResponseWriter, r *http.Request) {
 			{module.ErrInvalidAgentName, http.StatusBadRequest, locale.TR(r, "invalid_agent_name")},
 			{module.ErrInvalidCardPath, http.StatusBadRequest, locale.TR(r, "invalid_agent_card_path")},
 			{module.ErrAgentVersionRequired, http.StatusBadRequest, locale.TR(r, "invalid_agent_version")},
+			{module.ErrInvalidLbStrategy, http.StatusBadRequest, locale.TR(r, "invalid_agent_lb_strategy")},
 		}) {
 			return
 		}

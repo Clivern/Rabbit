@@ -16,42 +16,135 @@
         </p>
       </header>
 
-      <section v-if="showGettingStarted" class="mb-8 overflow-hidden rounded-xl border border-theme-border bg-white shadow-sm">
-        <div class="flex flex-wrap items-start justify-between gap-3 border-b border-theme-border px-6 py-4">
-          <div class="min-w-0">
-            <h2 class="text-lg font-semibold text-theme-text">{{ $t('dashboard.getting_started') }}</h2>
-            <p class="mt-0.5 text-sm text-theme-textLight">{{ $t('dashboard.getting_started_desc') }}</p>
-          </div>
-          <button
-            type="button"
-            class="rounded-md px-2 py-1 text-sm text-theme-textLight transition hover:bg-theme-hover hover:text-theme-text"
-            @click="dismissGettingStarted"
-          >
-            {{ $t('dashboard.getting_started_dismiss') }}
-          </button>
+      <section class="mb-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div class="section bg-blue-50/50">
+          <p class="mb-3 text-sm text-theme-textLight">{{ $t('dashboard.metrics_calls') }}</p>
+          <p class="text-3xl font-normal tabular-nums tracking-tight text-theme-text">
+            {{ formatCount(callsTotal) }}
+          </p>
+          <Sparkline v-if="callsSeries.length > 1" :values="callsSeries" class="mt-3" />
+          <p class="mt-2 text-xs text-theme-textLight">
+            {{ $t('dashboard.metrics_calls_sub', { window: METRICS_WINDOW }) }}
+          </p>
         </div>
+        <div class="section bg-red-50/50">
+          <p class="mb-3 text-sm text-theme-textLight">{{ $t('dashboard.metrics_problems') }}</p>
+          <p
+            class="text-3xl font-normal tabular-nums tracking-tight text-theme-text"
+            :class="{ 'text-red-700': (problemsCount ?? 0) > 0 }"
+          >
+            {{ formatCount(problemsCount) }}
+          </p>
+          <Sparkline
+            v-if="problemsSeries.length > 1"
+            :values="problemsSeries"
+            color="var(--chart-2)"
+            class="mt-3"
+          />
+          <p class="mt-2 text-xs text-theme-textLight">
+            {{ $t('dashboard.metrics_problems_sub', { window: METRICS_WINDOW }) }}
+          </p>
+        </div>
+        <div class="section bg-amber-50/50">
+          <p class="mb-3 text-sm text-theme-textLight">{{ $t('dashboard.metrics_latency') }}</p>
+          <p
+            class="text-3xl font-normal tabular-nums tracking-tight text-theme-text"
+            :class="latencyValueClass"
+          >
+            {{ avgLatency == null ? '—' : `${avgLatency} ms` }}
+          </p>
+          <Sparkline
+            v-if="latencySeries.length > 1"
+            :values="latencySeries"
+            color="var(--chart-4)"
+            class="mt-3"
+          />
+          <p class="mt-2 text-xs text-theme-textLight">
+            {{ $t('dashboard.metrics_latency_sub', { window: METRICS_WINDOW }) }}
+          </p>
+        </div>
+        <div class="section bg-emerald-50/50">
+          <p class="mb-3 text-sm text-theme-textLight">{{ $t('dashboard.metrics_agents') }}</p>
+          <p v-if="agentsList === null" class="text-3xl font-normal text-theme-text">—</p>
+          <StatusBreakdown v-else :counts="healthCounts" class="mt-1" />
+          <p class="mt-2 text-xs text-theme-textLight">
+            {{ $t('dashboard.metrics_agents_sub', { total: agentsTotal ?? 0 }) }}
+          </p>
+        </div>
+      </section>
 
-        <ol class="grid grid-cols-1 gap-px bg-theme-border sm:grid-cols-2 lg:grid-cols-3">
-          <li v-for="(step, index) in gettingStartedSteps" :key="step.id" class="flex gap-4 bg-white px-6 py-5">
-            <span
-              class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-theme-hover text-sm font-semibold text-theme-text"
-              aria-hidden="true"
-            >
-              {{ index + 1 }}
-            </span>
-            <span class="sr-only">{{ $t('dashboard.step_label', { number: index + 1 }) }}</span>
-            <div class="min-w-0 flex-1">
-              <p class="text-sm font-medium text-theme-text">{{ step.title }}</p>
-              <p class="mt-0.5 text-sm leading-relaxed text-theme-textLight">{{ step.description }}</p>
-              <router-link
-                :to="step.to"
-                class="mt-2 inline-flex text-sm font-medium text-primary-800 hover:underline"
+      <section class="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div class="lg:col-span-2">
+          <AgentTraffic
+            v-if="selectedAgent"
+            :key="selectedAgent"
+            :title="$t('dashboard.agents_traffic_title')"
+            :subtitle="$t('dashboard.agents_traffic_desc')"
+            :workspace-id="currentWorkspace.id"
+            :agent-name="selectedAgent"
+          >
+            <template #actions>
+              <select
+                v-model="selectedAgent"
+                class="input-field w-auto"
+                :aria-label="$t('dashboard.agents_traffic_title')"
               >
-                {{ step.action }}
-              </router-link>
-            </div>
-          </li>
-        </ol>
+                <option v-for="name in agentNames" :key="name" :value="name">{{ name }}</option>
+              </select>
+            </template>
+          </AgentTraffic>
+          <div
+            v-else-if="agentsList !== null"
+            class="section flex flex-col items-center gap-2 border-dashed px-6 py-12 text-center"
+          >
+            <p class="text-base font-semibold text-theme-text">
+              {{ $t('dashboard.agents_traffic_empty') }}
+            </p>
+            <p class="max-w-sm text-sm text-theme-textLight">
+              {{ $t('dashboard.agents_traffic_empty_desc') }}
+            </p>
+            <router-link :to="{ name: 'Agents' }" class="btn-primary mt-3">
+              {{ $t('dashboard.agents_traffic_action') }}
+            </router-link>
+          </div>
+        </div>
+        <div class="section overflow-hidden !p-0">
+          <div class="border-b border-theme-border px-6 py-4">
+            <h2 class="text-lg font-semibold text-theme-text">
+              {{ $t('dashboard.talkers_title') }}
+            </h2>
+            <p class="mt-0.5 text-sm text-theme-textLight">
+              {{ $t('dashboard.talkers_desc', { window: METRICS_WINDOW }) }}
+            </p>
+          </div>
+          <ul v-if="topTalkers.length" class="space-y-3 px-6 py-4">
+            <li v-for="row in topTalkers" :key="row.name">
+              <div class="mb-1 flex justify-between gap-3 text-xs">
+                <router-link
+                  :to="{ name: 'Agent', params: { name: row.name } }"
+                  class="min-w-0 truncate font-mono text-theme-text hover:underline"
+                >
+                  {{ row.name }}
+                </router-link>
+                <span class="shrink-0 tabular-nums text-theme-textLight"
+                  >{{ Math.round((row.count / talkersTotal) * 100) }}%</span
+                >
+              </div>
+              <div class="h-2 rounded-r bg-theme-hover">
+                <div
+                  class="h-2 rounded-r"
+                  :style="{
+                    width: `${Math.round((row.count / topTalkerMax) * 100)}%`,
+                    backgroundColor: 'var(--chart-1)',
+                  }"
+                />
+              </div>
+            </li>
+          </ul>
+          <p v-else class="px-6 py-4 text-sm text-theme-textLight">
+            {{ $t('dashboard.talkers_empty') }}
+          </p>
+        </div>
       </section>
 
       <section class="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -59,21 +152,18 @@
           <div class="border-b border-theme-border px-6 py-4">
             <div class="flex flex-wrap items-center justify-between gap-2">
               <div>
-                <h2 class="text-lg font-semibold text-theme-text">{{ $t('dashboard.attention_title') }}</h2>
-                <p class="mt-0.5 text-sm text-theme-textLight">{{ $t('dashboard.attention_subtitle') }}</p>
+                <h2 class="text-lg font-semibold text-theme-text">
+                  {{ $t('dashboard.attention_title') }}
+                </h2>
+                <p class="mt-0.5 text-sm text-theme-textLight">
+                  {{ $t('dashboard.attention_subtitle') }}
+                </p>
               </div>
-              <span class="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-800">
-                {{ $t('dashboard.mock_badge') }}
-              </span>
             </div>
           </div>
 
           <ul class="divide-y divide-theme-border max-h-[28rem] overflow-y-auto">
-            <li
-              v-for="item in attentionItems"
-              :key="item.id"
-              class="flex gap-4 px-6 py-4"
-            >
+            <li v-for="item in attentionItems" :key="item.id" class="flex gap-4 px-6 py-4">
               <span
                 class="mt-1.5 h-2 w-2 shrink-0 rounded-full"
                 :class="attentionDotClass(item.level)"
@@ -81,7 +171,9 @@
               />
               <div class="min-w-0 flex-1">
                 <p class="text-sm font-medium text-theme-text">{{ item.title }}</p>
-                <p class="mt-0.5 text-sm text-theme-textLight leading-relaxed">{{ item.description }}</p>
+                <p class="mt-0.5 text-sm text-theme-textLight leading-relaxed">
+                  {{ item.description }}
+                </p>
                 <router-link
                   v-if="item.to"
                   :to="item.to"
@@ -93,76 +185,26 @@
             </li>
           </ul>
         </div>
-
         <div class="section overflow-hidden !p-0">
           <div class="border-b border-theme-border px-6 py-4">
-            <div class="flex flex-wrap items-center justify-between gap-2">
-              <div>
-                <h2 class="text-lg font-semibold text-theme-text">{{ $t('dashboard.activity_title') }}</h2>
-                <p class="mt-0.5 text-sm text-theme-textLight">{{ $t('dashboard.activity_subtitle') }}</p>
-              </div>
-              <span class="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-800">
-                {{ $t('dashboard.mock_badge') }}
-              </span>
-            </div>
+            <h2 class="text-lg font-semibold text-theme-text">
+              {{ $t('dashboard.whats_new_title') }}
+            </h2>
+            <p class="mt-0.5 text-sm text-theme-textLight">
+              {{ $t('dashboard.whats_new_subtitle') }}
+            </p>
           </div>
-
-          <ul class="divide-y divide-theme-border">
-            <li
-              v-for="event in recentActivity"
-              :key="event.id"
-              class="flex gap-3 px-6 py-3.5"
-            >
-              <span
-                class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-theme-hover text-theme-textLight"
-                aria-hidden="true"
-              >
-                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" :d="activityIcons[event.icon]" />
-                </svg>
-              </span>
-              <div class="min-w-0 flex-1">
-                <p class="text-sm text-theme-text">
-                  <span class="font-medium">{{ event.actor }}</span>
-                  {{ event.action }}
-                  <span class="font-medium">{{ event.target }}</span>
-                </p>
-                <p class="mt-0.5 text-xs text-theme-textLight">{{ event.time }}</p>
-              </div>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <section v-if="showWhatsNew" class="section mb-8 overflow-hidden !p-0">
-        <div class="border-b border-theme-border px-6 py-4">
-          <div class="flex flex-wrap items-start justify-between gap-3">
-            <div class="min-w-0">
-              <div class="flex flex-wrap items-center gap-2">
-                <h2 class="text-lg font-semibold text-theme-text">{{ $t('dashboard.whats_new_title') }}</h2>
-                <span class="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-800">
-                  {{ $t('dashboard.mock_badge') }}
-                </span>
-              </div>
-              <p class="mt-0.5 text-sm text-theme-textLight">{{ $t('dashboard.whats_new_subtitle') }}</p>
-            </div>
-            <button
-              type="button"
-              class="rounded-md px-2 py-1 text-sm text-theme-textLight transition hover:bg-theme-hover hover:text-theme-text"
-              @click="dismissWhatsNew"
-            >
-              {{ $t('dashboard.whats_new_dismiss') }}
-            </button>
+          <div class="px-6 py-5">
+            <p class="text-xs font-medium uppercase tracking-wide text-theme-textLight">
+              {{ $t('dashboard.whats_new_tip_label') }}
+            </p>
+            <p class="mt-2 text-base font-medium text-theme-text">
+              {{ $t('dashboard.whats_new_tip_title') }}
+            </p>
+            <p class="mt-1 text-sm leading-relaxed text-theme-textLight">
+              {{ $t('dashboard.whats_new_tip_body') }}
+            </p>
           </div>
-        </div>
-        <div class="px-6 py-5">
-          <p class="text-xs font-medium uppercase tracking-wide text-theme-textLight">
-            {{ $t('dashboard.whats_new_tip_label') }}
-          </p>
-          <p class="mt-2 text-base font-medium text-theme-text">{{ $t('dashboard.whats_new_tip_title') }}</p>
-          <p class="mt-1 text-sm leading-relaxed text-theme-textLight">
-            {{ $t('dashboard.whats_new_tip_body') }}
-          </p>
         </div>
       </section>
     </main>
@@ -170,160 +212,343 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AppNav from '@/comp/AppNav.vue'
+import AgentTraffic from '@/comp/AgentTraffic.vue'
+import Sparkline from '@/comp/Sparkline.vue'
+import StatusBreakdown from '@/comp/StatusBreakdown.vue'
+import {
+  agent_api,
+  traffic_api,
+  workspace_access_key_api,
+  workspace_invite_api,
+} from '@/api'
 import { user } from '@/lib/auth'
 import { useWorkspaceContext } from '@/lib/permission'
-import { isSaaS } from '@/lib/edition'
 
 const { t } = useI18n()
 
-const WHATS_NEW_KEY = 'dashboard_whats_new_v1'
-const GETTING_STARTED_KEY = 'dashboard_getting_started_v1'
+const METRICS_WINDOW = 200
+const SPARK_DAYS = 14
 
-const { canManage } = useWorkspaceContext()
-const showWhatsNew = ref(localStorage.getItem(WHATS_NEW_KEY) !== '1')
-const showGettingStarted = ref(localStorage.getItem(GETTING_STARTED_KEY) !== '1')
+const { currentWorkspace, canManage } = useWorkspaceContext()
 
-function dismissWhatsNew() {
-  showWhatsNew.value = false
-  localStorage.setItem(WHATS_NEW_KEY, '1')
+const callsTotal = ref(null)
+const problemsCount = ref(null)
+const avgLatency = ref(null)
+const healthyAgents = ref(null)
+const agentsTotal = ref(null)
+const callsSeries = ref([])
+const problemsSeries = ref([])
+const latencySeries = ref([])
+const agentNames = ref([])
+const selectedAgent = ref('')
+const agentsList = ref(null)
+const trafficRows = ref(null)
+const accessKeysTotal = ref(null)
+const pendingInvites = ref(null)
+
+function formatCount(value) {
+  return value == null ? '—' : value.toLocaleString()
 }
 
-function dismissGettingStarted() {
-  showGettingStarted.value = false
-  localStorage.setItem(GETTING_STARTED_KEY, '1')
+function lastDays(count) {
+  return [...Array(count)].map((_, i) => {
+    const day = new Date()
+    day.setDate(day.getDate() - (count - 1 - i))
+
+    return day.toISOString().slice(0, 10)
+  })
 }
 
-const gettingStartedSteps = computed(() => [
-  {
-    id: 'access_key',
-    title: t('dashboard.step_access_key'),
-    description: t('dashboard.step_access_key_desc'),
-    action: t('dashboard.step_access_key_link'),
-    to: '/settings',
-    requiresManage: true,
-  },
-  {
-    id: 'register_agent',
-    title: t('dashboard.step_register_agent'),
-    description: t('dashboard.step_register_agent_desc'),
-    action: t('dashboard.step_register_agent_link'),
-    to: '/agents',
-  },
-  {
-    id: 'register_instance',
-    title: t('dashboard.step_register_instance'),
-    description: t('dashboard.step_register_instance_desc'),
-    action: t('dashboard.step_register_instance_link'),
-    to: '/agents',
-  },
-  {
-    id: 'health_check',
-    title: t('dashboard.step_health_check'),
-    description: t('dashboard.step_health_check_desc'),
-    action: t('dashboard.step_health_check_link'),
-    to: '/agents',
-  },
-  {
-    id: 'intention',
-    title: t('dashboard.step_intention'),
-    description: t('dashboard.step_intention_desc'),
-    action: t('dashboard.step_intention_link'),
-    to: '/intentions',
-  },
-  {
-    id: 'traffic',
-    title: t('dashboard.step_traffic'),
-    description: t('dashboard.step_traffic_desc'),
-    action: t('dashboard.step_traffic_link'),
-    to: '/traffic',
-  },
-].filter((step) => !step.requiresManage || canManage.value))
+async function loadMetrics() {
+  try {
+    const res = await traffic_api.list(currentWorkspace.id, {
+      limit: METRICS_WINDOW,
+      offset: 0,
+    })
+    const rows = res.data.calls || []
+    trafficRows.value = rows
+    callsTotal.value = res.data._meta?.total ?? rows.length
 
-const attentionItems = computed(() => [
-  {
-    id: 'key',
-    level: 'error',
-    title: t('dashboard.attention_key_title'),
-    description: t('dashboard.attention_key_desc'),
-    action: t('dashboard.attention_key_action'),
-    to: '/settings',
-  },
-  {
-    id: 'invite',
-    level: 'info',
-    title: t('dashboard.attention_invite_title'),
-    description: t('dashboard.attention_invite_desc'),
-    action: t('dashboard.attention_invite_action'),
-    to: '/members',
-  },
-  {
-    id: 'integration',
-    level: 'info',
-    title: t('dashboard.attention_integration_title'),
-    description: t('dashboard.attention_integration_desc'),
-    action: t('dashboard.attention_integration_action'),
-    to: '/integrations',
-  },
-  {
-    id: 'trial',
-    level: 'warn',
-    title: t('dashboard.attention_trial_title'),
-    description: t('dashboard.attention_trial_desc'),
-    action: t('dashboard.attention_trial_action'),
-    to: '/billing',
-    requiresSaaS: true,
-  },
-  {
-    id: 'stale_key',
-    level: 'info',
-    title: t('dashboard.attention_stale_key_title'),
-    description: t('dashboard.attention_stale_key_desc'),
-    action: t('dashboard.attention_stale_key_action'),
-    to: '/settings',
-  },
-  {
-    id: 'latency',
-    level: 'warn',
-    title: t('dashboard.attention_latency_title'),
-    description: t('dashboard.attention_latency_desc'),
-    action: t('dashboard.attention_latency_action'),
-    to: '/traffic',
-  },
-].filter((item) => !item.requiresSaaS || isSaaS()))
+    const problems = rows.filter((call) => call.decision === 'deny' || call.result === 'failed')
+    problemsCount.value = problems.length
+
+    const latencies = rows.map((call) => call.latencyMs).filter((ms) => ms != null)
+    avgLatency.value = latencies.length
+      ? Math.round(latencies.reduce((sum, ms) => sum + ms, 0) / latencies.length)
+      : null
+
+    const days = lastDays(SPARK_DAYS)
+    const perDay = Object.fromEntries(
+      days.map((day) => [day, { calls: 0, problems: 0, latency: [] }])
+    )
+
+    for (const call of rows) {
+      const bucket = perDay[new Date(call.createdAt).toISOString().slice(0, 10)]
+
+      if (bucket) {
+        bucket.calls++
+        if (call.decision === 'deny' || call.result === 'failed') bucket.problems++
+        if (call.latencyMs != null) bucket.latency.push(call.latencyMs)
+      }
+    }
+
+    callsSeries.value = days.map((day) => perDay[day].calls)
+    problemsSeries.value = days.map((day) => perDay[day].problems)
+    latencySeries.value = days.map((day) =>
+      perDay[day].latency.length
+        ? Math.round(
+            perDay[day].latency.reduce((sum, ms) => sum + ms, 0) / perDay[day].latency.length
+          )
+        : 0
+    )
+  } catch (_) {
+    // Metrics stay blank when the traffic cannot be read.
+  }
+}
+
+async function loadAgentHealth() {
+  try {
+    const loaded = []
+
+    for (;;) {
+      const res = await agent_api.list(currentWorkspace.id, {
+        limit: 100,
+        offset: loaded.length,
+      })
+      const page = res.data.agents || []
+      loaded.push(...page)
+
+      if (page.length < 100 || loaded.length >= (res.data._meta?.total || 0)) break
+    }
+
+    agentsTotal.value = loaded.length
+    healthyAgents.value = loaded.filter((agent) => agent.health === 'passing').length
+    agentsList.value = loaded
+    agentNames.value = loaded.map((agent) => agent.name).sort()
+
+    if (!selectedAgent.value && agentNames.value.length) {
+      selectedAgent.value = agentNames.value[0]
+    }
+  } catch (_) {
+    // Metrics stay blank when the agents cannot be read.
+  }
+}
+
+async function loadSetupSignals() {
+  if (canManage.value) {
+    try {
+      const res = await workspace_access_key_api.list(currentWorkspace.id, {
+        limit: 1,
+        offset: 0,
+      })
+      accessKeysTotal.value = res.data._meta?.total ?? (res.data.keys || []).length
+    } catch (_) {
+      // The key check is skipped when the keys cannot be read.
+    }
+
+    try {
+      const res = await workspace_invite_api.list(currentWorkspace.id, {
+        limit: 100,
+        offset: 0,
+      })
+      pendingInvites.value = (res.data.invites || []).filter(
+        (invite) => invite.status === 'pending'
+      ).length
+    } catch (_) {
+      // The invite check is skipped when the invites cannot be read.
+    }
+  }
+}
+
+onMounted(() => {
+  loadMetrics()
+  loadAgentHealth()
+  loadSetupSignals()
+})
+
+function instanceCount(agent) {
+  return Object.values(agent.statusCounts || {}).reduce((sum, count) => sum + count, 0)
+}
+
+function shortNames(list) {
+  const names = list.map((agent) => agent.name)
+
+  if (names.length <= 3) return names.join(', ')
+
+  return `${names.slice(0, 3).join(', ')} (+${names.length - 3})`
+}
+
+function agentsTarget(list) {
+  if (list.length === 1) return { name: 'Agent', params: { name: list[0].name } }
+
+  return { name: 'Agents' }
+}
+
+const attentionReady = computed(
+  () =>
+    agentsList.value !== null &&
+    trafficRows.value !== null &&
+    (!canManage.value || (accessKeysTotal.value !== null && pendingInvites.value !== null))
+)
+
+const attentionItems = computed(() => {
+  const items = []
+
+  if (agentsList.value) {
+    const critical = agentsList.value.filter((agent) => agent.health === 'critical')
+    const warning = agentsList.value.filter((agent) => agent.health === 'warning')
+    const idle = agentsList.value.filter((agent) => instanceCount(agent) === 0)
+
+    if (critical.length) {
+      items.push({
+        id: 'critical',
+        level: 'error',
+        title: t('dashboard.attention_critical_title'),
+        description: t('dashboard.attention_critical_desc', { names: shortNames(critical) }),
+        action: t('dashboard.attention_critical_action'),
+        to: agentsTarget(critical),
+      })
+    }
+
+    if (warning.length) {
+      items.push({
+        id: 'warning',
+        level: 'warn',
+        title: t('dashboard.attention_warning_title'),
+        description: t('dashboard.attention_warning_desc', { names: shortNames(warning) }),
+        action: t('dashboard.attention_warning_action'),
+        to: agentsTarget(warning),
+      })
+    }
+
+    if (idle.length) {
+      items.push({
+        id: 'idle',
+        level: 'warn',
+        title: t('dashboard.attention_no_instances_title'),
+        description: t('dashboard.attention_no_instances_desc', { names: shortNames(idle) }),
+        action: t('dashboard.attention_no_instances_action'),
+        to: agentsTarget(idle),
+      })
+    }
+  }
+
+  if (trafficRows.value) {
+    const denied = trafficRows.value.filter((call) => call.decision === 'deny')
+    const failed = trafficRows.value.filter((call) => call.result === 'failed')
+
+    if (denied.length) {
+      items.push({
+        id: 'denied',
+        level: 'warn',
+        title: t('dashboard.attention_denied_title'),
+        description: t('dashboard.attention_denied_desc', {
+          count: denied.length,
+          window: METRICS_WINDOW,
+        }),
+        action: t('dashboard.attention_denied_action'),
+        to: { name: 'Traffic' },
+      })
+    }
+
+    if (failed.length) {
+      items.push({
+        id: 'failed',
+        level: 'error',
+        title: t('dashboard.attention_failed_title'),
+        description: t('dashboard.attention_failed_desc', {
+          count: failed.length,
+          window: METRICS_WINDOW,
+        }),
+        action: t('dashboard.attention_failed_action'),
+        to: { name: 'Traffic' },
+      })
+    }
+  }
+
+  if (canManage.value) {
+    if (accessKeysTotal.value === 0) {
+      items.push({
+        id: 'key',
+        level: 'info',
+        title: t('dashboard.attention_no_key_title'),
+        description: t('dashboard.attention_no_key_desc'),
+        action: t('dashboard.attention_no_key_action'),
+        to: { name: 'Settings' },
+      })
+    }
+
+    if (pendingInvites.value > 0) {
+      items.push({
+        id: 'invites',
+        level: 'info',
+        title: t('dashboard.attention_invites_title'),
+        description: t('dashboard.attention_invites_desc', { count: pendingInvites.value }),
+        action: t('dashboard.attention_invites_action'),
+        to: { name: 'Members' },
+      })
+    }
+  }
+
+  if (!items.length && attentionReady.value) {
+    items.push({
+      id: 'clear',
+      level: 'info',
+      title: t('dashboard.attention_all_clear_title'),
+      description: t('dashboard.attention_all_clear_desc'),
+    })
+  }
+
+  return items
+})
+
+const topTalkers = computed(() => {
+  const counts = {}
+
+  for (const call of trafficRows.value || []) {
+    for (const name of [call.sourceAgent, call.destinationAgent]) {
+      if (name) counts[name] = (counts[name] || 0) + 1
+    }
+  }
+
+  return Object.entries(counts)
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 6)
+})
+
+const latencyValueClass = computed(() => {
+  if (avgLatency.value == null) return ''
+  if (avgLatency.value >= 1000) return 'text-red-700'
+  if (avgLatency.value >= 200) return 'text-amber-700'
+
+  return ''
+})
+
+const healthCounts = computed(() => {
+  const counts = { passing: 0, warning: 0, critical: 0, unknown: 0 }
+
+  for (const agent of agentsList.value || []) {
+    if (counts[agent.health] === undefined) counts.unknown++
+    else counts[agent.health]++
+  }
+
+  return counts
+})
+
+const topTalkerMax = computed(() => topTalkers.value[0]?.count || 1)
+const talkersTotal = computed(() => topTalkers.value.reduce((sum, row) => sum + row.count, 0) || 1)
 
 function attentionDotClass(level) {
-  return {
-    error: 'bg-red-500',
-    warn: 'bg-amber-500',
-    info: 'bg-sky-500',
-  }[level] || 'bg-theme-textLight'
+  return (
+    {
+      error: 'bg-red-500',
+      warn: 'bg-amber-500',
+      info: 'bg-sky-500',
+    }[level] || 'bg-theme-textLight'
+  )
 }
-
-const activityIcons = {
-  member: 'M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z',
-  key: 'M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z',
-}
-
-const recentActivity = computed(() => [
-  {
-    id: 2,
-    icon: 'member',
-    actor: 'Ahmed',
-    action: t('dashboard.activity_invited'),
-    target: 'maya@example.com',
-    time: t('dashboard.activity_time_3h'),
-  },
-  {
-    id: 3,
-    icon: 'key',
-    actor: 'Ahmed',
-    action: t('dashboard.activity_created_key'),
-    target: 'production-ci',
-    time: t('dashboard.activity_time_1d'),
-  },
-])
-
 </script>

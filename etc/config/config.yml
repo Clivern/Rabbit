@@ -67,16 +67,13 @@ app:
       checkout_cancel: ${SLOTH_STRIPE_CHECKOUT_CANCEL_URL:-/billing/cancel}
       portal_return: ${SLOTH_STRIPE_PORTAL_RETURN_URL:-/billing}
 
-  ai:
-    api_key: ${SLOTH_AI_OROUTE_API_KEY:-}
-    embed:
-      model: ${SLOTH_AI_OROUTE_EMBEDDING_MODEL:-openai/text-embedding-3-large}
-    llm:
-      lite:
-        model: ${SLOTH_AI_LITE_LLM_MODEL:-cohere/command-r}
-      large:
-        model: ${SLOTH_AI_LARGE_LLM_MODEL:-openai/gpt-4o}
-
+  llm:
+    # openrouter or muse
+    provider: ${SLOTH_LLM_PROVIDER:-openrouter}
+    api_key: ${SLOTH_LLM_API_KEY:-}
+    chat_model: ${SLOTH_LLM_CHAT_MODEL:-openai/gpt-4o}
+    # muse only: minimal, low, medium, high, xhigh or max; higher thinks longer before answering
+    reasoning_effort: ${SLOTH_LLM_REASONING_EFFORT:-minimal}
   cache:
     provider: ${SLOTH_CACHE_PROVIDER:-redis}
     redis:

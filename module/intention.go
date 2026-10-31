@@ -87,6 +87,20 @@ func NewIntention(intentions db.IntentionRepository, workspaces db.WorkspaceRepo
 	}
 }
 
+// toIntentionResponse shapes an intention row for API responses.
+func toIntentionResponse(item *db.Intention) *IntentionResponse {
+	return &IntentionResponse{
+		Id:          item.Id,
+		WorkspaceId: item.WorkspaceId,
+		Source:      item.SourceAgent,
+		Destination: item.DestinationAgent,
+		Skill:       lo.FromPtr(item.Skill),
+		Action:      item.Action,
+		CreatedAt:   item.CreatedAt.UTC().Format(time.RFC3339),
+		UpdatedAt:   item.UpdatedAt.UTC().Format(time.RFC3339),
+	}
+}
+
 // ListIntentions returns paginated intentions in a workspace.
 func (i *Intention) ListIntentions(workspaceId db.Id, limit, offset int) (*ListIntentionsResponse, error) {
 	total, err := i.IntentionRepository.CountByWorkspaceId(workspaceId)
@@ -109,16 +123,7 @@ func (i *Intention) ListIntentions(workspaceId db.Id, limit, offset int) (*ListI
 
 	list := make([]*IntentionResponse, 0, len(intentions))
 	for _, item := range intentions {
-		list = append(list, &IntentionResponse{
-			Id:          item.Id,
-			WorkspaceId: item.WorkspaceId,
-			Source:      item.SourceAgent,
-			Destination: item.DestinationAgent,
-			Skill:       lo.FromPtr(item.Skill),
-			Action:      item.Action,
-			CreatedAt:   item.CreatedAt.UTC().Format(time.RFC3339),
-			UpdatedAt:   item.UpdatedAt.UTC().Format(time.RFC3339),
-		})
+		list = append(list, toIntentionResponse(item))
 	}
 
 	return &ListIntentionsResponse{Intentions: list, Total: total}, nil
@@ -139,16 +144,7 @@ func (i *Intention) GetIntention(workspaceId, intentionId db.Id) (*IntentionResp
 		return nil, ErrIntentionNotFound
 	}
 
-	return &IntentionResponse{
-		Id:          intention.Id,
-		WorkspaceId: intention.WorkspaceId,
-		Source:      intention.SourceAgent,
-		Destination: intention.DestinationAgent,
-		Skill:       lo.FromPtr(intention.Skill),
-		Action:      intention.Action,
-		CreatedAt:   intention.CreatedAt.UTC().Format(time.RFC3339),
-		UpdatedAt:   intention.UpdatedAt.UTC().Format(time.RFC3339),
-	}, nil
+	return toIntentionResponse(intention), nil
 }
 
 // CreateIntention inserts an allow or deny rule.
@@ -187,16 +183,7 @@ func (i *Intention) CreateIntention(workspaceId db.Id, req *SaveIntentionRequest
 		Str("action", intention.Action).
 		Msg("Intention created")
 
-	return &IntentionResponse{
-		Id:          intention.Id,
-		WorkspaceId: intention.WorkspaceId,
-		Source:      intention.SourceAgent,
-		Destination: intention.DestinationAgent,
-		Skill:       lo.FromPtr(intention.Skill),
-		Action:      intention.Action,
-		CreatedAt:   intention.CreatedAt.UTC().Format(time.RFC3339),
-		UpdatedAt:   intention.UpdatedAt.UTC().Format(time.RFC3339),
-	}, nil
+	return toIntentionResponse(intention), nil
 }
 
 // UpdateIntention replaces an existing rule.
@@ -256,16 +243,7 @@ func (i *Intention) UpdateIntention(workspaceId, intentionId db.Id, req *SaveInt
 		Str("action", intention.Action).
 		Msg("Intention updated")
 
-	return &IntentionResponse{
-		Id:          intention.Id,
-		WorkspaceId: intention.WorkspaceId,
-		Source:      intention.SourceAgent,
-		Destination: intention.DestinationAgent,
-		Skill:       lo.FromPtr(intention.Skill),
-		Action:      intention.Action,
-		CreatedAt:   intention.CreatedAt.UTC().Format(time.RFC3339),
-		UpdatedAt:   intention.UpdatedAt.UTC().Format(time.RFC3339),
-	}, nil
+	return toIntentionResponse(intention), nil
 }
 
 // DeleteIntention removes a rule.
@@ -339,16 +317,7 @@ func (i *Intention) CheckIntention(workspaceId db.Id, req *CheckIntentionRequest
 		Msg("Intention matched")
 
 	return &CheckIntentionResponse{
-		Action: intention.Action,
-		Intention: &IntentionResponse{
-			Id:          intention.Id,
-			WorkspaceId: intention.WorkspaceId,
-			Source:      intention.SourceAgent,
-			Destination: intention.DestinationAgent,
-			Skill:       lo.FromPtr(intention.Skill),
-			Action:      intention.Action,
-			CreatedAt:   intention.CreatedAt.UTC().Format(time.RFC3339),
-			UpdatedAt:   intention.UpdatedAt.UTC().Format(time.RFC3339),
-		},
+		Action:    intention.Action,
+		Intention: toIntentionResponse(intention),
 	}, nil
 }

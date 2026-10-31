@@ -15,7 +15,8 @@ export async function loadEdition() {
     return pending
   }
 
-  pending = setup_api.checkInstalled()
+  pending = setup_api
+    .checkInstalled()
     .then((res) => {
       edition = res.data?.edition === SAAS ? SAAS : OSS
       loaded = true

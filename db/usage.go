@@ -42,6 +42,22 @@ func NewUsageRepository(db *sql.DB) UsageRepository {
 	return &UsageRepositoryPostgres{db: db}
 }
 
+// scanUsage maps a row into a usage record. Column order must match the select list.
+func scanUsage(item *Usage) []any {
+	return []any{
+		&item.Id,
+		&item.WorkspaceId,
+		&item.Type,
+		&item.Quantity,
+		&item.Unit,
+		&item.PeriodStart,
+		&item.PeriodEnd,
+		&item.Meta,
+		&item.CreatedAt,
+		&item.UpdatedAt,
+	}
+}
+
 // Create inserts an usage row. TODO: remove if not used in future.
 func (r *UsageRepositoryPostgres) Create(usage *Usage) error {
 	id, err := NewId()
@@ -72,36 +88,22 @@ func (r *UsageRepositoryPostgres) Create(usage *Usage) error {
 
 // GetById returns an usage by id. TODO: remove if not used in future.
 func (r *UsageRepositoryPostgres) GetById(id Id) (*Usage, error) {
-	item := &Usage{}
-	err := r.db.QueryRow(
+	return QueryOne(
+		r.db,
 		`SELECT
 			id, workspace_id, type, quantity, unit, period_start, period_end, meta,
 			created_at, updated_at
 		FROM usage
 		WHERE id = $1`,
+		scanUsage,
 		id.String(),
-	).Scan(
-		&item.Id,
-		&item.WorkspaceId,
-		&item.Type,
-		&item.Quantity,
-		&item.Unit,
-		&item.PeriodStart,
-		&item.PeriodEnd,
-		&item.Meta,
-		&item.CreatedAt,
-		&item.UpdatedAt,
 	)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
-
-	return item, err
 }
 
 // ListByWorkspaceId lists usage rows by workspace id. TODO: remove if not used in future.
 func (r *UsageRepositoryPostgres) ListByWorkspaceId(workspaceId Id, limit, offset int) ([]*Usage, error) {
-	rows, err := r.db.Query(
+	return QueryMany(
+		r.db,
 		`SELECT
 			id, workspace_id, type, quantity, unit, period_start, period_end, meta,
 			created_at, updated_at
@@ -109,38 +111,11 @@ func (r *UsageRepositoryPostgres) ListByWorkspaceId(workspaceId Id, limit, offse
 		WHERE workspace_id = $1
 		ORDER BY created_at DESC
 		LIMIT $2 OFFSET $3`,
+		scanUsage,
 		workspaceId.String(),
 		limit,
 		offset,
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-
-	var list []*Usage
-	for rows.Next() {
-		item := &Usage{}
-		if err := rows.Scan(
-			&item.Id,
-			&item.WorkspaceId,
-			&item.Type,
-			&item.Quantity,
-			&item.Unit,
-			&item.PeriodStart,
-			&item.PeriodEnd,
-			&item.Meta,
-			&item.CreatedAt,
-			&item.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-
-		list = append(list, item)
-	}
-
-	return list, rows.Err()
 }
 
 // CountByWorkspaceId counts usage rows by workspace id. TODO: remove if not used in future.

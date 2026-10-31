@@ -63,6 +63,23 @@ func NewKeyValue(items db.WorkspaceKeyValueRepository, workspaces db.WorkspaceRe
 	}
 }
 
+// toKeyValueResponse shapes a workspace key for API responses.
+func toKeyValueResponse(item *db.WorkspaceKeyValue) *KeyValueResponse {
+	return &KeyValueResponse{
+		Id:          item.Id,
+		WorkspaceId: item.WorkspaceId,
+		Key:         item.Key,
+		Value:       item.Value,
+		ExpiresAt: lo.TernaryF(
+			item.ExpiresAt != nil,
+			func() *string { return new(item.ExpiresAt.UTC().Format(time.RFC3339)) },
+			func() *string { return nil },
+		),
+		CreatedAt: item.CreatedAt.UTC().Format(time.RFC3339),
+		UpdatedAt: item.UpdatedAt.UTC().Format(time.RFC3339),
+	}
+}
+
 // ListKeyValue returns non-expired keys that start with prefix.
 func (k *KeyValue) ListKeyValue(workspaceId db.Id, prefix string) (*ListKeyValueResponse, error) {
 	items, err := k.KeyValueRepository.ListByPrefix(workspaceId, strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`).Replace(prefix))
@@ -77,20 +94,7 @@ func (k *KeyValue) ListKeyValue(workspaceId db.Id, prefix string) (*ListKeyValue
 
 	list := make([]*KeyValueResponse, 0, len(items))
 	for _, item := range items {
-		var expiresAt *string
-		if item.ExpiresAt != nil {
-			expiresAt = new(item.ExpiresAt.UTC().Format(time.RFC3339))
-		}
-
-		list = append(list, &KeyValueResponse{
-			Id:          item.Id,
-			WorkspaceId: item.WorkspaceId,
-			Key:         item.Key,
-			Value:       item.Value,
-			ExpiresAt:   expiresAt,
-			CreatedAt:   item.CreatedAt.UTC().Format(time.RFC3339),
-			UpdatedAt:   item.UpdatedAt.UTC().Format(time.RFC3339),
-		})
+		list = append(list, toKeyValueResponse(item))
 	}
 
 	return &ListKeyValueResponse{Items: list, Total: int64(len(list))}, nil
@@ -111,20 +115,7 @@ func (k *KeyValue) GetKeyValue(workspaceId db.Id, key string) (*KeyValueResponse
 		return nil, ErrKeyValueNotFound
 	}
 
-	var expiresAt *string
-	if item.ExpiresAt != nil {
-		expiresAt = new(item.ExpiresAt.UTC().Format(time.RFC3339))
-	}
-
-	return &KeyValueResponse{
-		Id:          item.Id,
-		WorkspaceId: item.WorkspaceId,
-		Key:         item.Key,
-		Value:       item.Value,
-		ExpiresAt:   expiresAt,
-		CreatedAt:   item.CreatedAt.UTC().Format(time.RFC3339),
-		UpdatedAt:   item.UpdatedAt.UTC().Format(time.RFC3339),
-	}, nil
+	return toKeyValueResponse(item), nil
 }
 
 // PutKeyValue writes a workspace key.
@@ -185,20 +176,7 @@ func (k *KeyValue) PutKeyValue(workspaceId db.Id, key string, req *PutKeyValueRe
 		Str("key", key).
 		Msg("Workspace key written")
 
-	var expiresAtText *string
-	if item.ExpiresAt != nil {
-		expiresAtText = new(item.ExpiresAt.UTC().Format(time.RFC3339))
-	}
-
-	return &KeyValueResponse{
-		Id:          item.Id,
-		WorkspaceId: item.WorkspaceId,
-		Key:         item.Key,
-		Value:       item.Value,
-		ExpiresAt:   expiresAtText,
-		CreatedAt:   item.CreatedAt.UTC().Format(time.RFC3339),
-		UpdatedAt:   item.UpdatedAt.UTC().Format(time.RFC3339),
-	}, nil
+	return toKeyValueResponse(item), nil
 }
 
 // DeleteKeyValue removes a workspace key.

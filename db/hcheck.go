@@ -5,7 +5,6 @@ package db
 
 import (
 	"database/sql"
-	"errors"
 	"time"
 )
 
@@ -94,6 +93,26 @@ func NewHealthCheckRepository(db *sql.DB) HealthCheckRepository {
 	return &HealthCheckRepositoryPostgres{db: db}
 }
 
+// scanHealthCheck maps a row into a health check. Column order must match the select list.
+func scanHealthCheck(check *HealthCheck) []any {
+	return []any{
+		&check.Id,
+		&check.InstanceId,
+		&check.CheckId,
+		&check.Name,
+		&check.Type,
+		&check.Source,
+		&check.Status,
+		&check.Definition,
+		&check.Output,
+		&check.TTLExpiresAt,
+		&check.LastRunAt,
+		&check.NextRunAt,
+		&check.CreatedAt,
+		&check.UpdatedAt,
+	}
+}
+
 // Create inserts a health check row. A new check starts unknown until its first result.
 func (r *HealthCheckRepositoryPostgres) Create(check *HealthCheck) error {
 	id, err := NewId()
@@ -133,69 +152,31 @@ func (r *HealthCheckRepositoryPostgres) Create(check *HealthCheck) error {
 
 // GetById returns a health check by id. TODO: remove if not used in future.
 func (r *HealthCheckRepositoryPostgres) GetById(id Id) (*HealthCheck, error) {
-	check := &HealthCheck{}
-	err := r.db.QueryRow(
+	return QueryOne(
+		r.db,
 		`SELECT
 			id, instance_id, check_id, name, type, source, status, definition,
 			output, ttl_expires_at, last_run_at, next_run_at, created_at, updated_at
 		FROM ai_health_checks
 		WHERE id = $1`,
+		scanHealthCheck,
 		id.String(),
-	).Scan(
-		&check.Id,
-		&check.InstanceId,
-		&check.CheckId,
-		&check.Name,
-		&check.Type,
-		&check.Source,
-		&check.Status,
-		&check.Definition,
-		&check.Output,
-		&check.TTLExpiresAt,
-		&check.LastRunAt,
-		&check.NextRunAt,
-		&check.CreatedAt,
-		&check.UpdatedAt,
 	)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
-
-	return check, err
 }
 
 // GetByInstanceAndCheckId returns a health check by instance and check id.
 func (r *HealthCheckRepositoryPostgres) GetByInstanceAndCheckId(instanceId Id, checkId string) (*HealthCheck, error) {
-	check := &HealthCheck{}
-	err := r.db.QueryRow(
+	return QueryOne(
+		r.db,
 		`SELECT
 			id, instance_id, check_id, name, type, source, status, definition,
 			output, ttl_expires_at, last_run_at, next_run_at, created_at, updated_at
 		FROM ai_health_checks
 		WHERE instance_id = $1 AND check_id = $2`,
+		scanHealthCheck,
 		instanceId.String(),
 		checkId,
-	).Scan(
-		&check.Id,
-		&check.InstanceId,
-		&check.CheckId,
-		&check.Name,
-		&check.Type,
-		&check.Source,
-		&check.Status,
-		&check.Definition,
-		&check.Output,
-		&check.TTLExpiresAt,
-		&check.LastRunAt,
-		&check.NextRunAt,
-		&check.CreatedAt,
-		&check.UpdatedAt,
 	)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
-
-	return check, err
 }
 
 // Update updates a health check definition and when it next runs.
@@ -224,48 +205,17 @@ func (r *HealthCheckRepositoryPostgres) Delete(id Id) error {
 
 // ListByInstanceId lists health checks for an instance.
 func (r *HealthCheckRepositoryPostgres) ListByInstanceId(instanceId Id) ([]*HealthCheck, error) {
-	rows, err := r.db.Query(
+	return QueryMany(
+		r.db,
 		`SELECT
 			id, instance_id, check_id, name, type, source, status, definition,
 			output, ttl_expires_at, last_run_at, next_run_at, created_at, updated_at
 		FROM ai_health_checks
 		WHERE instance_id = $1
 		ORDER BY check_id`,
+		scanHealthCheck,
 		instanceId.String(),
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-
-	var list []*HealthCheck
-	for rows.Next() {
-		check := &HealthCheck{}
-		err := rows.Scan(
-			&check.Id,
-			&check.InstanceId,
-			&check.CheckId,
-			&check.Name,
-			&check.Type,
-			&check.Source,
-			&check.Status,
-			&check.Definition,
-			&check.Output,
-			&check.TTLExpiresAt,
-			&check.LastRunAt,
-			&check.NextRunAt,
-			&check.CreatedAt,
-			&check.UpdatedAt,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		list = append(list, check)
-	}
-
-	return list, rows.Err()
 }
 
 // DeleteByAgentAndCheckId removes a template check from every instance of an agent.
@@ -382,7 +332,8 @@ func (r *HealthCheckRepositoryPostgres) ClaimDue(now time.Time, limit int, hold 
 
 	defer tx.Rollback()
 
-	rows, err := tx.Query(
+	list, err := QueryMany(
+		tx,
 		`SELECT
 			id, instance_id, check_id, name, type, source, status, definition,
 			output, ttl_expires_at, last_run_at, next_run_at, created_at, updated_at
@@ -391,44 +342,13 @@ func (r *HealthCheckRepositoryPostgres) ClaimDue(now time.Time, limit int, hold 
 		ORDER BY next_run_at
 		LIMIT $4
 		FOR UPDATE SKIP LOCKED`,
+		scanHealthCheck,
 		now,
 		HealthCheckTypeHTTP,
 		HealthCheckTypeTCP,
 		limit,
 	)
 	if err != nil {
-		return nil, err
-	}
-
-	var list []*HealthCheck
-	for rows.Next() {
-		check := &HealthCheck{}
-		err := rows.Scan(
-			&check.Id,
-			&check.InstanceId,
-			&check.CheckId,
-			&check.Name,
-			&check.Type,
-			&check.Source,
-			&check.Status,
-			&check.Definition,
-			&check.Output,
-			&check.TTLExpiresAt,
-			&check.LastRunAt,
-			&check.NextRunAt,
-			&check.CreatedAt,
-			&check.UpdatedAt,
-		)
-		if err != nil {
-			rows.Close()
-			return nil, err
-		}
-
-		list = append(list, check)
-	}
-
-	rows.Close()
-	if err := rows.Err(); err != nil {
 		return nil, err
 	}
 
@@ -470,6 +390,18 @@ func NewHealthCheckMetaRepository(db *sql.DB) HealthCheckMetaRepository {
 	return &HealthCheckMetaRepositoryPostgres{db: db}
 }
 
+// scanHealthCheckMeta maps a row into health check metadata. Column order must match the select list.
+func scanHealthCheckMeta(meta *HealthCheckMeta) []any {
+	return []any{
+		&meta.Id,
+		&meta.HealthCheckId,
+		&meta.Key,
+		&meta.Value,
+		&meta.CreatedAt,
+		&meta.UpdatedAt,
+	}
+}
+
 // Create inserts a health check metadata row. TODO: remove if not used in future.
 func (r *HealthCheckMetaRepositoryPostgres) Create(id Id, key, value string) error {
 	metaId, err := NewId()
@@ -491,26 +423,15 @@ func (r *HealthCheckMetaRepositoryPostgres) Create(id Id, key, value string) err
 
 // Get returns health check metadata by key. TODO: remove if not used in future.
 func (r *HealthCheckMetaRepositoryPostgres) Get(id Id, key string) (*HealthCheckMeta, error) {
-	meta := &HealthCheckMeta{}
-	err := r.db.QueryRow(
+	return QueryOne(
+		r.db,
 		`SELECT id, health_check_id, key, value #>> '{}', created_at, updated_at
 		FROM ai_health_checks_meta
 		WHERE health_check_id = $1 AND key = $2`,
+		scanHealthCheckMeta,
 		id.String(),
 		key,
-	).Scan(
-		&meta.Id,
-		&meta.HealthCheckId,
-		&meta.Key,
-		&meta.Value,
-		&meta.CreatedAt,
-		&meta.UpdatedAt,
 	)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
-
-	return meta, err
 }
 
 // Update updates an existing health check metadata row. TODO: remove if not used in future.
@@ -541,38 +462,15 @@ func (r *HealthCheckMetaRepositoryPostgres) Delete(id Id, key string) error {
 
 // ListByHealthCheckId lists health check metadata rows. TODO: remove if not used in future.
 func (r *HealthCheckMetaRepositoryPostgres) ListByHealthCheckId(id Id) ([]*HealthCheckMeta, error) {
-	rows, err := r.db.Query(
+	return QueryMany(
+		r.db,
 		`SELECT id, health_check_id, key, value #>> '{}', created_at, updated_at
 		FROM ai_health_checks_meta
 		WHERE health_check_id = $1
 		ORDER BY key`,
+		scanHealthCheckMeta,
 		id.String(),
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-
-	var list []*HealthCheckMeta
-	for rows.Next() {
-		meta := &HealthCheckMeta{}
-		err := rows.Scan(
-			&meta.Id,
-			&meta.HealthCheckId,
-			&meta.Key,
-			&meta.Value,
-			&meta.CreatedAt,
-			&meta.UpdatedAt,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		list = append(list, meta)
-	}
-
-	return list, rows.Err()
 }
 
 // Upsert creates or updates health check metadata. TODO: remove if not used in future.

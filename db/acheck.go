@@ -5,7 +5,6 @@ package db
 
 import (
 	"database/sql"
-	"errors"
 	"time"
 )
 
@@ -41,6 +40,20 @@ func NewAgentCheckRepository(db *sql.DB) AgentCheckRepository {
 	return &AgentCheckRepositoryPostgres{db: db}
 }
 
+// scanAgentCheck maps a row into an agent check template. Column order must match the select list.
+func scanAgentCheck(check *AgentCheck) []any {
+	return []any{
+		&check.Id,
+		&check.AgentId,
+		&check.CheckId,
+		&check.Name,
+		&check.Type,
+		&check.Definition,
+		&check.CreatedAt,
+		&check.UpdatedAt,
+	}
+}
+
 // Create inserts an agent check template.
 func (r *AgentCheckRepositoryPostgres) Create(check *AgentCheck) error {
 	id, err := NewId()
@@ -65,28 +78,15 @@ func (r *AgentCheckRepositoryPostgres) Create(check *AgentCheck) error {
 
 // GetByAgentAndCheckId returns an agent check template by its check id.
 func (r *AgentCheckRepositoryPostgres) GetByAgentAndCheckId(agentId Id, checkId string) (*AgentCheck, error) {
-	check := &AgentCheck{}
-	err := r.db.QueryRow(
+	return QueryOne(
+		r.db,
 		`SELECT id, agent_id, check_id, name, type, definition, created_at, updated_at
 		FROM ai_agent_checks
 		WHERE agent_id = $1 AND check_id = $2`,
+		scanAgentCheck,
 		agentId.String(),
 		checkId,
-	).Scan(
-		&check.Id,
-		&check.AgentId,
-		&check.CheckId,
-		&check.Name,
-		&check.Type,
-		&check.Definition,
-		&check.CreatedAt,
-		&check.UpdatedAt,
 	)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
-
-	return check, err
 }
 
 // Update updates an agent check template.
@@ -115,81 +115,31 @@ func (r *AgentCheckRepositoryPostgres) Delete(id Id) error {
 
 // ListByAgentId lists the check templates of an agent.
 func (r *AgentCheckRepositoryPostgres) ListByAgentId(agentId Id) ([]*AgentCheck, error) {
-	rows, err := r.db.Query(
+	return QueryMany(
+		r.db,
 		`SELECT id, agent_id, check_id, name, type, definition, created_at, updated_at
 		FROM ai_agent_checks
 		WHERE agent_id = $1
 		ORDER BY check_id`,
+		scanAgentCheck,
 		agentId.String(),
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-
-	var list []*AgentCheck
-	for rows.Next() {
-		check := &AgentCheck{}
-		err := rows.Scan(
-			&check.Id,
-			&check.AgentId,
-			&check.CheckId,
-			&check.Name,
-			&check.Type,
-			&check.Definition,
-			&check.CreatedAt,
-			&check.UpdatedAt,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		list = append(list, check)
-	}
-
-	return list, rows.Err()
 }
 
 // ListPageByAgentId lists one page of the check templates of an agent.
 func (r *AgentCheckRepositoryPostgres) ListPageByAgentId(agentId Id, limit, offset int) ([]*AgentCheck, error) {
-	rows, err := r.db.Query(
+	return QueryMany(
+		r.db,
 		`SELECT id, agent_id, check_id, name, type, definition, created_at, updated_at
 		FROM ai_agent_checks
 		WHERE agent_id = $1
 		ORDER BY check_id
 		LIMIT $2 OFFSET $3`,
+		scanAgentCheck,
 		agentId.String(),
 		limit,
 		offset,
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-
-	var list []*AgentCheck
-	for rows.Next() {
-		check := &AgentCheck{}
-		err := rows.Scan(
-			&check.Id,
-			&check.AgentId,
-			&check.CheckId,
-			&check.Name,
-			&check.Type,
-			&check.Definition,
-			&check.CreatedAt,
-			&check.UpdatedAt,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		list = append(list, check)
-	}
-
-	return list, rows.Err()
 }
 
 // CountByAgentId returns the number of check templates of an agent.

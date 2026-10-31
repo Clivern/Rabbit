@@ -13,7 +13,7 @@ Give the agent a server URL, a user API key (sent as `X-API-Key`), the files to 
 - **Own workspace.** Create `spec-<runId>` before the first scenario and keep everything you create in it (or in workspaces a scenario asks for, also prefixed `spec-<runId>`). Never touch anything you didn't create.
 - **Clean up** everything at the end, even after failures, and report what you couldn't delete.
 - **Mint keys in the run.** "An access key with only X" means a new access key with exactly those permissions. The full list is `AccessKeyPermissions` in `module/permission.go`.
-- **Tags.** `@readonly`, `@mutates` and `@smoke` always run. Skip `@slow`, `@destructive` and `@worker` unless asked. `@admin` needs a platform admin. `@saas` / `@oss` run only on that edition (see `/api/v1/public/action/setup/status`).
+- **Tags.** `@readonly`, `@mutates` and `@smoke` always run. Skip `@slow`, `@destructive`, `@worker` and `@llm` unless asked. `@llm` needs the server's AI provider configured and makes real model calls. `@admin` needs a platform admin. `@saas` / `@oss` run only on that edition (see `/api/v1/public/action/setup/status`).
 - **Routes** come from each feature's description and `openapi.yaml`. A path like `agents/x` is relative to `/api/v1/workspaces/{ws}/`.
 - **Then steps are exact.** Status, fields and values must all match. "No X field" means the key is absent. If a step is ambiguous, mark the scenario `unclear`.
 - **Scenarios are independent.** Background runs before each one.

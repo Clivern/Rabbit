@@ -81,6 +81,24 @@ func NewEvent(events db.EventRepository) *Event {
 	}
 }
 
+// toEventResponse shapes an event row for API responses.
+func toEventResponse(item *db.Event) *EventResponse {
+	return &EventResponse{
+		Id:           item.Id,
+		WorkspaceId:  item.WorkspaceId,
+		Type:         item.Type,
+		ActorId:      item.ActorId,
+		ActorName:    item.ActorName,
+		ActorType:    item.ActorType,
+		ResourceType: item.ResourceType,
+		ResourceId:   item.ResourceId,
+		IPAddress:    item.IPAddress,
+		UserAgent:    item.UserAgent,
+		Data:         util.JSONRawFromString(item.Data),
+		CreatedAt:    item.CreatedAt.UTC().Format(time.RFC3339),
+	}
+}
+
 // ListEvents returns paginated events in a workspace, newest first.
 func (e *Event) ListEvents(workspaceId db.Id, limit, offset int) (*ListEventsResponse, error) {
 	total, err := e.EventRepository.CountByWorkspaceId(workspaceId)
@@ -103,20 +121,7 @@ func (e *Event) ListEvents(workspaceId db.Id, limit, offset int) (*ListEventsRes
 
 	list := make([]*EventResponse, 0, len(events))
 	for _, item := range events {
-		list = append(list, &EventResponse{
-			Id:           item.Id,
-			WorkspaceId:  item.WorkspaceId,
-			Type:         item.Type,
-			ActorId:      item.ActorId,
-			ActorName:    item.ActorName,
-			ActorType:    item.ActorType,
-			ResourceType: item.ResourceType,
-			ResourceId:   item.ResourceId,
-			IPAddress:    item.IPAddress,
-			UserAgent:    item.UserAgent,
-			Data:         util.JSONRawFromString(item.Data),
-			CreatedAt:    item.CreatedAt.UTC().Format(time.RFC3339),
-		})
+		list = append(list, toEventResponse(item))
 	}
 
 	return &ListEventsResponse{Events: list, Total: total}, nil
@@ -137,20 +142,7 @@ func (e *Event) GetEvent(workspaceId, eventId db.Id) (*EventResponse, error) {
 		return nil, ErrEventNotFound
 	}
 
-	return &EventResponse{
-		Id:           event.Id,
-		WorkspaceId:  event.WorkspaceId,
-		Type:         event.Type,
-		ActorId:      event.ActorId,
-		ActorName:    event.ActorName,
-		ActorType:    event.ActorType,
-		ResourceType: event.ResourceType,
-		ResourceId:   event.ResourceId,
-		IPAddress:    event.IPAddress,
-		UserAgent:    event.UserAgent,
-		Data:         util.JSONRawFromString(event.Data),
-		CreatedAt:    event.CreatedAt.UTC().Format(time.RFC3339),
-	}, nil
+	return toEventResponse(event), nil
 }
 
 // TriggerEvent stores the event and enqueues a delivery per subscribed integration.

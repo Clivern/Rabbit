@@ -16,7 +16,7 @@ User-facing text is stored here for translation. English is the default and curr
      legacy: false,
      locale: 'en',
      fallbackLocale: 'en',
-     messages: { en, fr }
+     messages: { en, fr },
    })
    ```
 

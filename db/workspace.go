@@ -5,7 +5,6 @@ package db
 
 import (
 	"database/sql"
-	"errors"
 	"time"
 )
 
@@ -64,6 +63,17 @@ func NewWorkspaceRepository(db *sql.DB) WorkspaceRepository {
 	return &WorkspaceRepositoryPostgres{db: db}
 }
 
+// scanWorkspace maps a row into a workspace. Column order must match the select list.
+func scanWorkspace(w *Workspace) []any {
+	return []any{
+		&w.Id,
+		&w.Name,
+		&w.Handle,
+		&w.CreatedAt,
+		&w.UpdatedAt,
+	}
+}
+
 // Create inserts a row and fills Id and timestamps via RETURNING.
 func (r *WorkspaceRepositoryPostgres) Create(workspace *Workspace) error {
 	id, err := NewId()
@@ -90,8 +100,8 @@ func (r *WorkspaceRepositoryPostgres) Create(workspace *Workspace) error {
 
 // GetById returns nil, nil if not found.
 func (r *WorkspaceRepositoryPostgres) GetById(id Id) (*Workspace, error) {
-	w := &Workspace{}
-	err := r.db.QueryRow(
+	return QueryOne(
+		r.db,
 		`SELECT
 			id,
 			name,
@@ -100,25 +110,15 @@ func (r *WorkspaceRepositoryPostgres) GetById(id Id) (*Workspace, error) {
 			updated_at
 		FROM workspaces
 		WHERE id = $1`,
+		scanWorkspace,
 		id.String(),
-	).Scan(
-		&w.Id,
-		&w.Name,
-		&w.Handle,
-		&w.CreatedAt,
-		&w.UpdatedAt,
 	)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
-
-	return w, err
 }
 
 // GetByHandle returns nil, nil if not found.
 func (r *WorkspaceRepositoryPostgres) GetByHandle(handle string) (*Workspace, error) {
-	w := &Workspace{}
-	err := r.db.QueryRow(
+	return QueryOne(
+		r.db,
 		`SELECT
 			id,
 			name,
@@ -127,19 +127,9 @@ func (r *WorkspaceRepositoryPostgres) GetByHandle(handle string) (*Workspace, er
 			updated_at
 		FROM workspaces
 		WHERE handle = $1`,
+		scanWorkspace,
 		handle,
-	).Scan(
-		&w.Id,
-		&w.Name,
-		&w.Handle,
-		&w.CreatedAt,
-		&w.UpdatedAt,
 	)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
-
-	return w, err
 }
 
 // Update updates a workspace.
@@ -170,7 +160,8 @@ func (r *WorkspaceRepositoryPostgres) Delete(id Id) error {
 
 // List returns workspaces the user is a member of, ordered by created_at DESC.
 func (r *WorkspaceRepositoryPostgres) List(limit, offset int, userId Id) ([]*Workspace, error) {
-	rows, err := r.db.Query(
+	return QueryMany(
+		r.db,
 		`SELECT
 			w.id,
 			w.name,
@@ -182,33 +173,11 @@ func (r *WorkspaceRepositoryPostgres) List(limit, offset int, userId Id) ([]*Wor
 		WHERE wu.user_id = $1
 		ORDER BY w.created_at DESC
 		LIMIT $2 OFFSET $3`,
+		scanWorkspace,
 		userId.String(),
 		limit,
 		offset,
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-	var list []*Workspace
-	for rows.Next() {
-		w := &Workspace{}
-		err := rows.Scan(
-			&w.Id,
-			&w.Name,
-			&w.Handle,
-			&w.CreatedAt,
-			&w.UpdatedAt,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		list = append(list, w)
-	}
-
-	return list, rows.Err()
 }
 
 // Count returns the number of workspaces the user is a member of.
@@ -238,8 +207,8 @@ func (r *WorkspaceRepositoryPostgres) CountAll() (int64, error) {
 
 // GetWorkspaceMembership returns the user's membership (role, etc.) for the workspace, or nil if not a member.
 func (r *WorkspaceRepositoryPostgres) GetWorkspaceMembership(workspaceId, userId Id) (*WorkspaceUser, error) {
-	m := &WorkspaceUser{}
-	err := r.db.QueryRow(
+	return QueryOne(
+		r.db,
 		`SELECT
 			id,
 			workspace_id,
@@ -250,26 +219,27 @@ func (r *WorkspaceRepositoryPostgres) GetWorkspaceMembership(workspaceId, userId
 		FROM workspace_users
 		WHERE workspace_id = $1
 			AND user_id = $2`,
+		scanWorkspaceUser,
 		workspaceId.String(),
 		userId.String(),
-	).Scan(
-		&m.Id,
-		&m.WorkspaceId,
-		&m.UserId,
-		&m.Role,
-		&m.CreatedAt,
-		&m.UpdatedAt,
 	)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
-
-	return m, err
 }
 
 // NewWorkspaceMetaRepository returns the repository for workspace metadata.
 func NewWorkspaceMetaRepository(db *sql.DB) WorkspaceMetaRepository {
 	return &WorkspaceMetaRepositoryPostgres{db: db}
+}
+
+// scanWorkspaceMeta maps a row into workspace metadata. Column order must match the select list.
+func scanWorkspaceMeta(meta *WorkspaceMeta) []any {
+	return []any{
+		&meta.Id,
+		&meta.WorkspaceId,
+		&meta.Key,
+		&meta.Value,
+		&meta.CreatedAt,
+		&meta.UpdatedAt,
+	}
 }
 
 // Create inserts a workspace metadata row. TODO: remove if not used in future.
@@ -293,26 +263,15 @@ func (r *WorkspaceMetaRepositoryPostgres) Create(id Id, key, value string) error
 
 // Get returns workspace metadata by key. TODO: remove if not used in future.
 func (r *WorkspaceMetaRepositoryPostgres) Get(id Id, key string) (*WorkspaceMeta, error) {
-	meta := &WorkspaceMeta{}
-	err := r.db.QueryRow(
+	return QueryOne(
+		r.db,
 		`SELECT id, workspace_id, key, value, created_at, updated_at
 		FROM workspaces_meta
 		WHERE workspace_id = $1 AND key = $2`,
+		scanWorkspaceMeta,
 		id.String(),
 		key,
-	).Scan(
-		&meta.Id,
-		&meta.WorkspaceId,
-		&meta.Key,
-		&meta.Value,
-		&meta.CreatedAt,
-		&meta.UpdatedAt,
 	)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
-
-	return meta, err
 }
 
 // Update updates an existing workspace metadata row. TODO: remove if not used in future.
@@ -344,38 +303,15 @@ func (r *WorkspaceMetaRepositoryPostgres) Delete(id Id, key string) error {
 
 // ListByWorkspaceId lists workspace metadata rows by workspace id. TODO: remove if not used in future.
 func (r *WorkspaceMetaRepositoryPostgres) ListByWorkspaceId(id Id) ([]*WorkspaceMeta, error) {
-	rows, err := r.db.Query(
+	return QueryMany(
+		r.db,
 		`SELECT id, workspace_id, key, value, created_at, updated_at
 		FROM workspaces_meta
 		WHERE workspace_id = $1
 		ORDER BY key`,
+		scanWorkspaceMeta,
 		id.String(),
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-
-	var list []*WorkspaceMeta
-	for rows.Next() {
-		meta := &WorkspaceMeta{}
-		err := rows.Scan(
-			&meta.Id,
-			&meta.WorkspaceId,
-			&meta.Key,
-			&meta.Value,
-			&meta.CreatedAt,
-			&meta.UpdatedAt,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		list = append(list, meta)
-	}
-
-	return list, rows.Err()
 }
 
 // Upsert creates or updates workspace metadata. TODO: remove if not used in future.

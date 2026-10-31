@@ -18,7 +18,11 @@
           <h2 :id="titleId" class="text-lg font-semibold text-theme-text">{{ title }}</h2>
           <p v-if="description" class="mt-1 text-sm text-theme-textLight">{{ description }}</p>
 
-          <div v-if="error" class="mt-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800" role="alert">
+          <div
+            v-if="error"
+            class="mt-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800"
+            role="alert"
+          >
             {{ error }}
           </div>
 
@@ -43,7 +47,8 @@ const props = defineProps({
 
 const emit = defineEmits(['close'])
 
-const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+const FOCUSABLE =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
 
 const titleId = useId()
 const panel = ref(null)
@@ -80,19 +85,23 @@ function release() {
 }
 
 // Lock page scroll, listen for Escape and move focus in on open; undo all of it and hand focus back on close.
-watch(() => props.open, async (open) => {
-  if (!open) {
-    if (opener) release()
-    return
-  }
+watch(
+  () => props.open,
+  async (open) => {
+    if (!open) {
+      if (opener) release()
+      return
+    }
 
-  opener = document.activeElement
-  document.body.style.overflow = 'hidden'
-  document.addEventListener('keydown', onKeydown)
+    opener = document.activeElement
+    document.body.style.overflow = 'hidden'
+    document.addEventListener('keydown', onKeydown)
 
-  await nextTick()
-  panel.value.querySelector(FOCUSABLE)?.focus()
-}, { immediate: true })
+    await nextTick()
+    panel.value.querySelector(FOCUSABLE)?.focus()
+  },
+  { immediate: true }
+)
 
 onBeforeUnmount(() => {
   if (opener) release()

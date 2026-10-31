@@ -3,19 +3,44 @@
     <AppNav />
 
     <main class="w-full py-8 px-4 sm:px-6 lg:px-8">
-      <div v-if="loading" class="mt-8 rounded-xl border border-theme-border bg-white p-12 text-center shadow-sm">
-        <svg class="animate-spin h-8 w-8 mx-auto text-theme-text" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+      <div
+        v-if="loading"
+        class="mt-8 rounded-xl border border-theme-border bg-white p-12 text-center shadow-sm"
+      >
+        <svg
+          class="animate-spin h-8 w-8 mx-auto text-theme-text"
+          fill="none"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <circle
+            class="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            stroke-width="4"
+          />
+          <path
+            class="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+          />
         </svg>
         <p class="text-theme-textLight mt-3">{{ $t('agents_page.loading_agent') }}</p>
       </div>
 
-      <div v-else-if="notFound" class="mt-8 rounded-xl border border-theme-border bg-white p-8 shadow-sm">
+      <div
+        v-else-if="notFound"
+        class="mt-8 rounded-xl border border-theme-border bg-white p-8 shadow-sm"
+      >
         <h1 class="text-2xl font-semibold text-theme-text">{{ $t('agents_page.not_found') }}</h1>
       </div>
 
-      <div v-else-if="!agent" class="mt-8 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+      <div
+        v-else-if="!agent"
+        class="mt-8 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+      >
         {{ errorMessage }}
       </div>
 
@@ -23,20 +48,30 @@
         <div class="mb-6 flex flex-wrap items-start justify-between gap-4">
           <div class="min-w-0">
             <div class="flex flex-wrap items-center gap-3">
-              <h1 class="text-3xl font-semibold text-theme-text font-mono break-all">{{ agent.name }}</h1>
+              <h1 class="text-3xl font-semibold text-theme-text font-mono break-all">
+                {{ agent.name }}
+              </h1>
               <span
                 v-if="agent.health"
                 class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium"
                 :class="healthClass(agent.health)"
               >
-                <span class="h-1.5 w-1.5 rounded-full" :class="healthDotClass(agent.health)" aria-hidden="true" />
+                <span
+                  class="h-1.5 w-1.5 rounded-full"
+                  :class="healthDotClass(agent.health)"
+                  aria-hidden="true"
+                />
                 {{ $t(`agents_page.health_${agent.health}`) }}
               </span>
-              <span class="rounded-full border border-theme-border bg-white px-2.5 py-1 text-xs font-mono text-theme-textLight">
+              <span
+                class="rounded-full border border-theme-border bg-white px-2.5 py-1 text-xs font-mono text-theme-textLight"
+              >
                 v{{ agent.version }}
               </span>
             </div>
-            <p v-if="card.description" class="mt-2 max-w-3xl text-theme-textLight">{{ card.description }}</p>
+            <p v-if="card.description" class="mt-2 max-w-3xl text-theme-textLight">
+              {{ card.description }}
+            </p>
           </div>
           <div v-if="canManage" class="flex items-center gap-2">
             <button type="button" class="btn-secondary" @click="showEditModal = true">
@@ -52,43 +87,84 @@
           </div>
         </div>
 
-        <div v-if="errorMessage" class="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+        <div
+          v-if="errorMessage"
+          class="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+        >
           {{ errorMessage }}
         </div>
 
         <div class="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-          <a href="#instances" class="rounded-xl border border-theme-border bg-white p-4 shadow-sm transition-colors hover:border-primary-300">
-            <p class="text-xs font-medium uppercase tracking-wider text-theme-textLight">{{ $t('agents_page.instances') }}</p>
+          <a
+            href="#instances"
+            class="rounded-xl border border-theme-border bg-white p-4 shadow-sm transition-colors hover:border-primary-300"
+          >
+            <p class="text-xs font-medium uppercase tracking-wider text-theme-textLight">
+              {{ $t('agents_page.instances') }}
+            </p>
             <p class="mt-1 text-2xl font-semibold text-theme-text">{{ instancesTotal }}</p>
             <div class="mt-1 min-h-5">
               <StatusBreakdown v-if="instancesTotal" :counts="agent.statusCounts || {}" hide-zero />
             </div>
           </a>
-          <a href="#checks" class="rounded-xl border border-theme-border bg-white p-4 shadow-sm transition-colors hover:border-primary-300">
-            <p class="text-xs font-medium uppercase tracking-wider text-theme-textLight">{{ $t('agents_page.checks_title') }}</p>
+          <a
+            href="#checks"
+            class="rounded-xl border border-theme-border bg-white p-4 shadow-sm transition-colors hover:border-primary-300"
+          >
+            <p class="text-xs font-medium uppercase tracking-wider text-theme-textLight">
+              {{ $t('agents_page.checks_title') }}
+            </p>
             <p class="mt-1 text-2xl font-semibold text-theme-text">{{ checks.length }}</p>
             <p class="mt-1 text-sm text-theme-textLight">{{ checkTypesSummary }}</p>
           </a>
-          <a href="#protection" class="rounded-xl border border-theme-border bg-white p-4 shadow-sm transition-colors hover:border-primary-300">
-            <p class="text-xs font-medium uppercase tracking-wider text-theme-textLight">{{ $t('agents_page.protection_title') }}</p>
-            <p class="mt-1 text-2xl font-semibold" :class="protection?.isActive ? 'text-emerald-700' : 'text-theme-text'">
-              {{ protection ? (protection.isActive ? $t('agents_page.protection_active') : $t('agents_page.protection_inactive')) : $t('agents_page.protection_not_set') }}
+          <a
+            href="#protection"
+            class="rounded-xl border border-theme-border bg-white p-4 shadow-sm transition-colors hover:border-primary-300"
+          >
+            <p class="text-xs font-medium uppercase tracking-wider text-theme-textLight">
+              {{ $t('agents_page.protection_title') }}
+            </p>
+            <p
+              class="mt-1 text-2xl font-semibold"
+              :class="protection?.isActive ? 'text-emerald-700' : 'text-theme-text'"
+            >
+              {{
+                protection
+                  ? protection.isActive
+                    ? $t('agents_page.protection_active')
+                    : $t('agents_page.protection_inactive')
+                  : $t('agents_page.protection_not_set')
+              }}
             </p>
             <p class="mt-1 text-sm text-theme-textLight">
-              {{ protection ? $t(`agents_page.protection_type_${protection.type}`) : $t('agents_page.protection_not_set_hint') }}
+              {{
+                protection
+                  ? $t(`agents_page.protection_type_${protection.type}`)
+                  : $t('agents_page.protection_not_set_hint')
+              }}
             </p>
           </a>
-          <a href="#identities" class="rounded-xl border border-theme-border bg-white p-4 shadow-sm transition-colors hover:border-primary-300">
-            <p class="text-xs font-medium uppercase tracking-wider text-theme-textLight">{{ $t('agents_page.identities_title') }}</p>
+          <a
+            href="#identities"
+            class="rounded-xl border border-theme-border bg-white p-4 shadow-sm transition-colors hover:border-primary-300"
+          >
+            <p class="text-xs font-medium uppercase tracking-wider text-theme-textLight">
+              {{ $t('agents_page.identities_title') }}
+            </p>
             <p class="mt-1 text-2xl font-semibold text-theme-text">{{ identities.length }}</p>
             <p class="mt-1 text-sm text-theme-textLight">
-              {{ $t('agents_page.identities_active_count', { count: identities.filter((identity) => identity.isActive).length }) }}
+              {{
+                $t('agents_page.identities_active_count', {
+                  count: identities.filter((identity) => identity.isActive).length,
+                })
+              }}
             </p>
           </a>
         </div>
 
         <div class="grid gap-6 lg:grid-cols-3">
           <div class="min-w-0 space-y-6 lg:col-span-2">
+            <AgentTraffic :workspace-id="currentWorkspace.id" :agent-name="agent.name" />
             <AgentInstances
               ref="instancesSection"
               v-model:total="instancesTotal"
@@ -181,6 +257,7 @@ import AgentIdentities from '@/comp/AgentIdentities.vue'
 import AgentInstances from '@/comp/AgentInstances.vue'
 import AgentProtection from '@/comp/AgentProtection.vue'
 import AgentSkills from '@/comp/AgentSkills.vue'
+import AgentTraffic from '@/comp/AgentTraffic.vue'
 import ConfirmModal from '@/comp/ConfirmModal.vue'
 import StatusBreakdown from '@/comp/StatusBreakdown.vue'
 import { agent_api } from '@/api'

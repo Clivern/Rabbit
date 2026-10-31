@@ -8,14 +8,19 @@
         <p class="text-theme-textLight mt-2">{{ $t('members_page.subtitle') }}</p>
       </div>
 
-      <div v-if="errorMessage" class="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+      <div
+        v-if="errorMessage"
+        class="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+      >
         {{ errorMessage }}
       </div>
 
       <div class="space-y-8">
         <section class="rounded-xl border border-theme-border bg-white shadow-sm overflow-hidden">
           <div class="border-b border-theme-border px-6 py-4">
-            <h2 class="text-lg font-semibold text-theme-text">{{ $t('members_page.invite_member') }}</h2>
+            <h2 class="text-lg font-semibold text-theme-text">
+              {{ $t('members_page.invite_member') }}
+            </h2>
             <p class="mt-1 text-sm text-theme-textLight">{{ $t('members_page.invite_desc') }}</p>
           </div>
           <form class="grid gap-4 p-6 md:grid-cols-[1fr_180px_auto]" @submit.prevent="createInvite">
@@ -33,7 +38,12 @@
             </div>
             <div>
               <label for="invite-role" class="form-label">{{ $t('members_page.role') }}</label>
-              <select id="invite-role" v-model="inviteForm.role" class="input-field" :disabled="inviteLoading">
+              <select
+                id="invite-role"
+                v-model="inviteForm.role"
+                class="input-field"
+                :disabled="inviteLoading"
+              >
                 <option value="regular">{{ $t('members_page.role_regular') }}</option>
                 <option value="admin">{{ $t('members_page.role_admin') }}</option>
                 <option value="readonly">{{ $t('members_page.role_readonly') }}</option>
@@ -56,105 +66,209 @@
             <h2 class="text-lg font-semibold text-theme-text">{{ $t('members_page.members') }}</h2>
           </div>
           <div v-if="loadingMembers" class="p-12 text-center">
-            <svg class="animate-spin h-8 w-8 mx-auto text-theme-text" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+            <svg
+              class="animate-spin h-8 w-8 mx-auto text-theme-text"
+              fill="none"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <circle
+                class="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                stroke-width="4"
+              />
+              <path
+                class="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              />
             </svg>
             <p class="text-theme-textLight mt-3">{{ $t('members_page.loading_members') }}</p>
           </div>
-          <div v-else-if="members.length === 0" class="p-12 text-center text-sm text-theme-textLight">
+          <div
+            v-else-if="members.length === 0"
+            class="p-12 text-center text-sm text-theme-textLight"
+          >
             {{ $t('members_page.no_members') }}
           </div>
           <div v-else class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-theme-border">
-            <thead class="bg-theme-hover">
-              <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider">{{ $t('members_page.name') }}</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider">{{ $t('members_page.email') }}</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider">{{ $t('members_page.role') }}</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider">{{ $t('members_page.joined') }}</th>
-                <th class="px-6 py-3 text-right text-xs font-medium text-theme-textLight uppercase tracking-wider">{{ $t('members_page.actions') }}</th>
-              </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-theme-border">
-              <tr v-for="member in members" :key="member.id" class="hover:bg-theme-hover">
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-theme-text">{{ member.name }}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-theme-textLight">{{ member.email }}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm">
-                  <select
-                    v-if="canEditMember(member)"
-                    :value="member.role"
-                    class="input-field py-1.5 text-sm"
-                    :disabled="updatingMemberId === member.userId"
-                    @change="updateMemberRole(member, $event.target.value)"
+            <table class="min-w-full divide-y divide-theme-border">
+              <thead class="bg-theme-hover">
+                <tr>
+                  <th
+                    class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider"
                   >
-                    <option value="regular">{{ $t('members_page.role_regular') }}</option>
-                    <option value="admin">{{ $t('members_page.role_admin') }}</option>
-                    <option value="readonly">{{ $t('members_page.role_readonly') }}</option>
-                  </select>
-                  <span v-else class="capitalize text-theme-text">{{ formatRole(member.role) }}</span>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-theme-textLight">{{ formatDate(member.createdAt) }}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
-                  <button
-                    type="button"
-                    class="text-red-600 hover:text-red-700 hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
-                    :disabled="!canEditMember(member) || deletingMemberId === member.userId"
-                    @click="deleteMember(member)"
+                    {{ $t('members_page.name') }}
+                  </th>
+                  <th
+                    class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider"
                   >
-                    {{ deletingMemberId === member.userId ? $t('members_page.removing') : $t('members_page.remove') }}
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                    {{ $t('members_page.email') }}
+                  </th>
+                  <th
+                    class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider"
+                  >
+                    {{ $t('members_page.role') }}
+                  </th>
+                  <th
+                    class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider"
+                  >
+                    {{ $t('members_page.joined') }}
+                  </th>
+                  <th
+                    class="px-6 py-3 text-right text-xs font-medium text-theme-textLight uppercase tracking-wider"
+                  >
+                    {{ $t('members_page.actions') }}
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-theme-border">
+                <tr v-for="member in members" :key="member.id" class="hover:bg-theme-hover">
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-theme-text">
+                    {{ member.name }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-theme-textLight">
+                    {{ member.email }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm">
+                    <select
+                      v-if="canEditMember(member)"
+                      :value="member.role"
+                      class="input-field py-1.5 text-sm"
+                      :disabled="updatingMemberId === member.userId"
+                      @change="updateMemberRole(member, $event.target.value)"
+                    >
+                      <option value="regular">{{ $t('members_page.role_regular') }}</option>
+                      <option value="admin">{{ $t('members_page.role_admin') }}</option>
+                      <option value="readonly">{{ $t('members_page.role_readonly') }}</option>
+                    </select>
+                    <span v-else class="capitalize text-theme-text">{{
+                      formatRole(member.role)
+                    }}</span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-theme-textLight">
+                    {{ formatDate(member.createdAt) }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
+                    <button
+                      type="button"
+                      class="text-red-600 hover:text-red-700 hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
+                      :disabled="!canEditMember(member) || deletingMemberId === member.userId"
+                      @click="deleteMember(member)"
+                    >
+                      {{
+                        deletingMemberId === member.userId
+                          ? $t('members_page.removing')
+                          : $t('members_page.remove')
+                      }}
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </section>
 
         <section class="rounded-xl border border-theme-border bg-white shadow-sm overflow-hidden">
           <div class="border-b border-theme-border px-6 py-4">
-            <h2 class="text-lg font-semibold text-theme-text">{{ $t('members_page.pending_invites') }}</h2>
+            <h2 class="text-lg font-semibold text-theme-text">
+              {{ $t('members_page.pending_invites') }}
+            </h2>
           </div>
           <div v-if="loadingInvites" class="p-12 text-center">
-            <svg class="animate-spin h-8 w-8 mx-auto text-theme-text" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+            <svg
+              class="animate-spin h-8 w-8 mx-auto text-theme-text"
+              fill="none"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <circle
+                class="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                stroke-width="4"
+              />
+              <path
+                class="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              />
             </svg>
             <p class="text-theme-textLight mt-3">{{ $t('members_page.loading_invites') }}</p>
           </div>
-          <div v-else-if="invites.length === 0" class="p-12 text-center text-sm text-theme-textLight">
+          <div
+            v-else-if="invites.length === 0"
+            class="p-12 text-center text-sm text-theme-textLight"
+          >
             {{ $t('members_page.no_invites') }}
           </div>
           <div v-else class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-theme-border">
-            <thead class="bg-theme-hover">
-              <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider">{{ $t('members_page.email') }}</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider">{{ $t('members_page.role') }}</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider">{{ $t('members_page.status') }}</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider">{{ $t('members_page.expires') }}</th>
-                <th class="px-6 py-3 text-right text-xs font-medium text-theme-textLight uppercase tracking-wider">{{ $t('members_page.actions') }}</th>
-              </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-theme-border">
-              <tr v-for="invite in invites" :key="invite.id" class="hover:bg-theme-hover">
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-theme-text">{{ invite.email }}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-theme-text capitalize">{{ formatRole(invite.role) }}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-theme-text capitalize">{{ invite.status }}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-theme-textLight">{{ formatDate(invite.expiresAt) }}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
-                  <button
-                    type="button"
-                    class="text-red-600 hover:text-red-700 hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
-                    :disabled="deletingInviteId === invite.id"
-                    @click="deleteInvite(invite)"
+            <table class="min-w-full divide-y divide-theme-border">
+              <thead class="bg-theme-hover">
+                <tr>
+                  <th
+                    class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider"
                   >
-                    {{ deletingInviteId === invite.id ? $t('members_page.cancelling') : $t('members_page.cancel_invite') }}
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                    {{ $t('members_page.email') }}
+                  </th>
+                  <th
+                    class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider"
+                  >
+                    {{ $t('members_page.role') }}
+                  </th>
+                  <th
+                    class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider"
+                  >
+                    {{ $t('members_page.status') }}
+                  </th>
+                  <th
+                    class="px-6 py-3 text-left text-xs font-medium text-theme-textLight uppercase tracking-wider"
+                  >
+                    {{ $t('members_page.expires') }}
+                  </th>
+                  <th
+                    class="px-6 py-3 text-right text-xs font-medium text-theme-textLight uppercase tracking-wider"
+                  >
+                    {{ $t('members_page.actions') }}
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-theme-border">
+                <tr v-for="invite in invites" :key="invite.id" class="hover:bg-theme-hover">
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-theme-text">
+                    {{ invite.email }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-theme-text capitalize">
+                    {{ formatRole(invite.role) }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-theme-text capitalize">
+                    {{ invite.status }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-theme-textLight">
+                    {{ formatDate(invite.expiresAt) }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
+                    <button
+                      type="button"
+                      class="text-red-600 hover:text-red-700 hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
+                      :disabled="deletingInviteId === invite.id"
+                      @click="deleteInvite(invite)"
+                    >
+                      {{
+                        deletingInviteId === invite.id
+                          ? $t('members_page.cancelling')
+                          : $t('members_page.cancel_invite')
+                      }}
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </section>
       </div>
@@ -187,7 +301,7 @@ const errorMessage = ref(null)
 
 const inviteForm = reactive({
   email: '',
-  role: 'regular'
+  role: 'regular',
 })
 
 function formatRole(role) {
@@ -240,7 +354,7 @@ async function createInvite() {
   try {
     await workspace_invite_api.create(currentWorkspace.id, {
       email: inviteForm.email.trim(),
-      role: inviteForm.role
+      role: inviteForm.role,
     })
     inviteForm.email = ''
     inviteForm.role = 'regular'

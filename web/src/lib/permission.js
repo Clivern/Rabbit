@@ -13,33 +13,63 @@ export const WORKSPACE_KEY_PERMISSION_GROUPS = [
   {
     labelKey: 'workspace_settings_page.perm_group_members',
     permissions: [
-      { value: 'CAN_LIST_WORKSPACE_MEMBERS', labelKey: 'workspace_settings_page.perm_list_workspace_members' },
-      { value: 'CAN_UPDATE_MEMBER_ROLE', labelKey: 'workspace_settings_page.perm_update_member_role' },
+      {
+        value: 'CAN_LIST_WORKSPACE_MEMBERS',
+        labelKey: 'workspace_settings_page.perm_list_workspace_members',
+      },
+      {
+        value: 'CAN_UPDATE_MEMBER_ROLE',
+        labelKey: 'workspace_settings_page.perm_update_member_role',
+      },
       { value: 'CAN_REMOVE_MEMBER', labelKey: 'workspace_settings_page.perm_remove_member' },
     ],
   },
   {
     labelKey: 'workspace_settings_page.perm_group_invites',
     permissions: [
-      { value: 'CAN_LIST_WORKSPACE_INVITES', labelKey: 'workspace_settings_page.perm_list_workspace_invites' },
-      { value: 'CAN_GET_WORKSPACE_INVITE', labelKey: 'workspace_settings_page.perm_get_workspace_invite' },
+      {
+        value: 'CAN_LIST_WORKSPACE_INVITES',
+        labelKey: 'workspace_settings_page.perm_list_workspace_invites',
+      },
+      {
+        value: 'CAN_GET_WORKSPACE_INVITE',
+        labelKey: 'workspace_settings_page.perm_get_workspace_invite',
+      },
       { value: 'CAN_REMOVE_INVITE', labelKey: 'workspace_settings_page.perm_remove_invite' },
     ],
   },
   {
     labelKey: 'workspace_settings_page.perm_group_billing',
     permissions: [
-      { value: 'CAN_GET_WORKSPACE_BILLING', labelKey: 'workspace_settings_page.perm_get_workspace_billing' },
-      { value: 'CAN_UPDATE_WORKSPACE_BILLING', labelKey: 'workspace_settings_page.perm_update_workspace_billing' },
+      {
+        value: 'CAN_GET_WORKSPACE_BILLING',
+        labelKey: 'workspace_settings_page.perm_get_workspace_billing',
+      },
+      {
+        value: 'CAN_UPDATE_WORKSPACE_BILLING',
+        labelKey: 'workspace_settings_page.perm_update_workspace_billing',
+      },
     ],
   },
   {
     labelKey: 'workspace_settings_page.perm_group_access_keys',
     permissions: [
-      { value: 'CAN_LIST_WORKSPACE_ACCESS_KEYS', labelKey: 'workspace_settings_page.perm_list_workspace_access_keys' },
-      { value: 'CAN_CREATE_WORKSPACE_ACCESS_KEY', labelKey: 'workspace_settings_page.perm_create_workspace_access_key' },
-      { value: 'CAN_GET_WORKSPACE_ACCESS_KEY', labelKey: 'workspace_settings_page.perm_get_workspace_access_key' },
-      { value: 'CAN_DELETE_WORKSPACE_ACCESS_KEY', labelKey: 'workspace_settings_page.perm_delete_workspace_access_key' },
+      {
+        value: 'CAN_LIST_WORKSPACE_ACCESS_KEYS',
+        labelKey: 'workspace_settings_page.perm_list_workspace_access_keys',
+      },
+      {
+        value: 'CAN_CREATE_WORKSPACE_ACCESS_KEY',
+        labelKey: 'workspace_settings_page.perm_create_workspace_access_key',
+      },
+      {
+        value: 'CAN_GET_WORKSPACE_ACCESS_KEY',
+        labelKey: 'workspace_settings_page.perm_get_workspace_access_key',
+      },
+      {
+        value: 'CAN_DELETE_WORKSPACE_ACCESS_KEY',
+        labelKey: 'workspace_settings_page.perm_delete_workspace_access_key',
+      },
     ],
   },
   {
@@ -56,7 +86,10 @@ export const WORKSPACE_KEY_PERMISSION_GROUPS = [
     permissions: [
       { value: 'CAN_LIST_INSTANCES', labelKey: 'workspace_settings_page.perm_list_instances' },
       { value: 'CAN_GET_INSTANCE', labelKey: 'workspace_settings_page.perm_get_instance' },
-      { value: 'CAN_REGISTER_INSTANCE', labelKey: 'workspace_settings_page.perm_register_instance' },
+      {
+        value: 'CAN_REGISTER_INSTANCE',
+        labelKey: 'workspace_settings_page.perm_register_instance',
+      },
       { value: 'CAN_REPORT_CHECK', labelKey: 'workspace_settings_page.perm_report_check' },
     ],
   },
@@ -74,11 +107,23 @@ export const WORKSPACE_KEY_PERMISSION_GROUPS = [
   {
     labelKey: 'workspace_settings_page.perm_group_integrations',
     permissions: [
-      { value: 'CAN_LIST_INTEGRATIONS', labelKey: 'workspace_settings_page.perm_list_integrations' },
+      {
+        value: 'CAN_LIST_INTEGRATIONS',
+        labelKey: 'workspace_settings_page.perm_list_integrations',
+      },
       { value: 'CAN_GET_INTEGRATION', labelKey: 'workspace_settings_page.perm_get_integration' },
-      { value: 'CAN_CREATE_INTEGRATION', labelKey: 'workspace_settings_page.perm_create_integration' },
-      { value: 'CAN_UPDATE_INTEGRATION', labelKey: 'workspace_settings_page.perm_update_integration' },
-      { value: 'CAN_DELETE_INTEGRATION', labelKey: 'workspace_settings_page.perm_delete_integration' },
+      {
+        value: 'CAN_CREATE_INTEGRATION',
+        labelKey: 'workspace_settings_page.perm_create_integration',
+      },
+      {
+        value: 'CAN_UPDATE_INTEGRATION',
+        labelKey: 'workspace_settings_page.perm_update_integration',
+      },
+      {
+        value: 'CAN_DELETE_INTEGRATION',
+        labelKey: 'workspace_settings_page.perm_delete_integration',
+      },
     ],
   },
   {
@@ -106,7 +151,9 @@ export const WORKSPACE_KEY_PERMISSION_GROUPS = [
   },
 ]
 
-export const WORKSPACE_KEY_PERMISSIONS = WORKSPACE_KEY_PERMISSION_GROUPS.flatMap((group) => group.permissions)
+export const WORKSPACE_KEY_PERMISSIONS = WORKSPACE_KEY_PERMISSION_GROUPS.flatMap(
+  (group) => group.permissions
+)
 
 export const PLATFORM_ROLE_ADMIN = 'admin'
 export const PLATFORM_ROLE_REGULAR = 'regular'
@@ -115,10 +162,7 @@ export const WORKSPACE_ROLE_ADMIN = 'admin'
 export const WORKSPACE_ROLE_OWNER = 'owner'
 export const WORKSPACE_ROLE_REGULAR = 'regular'
 
-const PLATFORM_ROLES = new Set([
-  PLATFORM_ROLE_ADMIN,
-  PLATFORM_ROLE_REGULAR,
-])
+const PLATFORM_ROLES = new Set([PLATFORM_ROLE_ADMIN, PLATFORM_ROLE_REGULAR])
 
 const WORKSPACE_MEMBERSHIP_ROLES = new Set([
   WORKSPACE_ROLE_READONLY,

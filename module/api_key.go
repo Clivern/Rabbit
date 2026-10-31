@@ -29,6 +29,22 @@ func NewAPIKey(apiKeys db.APIKeyRepository) *APIKey {
 	return &APIKey{APIKeyRepository: apiKeys}
 }
 
+// toAPIKeyResponse shapes an API key row for API responses. An empty key hides it.
+func toAPIKeyResponse(item *db.APIKey, key string) *APIKeyResponse {
+	return &APIKeyResponse{
+		Id:        item.Id,
+		Name:      item.Name,
+		CreatedAt: item.CreatedAt.UTC().Format(time.RFC3339),
+		UpdatedAt: item.UpdatedAt.UTC().Format(time.RFC3339),
+		Key:       key,
+		ExpiresAt: lo.TernaryF(
+			item.ExpiresAt != nil,
+			func() *string { return new(item.ExpiresAt.UTC().Format(time.RFC3339)) },
+			func() *string { return nil },
+		),
+	}
+}
+
 // ListAPIKeysResult is what you get back when listing API keys.
 type ListAPIKeysResult struct {
 	APIKeys []*APIKeyResponse
@@ -93,18 +109,7 @@ func (a *APIKey) CreateAPIKey(req *CreateAPIKeyRequest, user *db.User) (*APIKeyR
 		Str("apiKeyId", apiKey.Id.String()).
 		Msg("API key created")
 
-	return &APIKeyResponse{
-		Id:        apiKey.Id,
-		Name:      req.Name,
-		CreatedAt: apiKey.CreatedAt.UTC().Format(time.RFC3339),
-		UpdatedAt: apiKey.UpdatedAt.UTC().Format(time.RFC3339),
-		Key:       id.String(),
-		ExpiresAt: lo.TernaryF(
-			apiKey.ExpiresAt != nil,
-			func() *string { return new(apiKey.ExpiresAt.UTC().Format(time.RFC3339)) },
-			func() *string { return nil },
-		),
-	}, nil
+	return toAPIKeyResponse(apiKey, apiKey.Key), nil
 }
 
 // ListAPIKeys returns the user's API keys (metadata only, never the secret).
@@ -140,17 +145,7 @@ func (a *APIKey) ListAPIKeys(user *db.User, limit, offset int) (*ListAPIKeysResu
 
 	list := make([]*APIKeyResponse, 0, len(keys))
 	for _, k := range keys {
-		list = append(list, &APIKeyResponse{
-			Id:        k.Id,
-			Name:      k.Name,
-			CreatedAt: k.CreatedAt.UTC().Format(time.RFC3339),
-			UpdatedAt: k.UpdatedAt.UTC().Format(time.RFC3339),
-			ExpiresAt: lo.TernaryF(
-				k.ExpiresAt != nil,
-				func() *string { return new(k.ExpiresAt.UTC().Format(time.RFC3339)) },
-				func() *string { return nil },
-			),
-		})
+		list = append(list, toAPIKeyResponse(k, ""))
 	}
 
 	return &ListAPIKeysResult{APIKeys: list, Total: total}, nil
@@ -182,17 +177,7 @@ func (a *APIKey) GetAPIKey(id db.Id, user *db.User) (*APIKeyResponse, error) {
 		return nil, ErrAPIKeyNotFound
 	}
 
-	return &APIKeyResponse{
-		Id:        k.Id,
-		Name:      k.Name,
-		CreatedAt: k.CreatedAt.UTC().Format(time.RFC3339),
-		UpdatedAt: k.UpdatedAt.UTC().Format(time.RFC3339),
-		ExpiresAt: lo.TernaryF(
-			k.ExpiresAt != nil,
-			func() *string { return new(k.ExpiresAt.UTC().Format(time.RFC3339)) },
-			func() *string { return nil },
-		),
-	}, nil
+	return toAPIKeyResponse(k, ""), nil
 }
 
 // DeleteAPIKey deletes a single API key owned by the user.

@@ -4,8 +4,11 @@
 package api
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/clivern/sloth/db"
 	"github.com/clivern/sloth/middleware"
@@ -18,6 +21,23 @@ type ErrorMapping struct {
 	Err     error
 	Status  int
 	Message string
+}
+
+// EventStream switches the response to server-sent events and returns a function that writes and flushes one event.
+func (a *API) EventStream(w http.ResponseWriter, timeout time.Duration) func(event string, data any) {
+	controller := http.NewResponseController(w)
+	_ = controller.SetWriteDeadline(time.Now().Add(timeout))
+
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("X-Accel-Buffering", "no")
+	w.WriteHeader(http.StatusOK)
+
+	return func(event string, data any) {
+		body, _ := json.Marshal(data)
+		fmt.Fprintf(w, "event: %s\ndata: %s\n\n", event, body)
+		_ = controller.Flush()
+	}
 }
 
 // WriteJSON writes data as a JSON response using util.WriteJSON.

@@ -20,11 +20,17 @@ func (a *API) SendAgentMessageAction(w http.ResponseWriter, r *http.Request) {
 	agentName := chi.URLParam(r, "agentName")
 	caller, _ := module.AgentFrom(r.Context())
 
-	proxy, err := a.Agents.SendMessage(db.Id(wid), caller, agentName)
+	proxy, err := a.Agents.SendMessage(
+		db.Id(wid),
+		caller,
+		agentName,
+		r.Header.Get("X-Source-Instance"),
+	)
 
 	if err != nil {
 		if a.WriteError(w, err, []ErrorMapping{
 			{module.ErrAgentNotFound, http.StatusNotFound, locale.TR(r, "agent_not_found")},
+			{module.ErrUnknownSourceInstance, http.StatusUnauthorized, locale.TR(r, "unknown_source_instance")},
 			{module.ErrCallDenied, http.StatusForbidden, locale.TR(r, "a2a_call_denied")},
 			{module.ErrNoHealthyInstance, http.StatusServiceUnavailable, locale.TR(r, "no_healthy_instance")},
 		}) {
@@ -53,11 +59,17 @@ func (a *API) SendSkillMessageAction(w http.ResponseWriter, r *http.Request) {
 	skill := chi.URLParam(r, "skill")
 	caller, _ := module.AgentFrom(r.Context())
 
-	proxy, err := a.Agents.SendSkillMessage(db.Id(wid), caller, skill)
+	proxy, err := a.Agents.SendSkillMessage(
+		db.Id(wid),
+		caller,
+		skill,
+		r.Header.Get("X-Source-Instance"),
+	)
 
 	if err != nil {
 		if a.WriteError(w, err, []ErrorMapping{
 			{module.ErrSkillNotFound, http.StatusNotFound, locale.TR(r, "skill_not_found")},
+			{module.ErrUnknownSourceInstance, http.StatusUnauthorized, locale.TR(r, "unknown_source_instance")},
 			{module.ErrCallDenied, http.StatusForbidden, locale.TR(r, "a2a_call_denied")},
 			{module.ErrNoHealthyInstance, http.StatusServiceUnavailable, locale.TR(r, "no_healthy_instance")},
 		}) {
@@ -86,11 +98,17 @@ func (a *API) GetTaskAction(w http.ResponseWriter, r *http.Request) {
 	taskId := chi.URLParam(r, "taskId")
 	caller, _ := module.AgentFrom(r.Context())
 
-	proxy, err := a.Agents.GetTask(db.Id(wid), caller, taskId)
+	proxy, err := a.Agents.GetTask(
+		db.Id(wid),
+		caller,
+		taskId,
+		r.Header.Get("X-Source-Instance"),
+	)
 
 	if err != nil {
 		if a.WriteError(w, err, []ErrorMapping{
 			{module.ErrTaskNotFound, http.StatusNotFound, locale.TR(r, "task_not_found")},
+			{module.ErrUnknownSourceInstance, http.StatusUnauthorized, locale.TR(r, "unknown_source_instance")},
 			{module.ErrCallDenied, http.StatusForbidden, locale.TR(r, "a2a_call_denied")},
 			{module.ErrNoHealthyInstance, http.StatusServiceUnavailable, locale.TR(r, "no_healthy_instance")},
 		}) {

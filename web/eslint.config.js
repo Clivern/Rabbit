@@ -1,11 +1,12 @@
 import js from '@eslint/js'
 import vue from 'eslint-plugin-vue'
+import prettier from 'eslint-config-prettier'
 import globals from 'globals'
 
 export default [
   { ignores: ['dist/**', 'node_modules/**'] },
   js.configs.recommended,
-  ...vue.configs['flat/essential'],
+  ...vue.configs['flat/strongly-recommended'],
   {
     languageOptions: {
       ecmaVersion: 'latest',
@@ -18,4 +19,5 @@ export default [
       'no-unused-vars': ['error', { caughtErrorsIgnorePattern: '^_' }],
     },
   },
+  prettier,
 ]

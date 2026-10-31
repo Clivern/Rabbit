@@ -1,120 +1,143 @@
-"""Weather agent with fake data. uv run uvicorn weather:app --port 9201"""
+"""Weather agent with live data from wttr.in. uv run uvicorn weather:app --port 9201"""
 
-import hashlib
+import os
+from datetime import date
 
-from fastapi import FastAPI
+import httpx
 
-from util import lifespan
+from util import agent_app
 
 NAME = "weather"
-VERSION = "1.1.0"
-PORT = 9201
-CONDITIONS = ["sunny", "cloudy", "rain", "snow", "windy", "fog"]
-DAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
+VERSION = "1.0.0"
+PORT = int(os.environ.get("PORT", "9201"))
+CONDITIONS = ["sunny", "clear", "cloudy", "rain", "snow", "windy", "fog"]
 
-app = FastAPI(lifespan=lifespan(NAME, VERSION, PORT))
+RAIN = {176, 200, 263, 266, 293, 296, 299, 302, 305, 308, 311, 353, 356, 359, 362, 365, 386, 389, 392, 395}
+SNOW = {179, 182, 227, 230, 317, 320, 323, 326, 329, 332, 335, 338, 350, 371, 374, 377}
+FOG = {143, 248, 260}
+CLOUDY = {116, 119, 122}
 
 
-def seed(text):
-    return int(hashlib.sha256(text.lower().encode()).hexdigest(), 16)
+def condition(code, wind_kph=0, is_day=True):
+    code = int(code)
+
+    if code in SNOW:
+        return "snow"
+
+    if code in RAIN:
+        return "rain"
+
+    if code in FOG:
+        return "fog"
+
+    if code in CLOUDY:
+        return "cloudy"
+
+    if wind_kph >= 40:
+        return "windy"
+
+    return "sunny" if is_day else "clear"
+
+
+def report(city):
+    response = httpx.get(f"https://wttr.in/{city}?format=j1", timeout=10)
+    response.raise_for_status()
+
+    return response.json()
 
 
 def current(args):
     city = args.get("city") or "Berlin"
-    n = seed(city)
+    data = report(city)
+    now = data["current_condition"][0]
+    wind = int(now["windspeedKmph"])
+    is_day = "night" not in now["weatherIconUrl"][0]["value"].lower()
+
     return {
-        "city": city,
-        "temperature_c": n % 35 - 5,
-        "humidity": n % 60 + 30,
-        "wind_kph": n % 40,
-        "condition": CONDITIONS[n % len(CONDITIONS)],
+        "city": data["nearest_area"][0]["areaName"][0]["value"],
+        "temperature_c": int(now["temp_C"]),
+        "humidity": int(now["humidity"]),
+        "wind_kph": wind,
+        "condition": condition(now["weatherCode"], wind, is_day),
     }
 
 
 def forecast(args):
     city = args.get("city") or "Berlin"
     days = int(args.get("days") or 3)
+    data = report(city)
+
     return {
-        "city": city,
+        "city": data["nearest_area"][0]["areaName"][0]["value"],
         "days": [
             {
-                "day": DAYS[i % len(DAYS)],
-                "high_c": seed(f"{city}{i}") % 30,
-                "low_c": seed(f"{city}{i}") % 30 - 8,
-                "condition": CONDITIONS[seed(f"{city}{i}") % len(CONDITIONS)],
+                "day": date.fromisoformat(entry["date"]).strftime("%a").lower(),
+                "high_c": int(entry["maxtempC"]),
+                "low_c": int(entry["mintempC"]),
+                "condition": condition(entry["hourly"][4]["weatherCode"]),
             }
-            for i in range(days)
+            for entry in data["weather"][:days]
         ],
     }
 
 
 def alerts(args):
     city = args.get("city") or "Berlin"
-    n = seed(city)
+    geo = httpx.get(
+        "https://geocoding-api.open-meteo.com/v1/search",
+        params={"name": city, "count": 1},
+        timeout=10,
+    ).json()["results"][0]
+
+    # weather.gov covers the US; anywhere else has no alerts, which is an empty list.
+    active = httpx.get(
+        f"https://api.weather.gov/alerts/active?point={geo['latitude']},{geo['longitude']}",
+        headers={"User-Agent": "sloth-demo/0.1", "Accept": "application/geo+json"},
+        timeout=10,
+    ).json()
+
     return {
-        "city": city,
-        "alerts": [{"type": "storm", "severity": "moderate"}] if n % 4 == 0 else [],
-    }
-
-
-SKILLS = {
-    "weather.current.get": current,
-    "weather.forecast.get": forecast,
-    "weather.alerts.list": alerts,
-}
-
-
-@app.get("/healthz")
-def healthz():
-    return {"status": "ok"}
-
-
-@app.get("/.well-known/agent-card.json")
-def agent_card():
-    return {
-        "name": "Weather",
-        "description": "Current conditions, forecasts and alerts for a city",
-        "version": VERSION,
-        "supportedInterfaces": [
-            {
-                "url": f"http://127.0.0.1:{PORT}/a2a/v1",
-                "protocolBinding": "HTTP+JSON",
-                "protocolVersion": "1.0",
-            }
-        ],
-        "defaultInputModes": ["application/json"],
-        "defaultOutputModes": ["application/json"],
-        "skills": [
-            {
-                "id": "weather.current.get",
-                "name": "Current weather",
-                "description": "Return temperature, humidity, wind and condition for a city. Data: {\"city\": \"Berlin\"}",
-                "tags": ["weather", "current"],
-                "inputModes": ["application/json"],
-                "examples": ['{"city": "Berlin"}'],
-            },
-            {
-                "id": "weather.forecast.get",
-                "name": "Weather forecast",
-                "description": "Return a daily high, low and condition forecast for a city. Data: {\"city\": \"Berlin\", \"days\": 3}",
-                "tags": ["weather", "forecast"],
-                "inputModes": ["application/json"],
-                "examples": ['{"city": "Cairo", "days": 5}'],
-            },
-            {
-                "id": "weather.alerts.list",
-                "name": "Weather alerts",
-                "description": "List active severe weather alerts for a city. Data: {\"city\": \"Miami\"}",
-                "tags": ["weather", "alerts"],
-                "inputModes": ["application/json"],
-                "examples": ['{"city": "Miami"}'],
-            },
+        "city": geo["name"],
+        "alerts": [
+            {"type": item["properties"]["event"], "severity": item["properties"]["severity"].lower()}
+            for item in active["features"]
         ],
     }
 
 
-@app.post("/a2a/v1/message:send")
-def message_send(body: dict):
-    skill = body.get("skill") or "weather.current.get"
-    data = body["message"]["parts"][0].get("data") or {}
-    return {"message": {"role": "ROLE_AGENT", "parts": [{"data": SKILLS[skill](data)}]}}
+app = agent_app(
+    NAME,
+    "Weather",
+    "Current conditions, forecasts and alerts for a city",
+    VERSION,
+    PORT,
+    [
+        {
+            "id": "weather.current.get",
+            "name": "Current weather",
+            "description": "Return temperature, humidity, wind and condition for a city. Data: {\"city\": \"Berlin\"}",
+            "tags": ["weather", "current"],
+            "inputModes": ["application/json"],
+            "examples": ['{"city": "Berlin"}'],
+            "func": current,
+        },
+        {
+            "id": "weather.forecast.get",
+            "name": "Weather forecast",
+            "description": "Return a daily high, low and condition forecast for a city. Data: {\"city\": \"Berlin\", \"days\": 3}",
+            "tags": ["weather", "forecast"],
+            "inputModes": ["application/json"],
+            "examples": ['{"city": "Cairo", "days": 5}'],
+            "func": forecast,
+        },
+        {
+            "id": "weather.alerts.list",
+            "name": "Weather alerts",
+            "description": "List active severe weather alerts for a city. Data: {\"city\": \"Miami\"}",
+            "tags": ["weather", "alerts"],
+            "inputModes": ["application/json"],
+            "examples": ['{"city": "Miami"}'],
+            "func": alerts,
+        },
+    ],
+)

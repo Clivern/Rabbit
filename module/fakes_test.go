@@ -7,10 +7,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/clivern/sloth/db"
+	"github.com/clivern/sloth/pkg/llm"
 	"github.com/clivern/sloth/pkg/stripe"
 
 	"github.com/samber/lo"
@@ -1357,4 +1359,57 @@ func newAgentsFixture(address string, port int) *agentsFixture {
 	f.module = NewAgents(f.agents, f.instances, f.intentions, f.protections, f.traffic, f.tasks, f.skills)
 
 	return f
+}
+
+type fakeChats struct {
+	db.ChatRepository
+	chat     *db.Chat
+	messages []*db.ChatMessage
+}
+
+func (f *fakeChats) GetChat(workspaceId, userId, id db.Id) (*db.Chat, error) {
+	return f.chat, nil
+}
+
+func (f *fakeChats) UpdateChat(chat *db.Chat) error {
+	f.chat = chat
+	return nil
+}
+
+func (f *fakeChats) DeleteChat(workspaceId, userId, id db.Id) (bool, error) {
+	deleted := f.chat != nil
+	f.chat = nil
+	return deleted, nil
+}
+
+func (f *fakeChats) CreateMessage(message *db.ChatMessage) error {
+	message.Id = db.Id(fmt.Sprintf("message-%d", len(f.messages)+1))
+	f.messages = append(f.messages, message)
+	return nil
+}
+
+func (f *fakeChats) ListMessages(chatId db.Id) ([]*db.ChatMessage, error) {
+	return f.messages, nil
+}
+
+// fakeModel replies with the next scripted reply and records what it was asked.
+type fakeModel struct {
+	replies []string
+	asked   [][]llm.Message
+}
+
+func (f *fakeModel) Complete(ctx context.Context, messages []llm.Message) (string, llm.Usage, error) {
+	f.asked = append(f.asked, messages)
+	reply := f.replies[0]
+	f.replies = f.replies[1:]
+	return reply, llm.Usage{}, nil
+}
+
+// Stream replies like Complete, one word at a time.
+func (f *fakeModel) Stream(ctx context.Context, messages []llm.Message, onDelta func(string)) (string, llm.Usage, error) {
+	reply, usage, err := f.Complete(ctx, messages)
+	for _, word := range strings.SplitAfter(reply, " ") {
+		onDelta(word)
+	}
+	return reply, usage, err
 }

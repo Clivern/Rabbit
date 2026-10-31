@@ -6,24 +6,16 @@ message:send without it. Other agents can only reach it through Sloth.
 """
 
 import hashlib
-import secrets
+import os
 
-from fastapi import FastAPI, Header, HTTPException
+from util import agent_app
 
-from util import lifespan
-
+NAME = "users"
+VERSION = "1.0.0"
+PORT = int(os.environ.get("PORT", "9203"))
 API_KEY = "users-demo-key-2026"
 PLANS = ["free", "pro", "team", "enterprise"]
-LANGUAGES = ["en", "fr", "de", "ar", "es"]
-
-app = FastAPI(
-    lifespan=lifespan(
-        "users",
-        "1.0.0",
-        9203,
-        protection={"type": "api_key", "header": "X-Users-Key", "secret": API_KEY},
-    )
-)
+LANGUAGES = ["en", "fr", "de", "es"]
 
 
 def seed(text):
@@ -31,86 +23,60 @@ def seed(text):
 
 
 def profile(args):
-    user_id = args.get("user_id") or "u_123"
-    n = seed(user_id)
-    first = ["Ada", "Grace", "Alan", "Linus", "Margaret", "Dennis"][n % 6]
-    last = ["Lovelace", "Hopper", "Turing", "Torvalds", "Hamilton", "Ritchie"][n // 6 % 6]
+    email = args.get("email") or "ada@example.com"
+    n = seed(email)
+    first, _, last = email.split("@")[0].partition(".")
 
     return {
-        "user_id": user_id,
-        "name": f"{first} {last}",
-        "email": f"{first.lower()}.{last.lower()}@example.com",
+        "user_id": f"u_{n % 900 + 100}",
+        "name": f"{first.title()} {last.title()}".strip(),
+        "email": email.lower(),
+        "company": ["Acme", "Globex", "Initech", "Umbrella", "Stark", "Wayne"][n // 4 % 6],
+        "role": ["Engineer", "Designer", "Manager", "Analyst", "Founder", "Support"][n // 24 % 6],
+        "country": ["Netherlands", "Germany", "France", "Spain", "Egypt", "USA"][n // 144 % 6],
         "plan": PLANS[n % len(PLANS)],
         "member_since": f"20{n % 10 + 15}-0{n % 9 + 1}-1{n % 9}",
     }
 
 
 def preferences(args):
-    user_id = args.get("user_id") or "u_123"
-    n = seed(user_id)
+    email = args.get("email") or "ada@example.com"
+    n = seed(email)
 
     return {
-        "user_id": user_id,
+        "user_id": f"u_{n % 900 + 100}",
         "language": LANGUAGES[n % len(LANGUAGES)],
         "timezone": ["UTC", "Europe/Berlin", "Africa/Cairo", "America/New_York"][n % 4],
         "newsletter": n % 2 == 0,
     }
 
 
-SKILLS = {
-    "user.profile.get": profile,
-    "user.preferences.get": preferences,
-}
-
-
-@app.get("/healthz")
-def healthz():
-    return {"status": "ok"}
-
-
-@app.get("/.well-known/agent-card.json")
-def agent_card():
-    return {
-        "name": "Users",
-        "description": "User profiles and preferences by user id",
-        "version": "1.0.0",
-        "supportedInterfaces": [
-            {
-                "url": "http://127.0.0.1:9203/a2a/v1",
-                "protocolBinding": "HTTP+JSON",
-                "protocolVersion": "1.0",
-            }
-        ],
-        "defaultInputModes": ["application/json"],
-        "defaultOutputModes": ["application/json"],
-        "skills": [
-            {
-                "id": "user.profile.get",
-                "name": "User profile",
-                "description": 'Return a user\'s name, email, plan and member date. Data: {"user_id": "u_123"}',
-                "tags": ["users", "profile"],
-                "inputModes": ["application/json"],
-                "examples": ['{"user_id": "u_123"}'],
-            },
-            {
-                "id": "user.preferences.get",
-                "name": "User preferences",
-                "description": 'Return a user\'s language, timezone and newsletter choice. Data: {"user_id": "u_123"}',
-                "tags": ["users", "preferences"],
-                "inputModes": ["application/json"],
-                "examples": ['{"user_id": "u_123"}'],
-            },
-        ],
-    }
-
-
-@app.post("/a2a/v1/message:send")
-def message_send(body: dict, x_users_key: str = Header(default="")):
+app = agent_app(
+    NAME,
+    "Users",
+    "User profiles and preferences by email",
+    VERSION,
+    PORT,
+    [
+        {
+            "id": "user.profile.get",
+            "name": "User profile",
+            "description": 'Return a user\'s name, company, role, country, plan and member date by email. Data: {"email": "ada@example.com"}',
+            "tags": ["users", "profile"],
+            "inputModes": ["application/json"],
+            "examples": ['{"email": "ada@example.com"}'],
+            "func": profile,
+        },
+        {
+            "id": "user.preferences.get",
+            "name": "User preferences",
+            "description": 'Return a user\'s language, timezone and newsletter choice by email. Data: {"email": "ada@example.com"}',
+            "tags": ["users", "preferences"],
+            "inputModes": ["application/json"],
+            "examples": ['{"email": "ada@example.com"}'],
+            "func": preferences,
+        },
+    ],
     # Only Sloth holds the key, so a call without it did not come through the gateway.
-    if not secrets.compare_digest(x_users_key, API_KEY):
-        raise HTTPException(status_code=401, detail="missing or wrong X-Users-Key")
-
-    skill = body.get("skill") or "user.profile.get"
-    data = body["message"]["parts"][0].get("data") or {}
-
-    return {"message": {"role": "ROLE_AGENT", "parts": [{"data": SKILLS[skill](data)}]}}
+    protection={"type": "api_key", "header": "X-Users-Key", "secret": API_KEY},
+)

@@ -54,18 +54,40 @@
           />
           <p class="mt-1 text-xs text-theme-textLight">{{ $t('agents_page.card_path_hint') }}</p>
         </div>
+        <div>
+          <label for="agent-lb-strategy" class="form-label">{{
+            $t('agents_page.lb_strategy')
+          }}</label>
+          <select
+            id="agent-lb-strategy"
+            v-model="form.lbStrategy"
+            required
+            class="input-field"
+            :disabled="saving"
+          >
+            <option value="round_robin">{{ $t('agents_page.lb_strategy_round_robin') }}</option>
+            <option value="random">{{ $t('agents_page.lb_strategy_random') }}</option>
+            <option value="least_outstanding_tasks">
+              {{ $t('agents_page.lb_strategy_least_outstanding_tasks') }}
+            </option>
+            <option value="sticky">{{ $t('agents_page.lb_strategy_sticky') }}</option>
+          </select>
+          <p class="mt-1 text-xs text-theme-textLight">{{ $t('agents_page.lb_strategy_hint') }}</p>
+        </div>
       </div>
 
       <div class="flex gap-3 justify-end">
         <button type="button" class="btn-secondary" :disabled="saving" @click="close">
           {{ $t('common.cancel') }}
         </button>
-        <button
-          type="submit"
-          class="btn-primary"
-          :disabled="saving"
-        >
-          {{ saving ? $t('agents_page.saving') : (isEdit ? $t('common.save') : $t('agents_page.register')) }}
+        <button type="submit" class="btn-primary" :disabled="saving">
+          {{
+            saving
+              ? $t('agents_page.saving')
+              : isEdit
+                ? $t('common.save')
+                : $t('agents_page.register')
+          }}
         </button>
       </div>
     </form>
@@ -106,15 +128,20 @@ const form = reactive({
   name: '',
   version: '',
   cardPath: '',
+  lbStrategy: 'round_robin',
 })
 
-watch(() => props.open, (open) => {
-  if (!open) return
-  error.value = null
-  form.name = props.agent?.name || ''
-  form.version = props.agent?.version || ''
-  form.cardPath = props.agent?.cardPath || ''
-})
+watch(
+  () => props.open,
+  (open) => {
+    if (!open) return
+    error.value = null
+    form.name = props.agent?.name || ''
+    form.version = props.agent?.version || ''
+    form.cardPath = props.agent?.cardPath || ''
+    form.lbStrategy = props.agent?.lbStrategy || 'round_robin'
+  }
+)
 
 function close() {
   if (saving.value) return
@@ -155,12 +182,13 @@ async function submit() {
 
   try {
     // PUT is an upsert, so guard against replacing an existing agent from the register form
-    if (!isEdit.value && await agentExists(name)) {
+    if (!isEdit.value && (await agentExists(name))) {
       error.value = t('agents_page.already_exists', { name })
       return
     }
 
-    const payload = cardPath ? { version, cardPath } : { version }
+    const payload = { version, lbStrategy: form.lbStrategy }
+    if (cardPath) payload.cardPath = cardPath
     const res = await agent_api.upsert(props.workspaceId, name, payload)
     emit('saved', res.data)
   } catch (err) {

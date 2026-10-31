@@ -198,6 +198,14 @@ func SetupServer(Static embed.FS, a *api.API) http.Handler {
 			r.With(middleware.Protect(middleware.Config{Perm: module.CanDeleteKeyValue})).Delete("/*", a.DeleteKeyValueAction) // delete a workspace key
 		})
 
+		r.Route("/chats", func(r chi.Router) {
+			r.With(middleware.Protect(middleware.Config{Perm: module.CanUseChat})).Get("/", a.ListChatsAction)                         // list the user's chats
+			r.With(middleware.Protect(middleware.Config{Perm: module.CanUseChat})).Post("/", a.CreateChatAction)                       // start a chat
+			r.With(middleware.Protect(middleware.Config{Perm: module.CanUseChat})).Get("/{chatId}", a.GetChatAction)                   // get a chat with its messages
+			r.With(middleware.Protect(middleware.Config{Perm: module.CanUseChat})).Delete("/{chatId}", a.DeleteChatAction)             // delete a chat with its messages
+			r.With(middleware.Protect(middleware.Config{Perm: module.CanUseChat})).Post("/{chatId}/messages", a.SendChatMessageAction) // ask in a chat and stream the answer
+		})
+
 		r.Route("/traffic", func(r chi.Router) {
 			r.With(middleware.Protect(middleware.Config{Perm: module.CanListTraffic})).Get("/", a.ListTrafficAction)          // list gateway calls
 			r.With(middleware.Protect(middleware.Config{Perm: module.CanGetTraffic})).Get("/{trafficId}", a.GetTrafficAction) // get a gateway call

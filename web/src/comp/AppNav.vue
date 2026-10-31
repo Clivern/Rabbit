@@ -32,7 +32,11 @@
               class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-200 text-sm font-medium text-theme-text"
               aria-hidden="true"
             >
-              <img :src="user?.avatar ?? ''" :alt="user?.email ?? ''" class="h-8 w-8 rounded-full">
+              <img
+                :src="user?.avatar ?? ''"
+                :alt="user?.email ?? ''"
+                class="h-8 w-8 rounded-full"
+              />
             </span>
             <svg
               class="h-4 w-4 text-theme-textLight transition-transform"
@@ -42,7 +46,12 @@
               stroke="currentColor"
               aria-hidden="true"
             >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M19 9l-7 7-7-7"
+              />
             </svg>
           </button>
           <Transition
@@ -64,7 +73,11 @@
                   v-for="item in navItems"
                   :key="item.to"
                   :to="item.to"
-                  :class="[isActive(item.to) ? 'bg-theme-hover text-theme-text' : 'text-theme-text hover:bg-theme-hover']"
+                  :class="[
+                    isActive(item.to)
+                      ? 'bg-theme-hover text-theme-text'
+                      : 'text-theme-text hover:bg-theme-hover',
+                  ]"
                   class="block px-4 py-2 text-sm font-medium"
                   role="menuitem"
                   @click="open = false"
@@ -76,7 +89,10 @@
                 <p v-if="user?.name" class="text-sm font-semibold text-theme-text truncate">
                   {{ user.name }}
                 </p>
-                <p class="text-sm truncate" :class="user?.name ? 'text-theme-textLight' : 'text-theme-text'">
+                <p
+                  class="text-sm truncate"
+                  :class="user?.name ? 'text-theme-textLight' : 'text-theme-text'"
+                >
                   {{ user?.email ?? '' }}
                 </p>
               </div>
@@ -121,7 +137,13 @@ import { useI18n } from 'vue-i18n'
 import { auth_api } from '@/api'
 import { removeWorkspaceFromStorage, loadWorkspaceFromStorage } from '@/utils/storage'
 import { user, clearUser } from '@/lib/auth'
-import { applyLocale, applyTheme, applyUserPreferences, readStoredLocale, readStoredTheme } from '@/lib/preferences'
+import {
+  applyLocale,
+  applyTheme,
+  applyUserPreferences,
+  readStoredLocale,
+  readStoredTheme,
+} from '@/lib/preferences'
 import { canManageWorkspace } from '@/lib/permission'
 import { isSaaS } from '@/lib/edition'
 import AppLogo from '@/comp/AppLogo.vue'
@@ -162,8 +184,11 @@ const navItems = computed(() => {
     { to: '/billing', label: t('nav.billing'), requiresManage: true, requiresSaaS: true },
     { to: '/members', label: 'Members', requiresManage: true },
     { to: '/settings', label: t('nav.settings'), requiresManage: true },
-    { to: '/workspaces', label: 'Workspaces' }
-  ].filter((item) => (!item.requiresManage || canManageWorkspaceNav.value) && (!item.requiresSaaS || isSaaS()))
+    { to: '/workspaces', label: 'Workspaces' },
+  ].filter(
+    (item) =>
+      (!item.requiresManage || canManageWorkspaceNav.value) && (!item.requiresSaaS || isSaaS())
+  )
 })
 
 function isActive(path) {

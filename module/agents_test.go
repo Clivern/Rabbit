@@ -23,14 +23,15 @@ import (
 
 // seenRequest is what the fake agent instance received.
 type seenRequest struct {
-	Method      string
-	Path        string
-	Query       string
-	Version     string
-	SourceAgent string
-	APIKey      string
-	AgentKey    string
-	Body        string
+	Method         string
+	Path           string
+	Query          string
+	Version        string
+	SourceAgent    string
+	SourceInstance string
+	APIKey         string
+	AgentKey       string
+	Body           string
 }
 
 func TestUnitAgents(t *testing.T) {
@@ -43,14 +44,15 @@ func TestUnitAgents(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			body, _ := io.ReadAll(r.Body)
 			seen = append(seen, seenRequest{
-				Method:      r.Method,
-				Path:        r.URL.Path,
-				Query:       r.URL.RawQuery,
-				Version:     r.Header.Get("A2A-Version"),
-				SourceAgent: r.Header.Get("X-Source-Agent"),
-				APIKey:      r.Header.Get("X-API-Key"),
-				AgentKey:    r.Header.Get("X-Agent-Key"),
-				Body:        string(body),
+				Method:         r.Method,
+				Path:           r.URL.Path,
+				Query:          r.URL.RawQuery,
+				Version:        r.Header.Get("A2A-Version"),
+				SourceAgent:    r.Header.Get("X-Source-Agent"),
+				SourceInstance: r.Header.Get("X-Source-Instance"),
+				APIKey:         r.Header.Get("X-API-Key"),
+				AgentKey:       r.Header.Get("X-Agent-Key"),
+				Body:           string(body),
 			})
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(status)
@@ -72,6 +74,7 @@ func TestUnitAgents(t *testing.T) {
 		request.Header.Set("Content-Type", "application/json")
 		request.Header.Set("A2A-Version", "1.0")
 		request.Header.Set("X-Source-Agent", "support-assistant")
+		request.Header.Set("X-Source-Instance", "assistant-1")
 		request.Header.Set("X-API-Key", "caller-secret")
 
 		w := httptest.NewRecorder()
@@ -85,7 +88,7 @@ func TestUnitAgents(t *testing.T) {
 	t.Run("send to an agent proxies to the advertised path and records the task", func(t *testing.T) {
 		f, seen := newInstance(t, http.StatusOK, `{"task":{"id":"task-7f3a","status":{"state":"TASK_STATE_WORKING"}}}`)
 
-		proxy, err := f.module.SendMessage("ws-1", caller, "user-directory")
+		proxy, err := f.module.SendMessage("ws-1", caller, "user-directory", "")
 		require.NoError(t, err)
 
 		w := serve(proxy, http.MethodPost, sendPath, message)
@@ -117,7 +120,7 @@ func TestUnitAgents(t *testing.T) {
 		f.instances.live = []*db.AgentInstance{first, second}
 
 		for range 4 {
-			proxy, err := f.module.SendMessage("ws-1", caller, "user-directory")
+			proxy, err := f.module.SendMessage("ws-1", caller, "user-directory", "")
 			require.NoError(t, err)
 			serve(proxy, http.MethodPost, sendPath, message)
 		}
@@ -132,7 +135,7 @@ func TestUnitAgents(t *testing.T) {
 	t.Run("the caller's credentials never reach the destination", func(t *testing.T) {
 		f, seen := newInstance(t, http.StatusOK, `{}`)
 
-		proxy, err := f.module.SendMessage("ws-1", caller, "user-directory")
+		proxy, err := f.module.SendMessage("ws-1", caller, "user-directory", "")
 		require.NoError(t, err)
 
 		serve(proxy, http.MethodPost, sendPath, message)
@@ -143,7 +146,7 @@ func TestUnitAgents(t *testing.T) {
 	t.Run("a direct message reply records no task", func(t *testing.T) {
 		f, _ := newInstance(t, http.StatusOK, `{"message":{"messageId":"m-1","role":"ROLE_AGENT","parts":[]}}`)
 
-		proxy, err := f.module.SendMessage("ws-1", caller, "user-directory")
+		proxy, err := f.module.SendMessage("ws-1", caller, "user-directory", "")
 		require.NoError(t, err)
 
 		serve(proxy, http.MethodPost, sendPath, message)
@@ -153,7 +156,7 @@ func TestUnitAgents(t *testing.T) {
 	t.Run("an instance error is relayed as is and recorded as failed", func(t *testing.T) {
 		f, _ := newInstance(t, http.StatusBadRequest, `{"error":"bad message"}`)
 
-		proxy, err := f.module.SendMessage("ws-1", caller, "user-directory")
+		proxy, err := f.module.SendMessage("ws-1", caller, "user-directory", "")
 		require.NoError(t, err)
 
 		w := serve(proxy, http.MethodPost, sendPath, message)
@@ -170,7 +173,7 @@ func TestUnitAgents(t *testing.T) {
 		config, _ := json.Marshal(ProtectionConfig{Header: "X-Agent-Key", SecretEncrypted: secret})
 		f.protections.protection = &db.AgentProtection{Type: db.AgentProtectionTypeAPIKey, Config: string(config), IsActive: true}
 
-		proxy, err := f.module.SendMessage("ws-1", caller, "user-directory")
+		proxy, err := f.module.SendMessage("ws-1", caller, "user-directory", "")
 		require.NoError(t, err)
 
 		serve(proxy, http.MethodPost, sendPath, message)
@@ -181,7 +184,7 @@ func TestUnitAgents(t *testing.T) {
 		f, _ := newInstance(t, http.StatusOK, `{}`)
 		f.intentions.match = nil
 
-		_, err := f.module.SendMessage("ws-1", caller, "user-directory")
+		_, err := f.module.SendMessage("ws-1", caller, "user-directory", "")
 		assert.ErrorIs(t, err, ErrCallDenied)
 		require.Len(t, f.traffic.list, 1)
 		assert.Equal(t, db.TrafficDecisionDeny, f.traffic.list[0].Decision)
@@ -193,7 +196,7 @@ func TestUnitAgents(t *testing.T) {
 		f, _ := newInstance(t, http.StatusOK, `{}`)
 		f.agents.agent = nil
 
-		_, err := f.module.SendMessage("ws-1", caller, "ghost")
+		_, err := f.module.SendMessage("ws-1", caller, "ghost", "")
 		assert.ErrorIs(t, err, ErrAgentNotFound)
 	})
 
@@ -201,7 +204,7 @@ func TestUnitAgents(t *testing.T) {
 		f, _ := newInstance(t, http.StatusOK, `{}`)
 		f.instances.live = nil
 
-		_, err := f.module.SendMessage("ws-1", caller, "user-directory")
+		_, err := f.module.SendMessage("ws-1", caller, "user-directory", "")
 		assert.ErrorIs(t, err, ErrNoHealthyInstance)
 		assert.Equal(t, db.TrafficResultNoInstance, f.traffic.list[0].Result)
 	})
@@ -209,7 +212,7 @@ func TestUnitAgents(t *testing.T) {
 	t.Run("an instance that cannot be reached answers 502", func(t *testing.T) {
 		f := newAgentsFixture("127.0.0.1", 1)
 
-		proxy, err := f.module.SendMessage("ws-1", caller, "user-directory")
+		proxy, err := f.module.SendMessage("ws-1", caller, "user-directory", "")
 		require.NoError(t, err)
 
 		w := serve(proxy, http.MethodPost, sendPath, message)
@@ -220,7 +223,7 @@ func TestUnitAgents(t *testing.T) {
 	t.Run("send to a skill nobody offers is not found", func(t *testing.T) {
 		f, _ := newInstance(t, http.StatusOK, `{}`)
 
-		_, err := f.module.SendSkillMessage("ws-1", caller, "ghost.skill")
+		_, err := f.module.SendSkillMessage("ws-1", caller, "ghost.skill", "")
 		assert.ErrorIs(t, err, ErrSkillNotFound)
 	})
 
@@ -229,7 +232,7 @@ func TestUnitAgents(t *testing.T) {
 		f.skills.skill = &db.AgentSkill{SkillId: "user.profile.get"}
 		f.skills.agents = []*db.CallableAgent{}
 
-		_, err := f.module.SendSkillMessage("ws-1", caller, "user.profile.get")
+		_, err := f.module.SendSkillMessage("ws-1", caller, "user.profile.get", "")
 		assert.ErrorIs(t, err, ErrCallDenied)
 	})
 
@@ -238,7 +241,7 @@ func TestUnitAgents(t *testing.T) {
 		f.skills.skill = &db.AgentSkill{SkillId: "user.profile.get"}
 		f.skills.agents = []*db.CallableAgent{{Name: "user-directory", Instances: 1}}
 
-		_, err := f.module.SendSkillMessage("ws-1", caller, "user.profile.get")
+		_, err := f.module.SendSkillMessage("ws-1", caller, "user.profile.get", "")
 		assert.ErrorIs(t, err, ErrNoHealthyInstance)
 	})
 
@@ -247,7 +250,7 @@ func TestUnitAgents(t *testing.T) {
 		f.skills.skill = &db.AgentSkill{SkillId: "user.profile.get"}
 		f.skills.agents = []*db.CallableAgent{{Name: "user-directory", Instances: 1, PassingInstances: 1}}
 
-		proxy, err := f.module.SendSkillMessage("ws-1", caller, "user.profile.get")
+		proxy, err := f.module.SendSkillMessage("ws-1", caller, "user.profile.get", "")
 		require.NoError(t, err)
 
 		serve(proxy, http.MethodPost, "/api/v1/workspaces/ws-1/agents/skills/user.profile.get/message:send", message)
@@ -261,7 +264,7 @@ func TestUnitAgents(t *testing.T) {
 		f, seen := newInstance(t, http.StatusOK, `{"id":"task-7f3a","status":{"state":"TASK_STATE_COMPLETED"}}`)
 		f.tasks.task = &db.AgentTask{TaskId: "task-7f3a", SourceAgent: "support-assistant", AgentId: "agent-1", InstanceId: &f.instances.instance.Id}
 
-		proxy, err := f.module.GetTask("ws-1", caller, "task-7f3a")
+		proxy, err := f.module.GetTask("ws-1", caller, "task-7f3a", "")
 		require.NoError(t, err)
 
 		w := serve(proxy, http.MethodGet, "/api/v1/workspaces/ws-1/agents/tasks/task-7f3a?historyLength=2", "")
@@ -276,7 +279,7 @@ func TestUnitAgents(t *testing.T) {
 	t.Run("get task of another caller or an unknown task is not found", func(t *testing.T) {
 		f, _ := newInstance(t, http.StatusOK, `{}`)
 
-		_, err := f.module.GetTask("ws-1", caller, "task-7f3a")
+		_, err := f.module.GetTask("ws-1", caller, "task-7f3a", "")
 		assert.ErrorIs(t, err, ErrTaskNotFound)
 	})
 
@@ -285,7 +288,7 @@ func TestUnitAgents(t *testing.T) {
 		f.tasks.task = &db.AgentTask{TaskId: "task-7f3a", SourceAgent: "support-assistant", AgentId: "agent-1", InstanceId: &f.instances.instance.Id}
 		f.intentions.match = &db.Intention{Action: db.IntentionActionDeny}
 
-		_, err := f.module.GetTask("ws-1", caller, "task-7f3a")
+		_, err := f.module.GetTask("ws-1", caller, "task-7f3a", "")
 		assert.ErrorIs(t, err, ErrCallDenied)
 	})
 
@@ -293,7 +296,34 @@ func TestUnitAgents(t *testing.T) {
 		f, _ := newInstance(t, http.StatusOK, `{}`)
 		f.tasks.task = &db.AgentTask{TaskId: "task-7f3a", SourceAgent: "support-assistant", AgentId: "agent-1"}
 
-		_, err := f.module.GetTask("ws-1", caller, "task-7f3a")
+		_, err := f.module.GetTask("ws-1", caller, "task-7f3a", "")
 		assert.ErrorIs(t, err, ErrNoHealthyInstance)
+	})
+
+	t.Run("send records the calling instance and strips its header", func(t *testing.T) {
+		f, seen := newInstance(t, http.StatusOK, `{}`)
+
+		proxy, err := f.module.SendMessage("ws-1", caller, "user-directory", "directory-1")
+		require.NoError(t, err)
+
+		w := serve(proxy, http.MethodPost, sendPath, message)
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		require.Len(t, f.traffic.list, 1)
+		assert.Equal(t, "support-assistant", f.traffic.list[0].SourceAgent)
+		assert.Equal(t, "directory-1", f.traffic.list[0].SourceInstance)
+
+		require.Len(t, *seen, 1)
+		assert.Empty(t, (*seen)[0].SourceAgent)
+		assert.Empty(t, (*seen)[0].SourceInstance)
+	})
+
+	t.Run("send rejects a source instance the caller does not own", func(t *testing.T) {
+		f, _ := newInstance(t, http.StatusOK, `{}`)
+		f.instances.instance = nil
+
+		_, err := f.module.SendMessage("ws-1", caller, "user-directory", "ghost-9")
+		assert.ErrorIs(t, err, ErrUnknownSourceInstance)
+		assert.Empty(t, f.traffic.list)
 	})
 }

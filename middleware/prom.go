@@ -290,6 +290,11 @@ func (m *MetricsResponseWriter) Write(b []byte) (int, error) {
 	return n, err
 }
 
+// Unwrap returns the wrapped response, so http.ResponseController can flush streamed responses through it.
+func (m *MetricsResponseWriter) Unwrap() http.ResponseWriter {
+	return m.ResponseWriter
+}
+
 // PrometheusMiddleware creates a middleware for Prometheus metrics
 func PrometheusMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

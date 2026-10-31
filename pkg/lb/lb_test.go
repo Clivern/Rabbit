@@ -95,6 +95,28 @@ func TestUnitPicker(t *testing.T) {
 		assert.Equal(t, []string{a, b, c}[first], reordered[second])
 	})
 
+	t.Run("sticky strategy hashes the key onto the ids", func(t *testing.T) {
+		p := New()
+		first, err := p.Pick([]string{a, b, c}, Options{Strategy: Sticky, StickyKey: "support-assistant"})
+		require.NoError(t, err)
+		second, err := p.Pick([]string{c, b, a}, Options{Strategy: Sticky, StickyKey: "support-assistant"})
+		require.NoError(t, err)
+		assert.Equal(t, []string{a, b, c}[first], []string{c, b, a}[second])
+	})
+
+	t.Run("sticky strategy without a key falls back to round robin", func(t *testing.T) {
+		p := New()
+		ids := []string{b, a}
+		var picked []string
+		for range 3 {
+			got, err := p.Pick(ids, Options{Strategy: Sticky, Key: "invoice-extractor"})
+			require.NoError(t, err)
+			picked = append(picked, ids[got])
+		}
+
+		assert.Equal(t, []string{a, b, a}, picked)
+	})
+
 	t.Run("sticky follows remaining ids", func(t *testing.T) {
 		p := New()
 		all := []string{a, b, c}

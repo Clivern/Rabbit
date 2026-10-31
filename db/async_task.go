@@ -5,7 +5,6 @@ package db
 
 import (
 	"database/sql"
-	"errors"
 	"time"
 )
 
@@ -218,6 +217,18 @@ func NewAsyncTaskMetaRepository(db *sql.DB) AsyncTaskMetaRepository {
 	return &AsyncTaskMetaRepositoryPostgres{db: db}
 }
 
+// scanAsyncTaskMeta maps a row into async task metadata. Column order must match the select list.
+func scanAsyncTaskMeta(meta *AsyncTaskMeta) []any {
+	return []any{
+		&meta.Id,
+		&meta.AsyncTaskId,
+		&meta.Key,
+		&meta.Value,
+		&meta.CreatedAt,
+		&meta.UpdatedAt,
+	}
+}
+
 // Create inserts an async task metadata row. TODO: remove if not used in future.
 func (r *AsyncTaskMetaRepositoryPostgres) Create(id Id, key, value string) error {
 	metaId, err := NewId()
@@ -236,25 +247,14 @@ func (r *AsyncTaskMetaRepositoryPostgres) Create(id Id, key, value string) error
 
 // Get returns async task metadata by key. TODO: remove if not used in future.
 func (r *AsyncTaskMetaRepositoryPostgres) Get(id Id, key string) (*AsyncTaskMeta, error) {
-	meta := &AsyncTaskMeta{}
-	err := r.db.QueryRow(
+	return QueryOne(
+		r.db,
 		`SELECT id, async_task_id, key, value #>> '{}', created_at, updated_at
 		FROM async_tasks_meta
 		WHERE async_task_id = $1 AND key = $2`,
+		scanAsyncTaskMeta,
 		id.String(), key,
-	).Scan(
-		&meta.Id,
-		&meta.AsyncTaskId,
-		&meta.Key,
-		&meta.Value,
-		&meta.CreatedAt,
-		&meta.UpdatedAt,
 	)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
-
-	return meta, err
 }
 
 // Update updates an existing async task metadata row. TODO: remove if not used in future.
@@ -282,38 +282,15 @@ func (r *AsyncTaskMetaRepositoryPostgres) Delete(id Id, key string) error {
 
 // ListByAsyncTaskId lists async task metadata rows by async task id. TODO: remove if not used in future.
 func (r *AsyncTaskMetaRepositoryPostgres) ListByAsyncTaskId(id Id) ([]*AsyncTaskMeta, error) {
-	rows, err := r.db.Query(
+	return QueryMany(
+		r.db,
 		`SELECT id, async_task_id, key, value #>> '{}', created_at, updated_at
 		FROM async_tasks_meta
 		WHERE async_task_id = $1
 		ORDER BY key`,
+		scanAsyncTaskMeta,
 		id.String(),
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-
-	var list []*AsyncTaskMeta
-	for rows.Next() {
-		meta := &AsyncTaskMeta{}
-		err := rows.Scan(
-			&meta.Id,
-			&meta.AsyncTaskId,
-			&meta.Key,
-			&meta.Value,
-			&meta.CreatedAt,
-			&meta.UpdatedAt,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		list = append(list, meta)
-	}
-
-	return list, rows.Err()
 }
 
 // Upsert creates or updates async task metadata. TODO: remove if not used in future.

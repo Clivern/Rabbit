@@ -5,7 +5,6 @@ package db
 
 import (
 	"database/sql"
-	"errors"
 	"time"
 )
 
@@ -67,6 +66,20 @@ func NewAgentIdentityRepository(db *sql.DB) AgentIdentityRepository {
 	return &AgentIdentityRepositoryPostgres{db: db}
 }
 
+// scanAgentIdentity maps a row into an agent identity. Column order must match the select list.
+func scanAgentIdentity(identity *AgentIdentity) []any {
+	return []any{
+		&identity.Id,
+		&identity.AgentId,
+		&identity.Name,
+		&identity.Type,
+		&identity.Config,
+		&identity.IsActive,
+		&identity.CreatedAt,
+		&identity.UpdatedAt,
+	}
+}
+
 // Create inserts an agent identity row.
 func (r *AgentIdentityRepositoryPostgres) Create(identity *AgentIdentity) error {
 	id, err := NewId()
@@ -91,53 +104,27 @@ func (r *AgentIdentityRepositoryPostgres) Create(identity *AgentIdentity) error 
 
 // GetById returns an agent identity by id.
 func (r *AgentIdentityRepositoryPostgres) GetById(id Id) (*AgentIdentity, error) {
-	identity := &AgentIdentity{}
-	err := r.db.QueryRow(
+	return QueryOne(
+		r.db,
 		`SELECT id, agent_id, name, type, config, is_active, created_at, updated_at
 		FROM ai_agent_identity
 		WHERE id = $1`,
+		scanAgentIdentity,
 		id.String(),
-	).Scan(
-		&identity.Id,
-		&identity.AgentId,
-		&identity.Name,
-		&identity.Type,
-		&identity.Config,
-		&identity.IsActive,
-		&identity.CreatedAt,
-		&identity.UpdatedAt,
 	)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
-
-	return identity, err
 }
 
 // GetByAgentAndName returns an agent identity by agent and name.
 func (r *AgentIdentityRepositoryPostgres) GetByAgentAndName(agentId Id, name string) (*AgentIdentity, error) {
-	identity := &AgentIdentity{}
-	err := r.db.QueryRow(
+	return QueryOne(
+		r.db,
 		`SELECT id, agent_id, name, type, config, is_active, created_at, updated_at
 		FROM ai_agent_identity
 		WHERE agent_id = $1 AND name = $2`,
+		scanAgentIdentity,
 		agentId.String(),
 		name,
-	).Scan(
-		&identity.Id,
-		&identity.AgentId,
-		&identity.Name,
-		&identity.Type,
-		&identity.Config,
-		&identity.IsActive,
-		&identity.CreatedAt,
-		&identity.UpdatedAt,
 	)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
-
-	return identity, err
 }
 
 // Update updates an agent identity row.
@@ -166,83 +153,44 @@ func (r *AgentIdentityRepositoryPostgres) Delete(id Id) error {
 
 // ListByAgentId lists the identity rows of an agent.
 func (r *AgentIdentityRepositoryPostgres) ListByAgentId(agentId Id) ([]*AgentIdentity, error) {
-	rows, err := r.db.Query(
+	return QueryMany(
+		r.db,
 		`SELECT id, agent_id, name, type, config, is_active, created_at, updated_at
 		FROM ai_agent_identity
 		WHERE agent_id = $1
 		ORDER BY name`,
+		scanAgentIdentity,
 		agentId.String(),
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-
-	var list []*AgentIdentity
-	for rows.Next() {
-		identity := &AgentIdentity{}
-		err := rows.Scan(
-			&identity.Id,
-			&identity.AgentId,
-			&identity.Name,
-			&identity.Type,
-			&identity.Config,
-			&identity.IsActive,
-			&identity.CreatedAt,
-			&identity.UpdatedAt,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		list = append(list, identity)
-	}
-
-	return list, rows.Err()
 }
 
 // ListActiveByAgentId lists the active identity rows of an agent. TODO: remove if not used in future.
 func (r *AgentIdentityRepositoryPostgres) ListActiveByAgentId(agentId Id) ([]*AgentIdentity, error) {
-	rows, err := r.db.Query(
+	return QueryMany(
+		r.db,
 		`SELECT id, agent_id, name, type, config, is_active, created_at, updated_at
 		FROM ai_agent_identity
 		WHERE agent_id = $1 AND is_active = TRUE
 		ORDER BY name`,
+		scanAgentIdentity,
 		agentId.String(),
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-
-	var list []*AgentIdentity
-	for rows.Next() {
-		identity := &AgentIdentity{}
-		err := rows.Scan(
-			&identity.Id,
-			&identity.AgentId,
-			&identity.Name,
-			&identity.Type,
-			&identity.Config,
-			&identity.IsActive,
-			&identity.CreatedAt,
-			&identity.UpdatedAt,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		list = append(list, identity)
-	}
-
-	return list, rows.Err()
 }
 
 // NewAgentIdentityTokenRepository returns the repository for the agent_identity_tokens table.
 func NewAgentIdentityTokenRepository(db *sql.DB) AgentIdentityTokenRepository {
 	return &AgentIdentityTokenRepositoryPostgres{db: db}
+}
+
+// scanAgentIdentityToken maps a row into an issued identity token. Column order must match the select list.
+func scanAgentIdentityToken(token *AgentIdentityToken) []any {
+	return []any{
+		&token.Id,
+		&token.IdentityId,
+		&token.TokenHash,
+		&token.ExpiresAt,
+		&token.CreatedAt,
+	}
 }
 
 // Create inserts an issued token row.
@@ -267,24 +215,14 @@ func (r *AgentIdentityTokenRepositoryPostgres) Create(token *AgentIdentityToken)
 
 // GetByTokenHash returns an issued token by the SHA-256 hash of its value.
 func (r *AgentIdentityTokenRepositoryPostgres) GetByTokenHash(tokenHash string) (*AgentIdentityToken, error) {
-	token := &AgentIdentityToken{}
-	err := r.db.QueryRow(
+	return QueryOne(
+		r.db,
 		`SELECT id, identity_id, token_hash, expires_at, created_at
 		FROM ai_agent_identity_tokens
 		WHERE token_hash = $1`,
+		scanAgentIdentityToken,
 		tokenHash,
-	).Scan(
-		&token.Id,
-		&token.IdentityId,
-		&token.TokenHash,
-		&token.ExpiresAt,
-		&token.CreatedAt,
 	)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
-
-	return token, err
 }
 
 // DeleteExpired removes issued tokens past their expiry.

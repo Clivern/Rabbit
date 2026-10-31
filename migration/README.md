@@ -593,6 +593,33 @@ Routes a task back to the instance that accepted it. The task itself lives on th
 - Index: `idx_events_resource` on `(resource_type, resource_id)`
 - Every triggered event is stored; each active integration subscribed to it also gets a delivery task in `async_tasks`.
 
+## Assistant
+
+### `ai_assistant_chats`
+
+One dashboard assistant chat, private to the user who started it.
+
+- `id` UUID, primary key
+- `workspace_id` UUID, not null, → `workspaces.id` (cascade)
+- `user_id` UUID, not null, → `users.id` (cascade)
+- `title` VARCHAR(120), not null
+- `status` VARCHAR(20), not null: `idle`, `running` or `failed`
+- `created_at` TIMESTAMP, default `now() UTC`
+- `updated_at` TIMESTAMP, default `now() UTC`
+- Index: `idx_ai_assistant_chats_workspace_user_updated_at` on `(workspace_id, user_id, updated_at DESC)`
+
+### `ai_assistant_messages`
+
+A user question or an assistant answer in a chat.
+
+- `id` UUID, primary key
+- `chat_id` UUID, not null, → `ai_assistant_chats.id` (cascade)
+- `kind` VARCHAR(20), not null: `user` or `assistant`
+- `content` TEXT, not null
+- `meta` JSONB, nullable: extra message values
+- `created_at` TIMESTAMP, default `now() UTC`
+- Index: `idx_ai_assistant_messages_chat_id_created_at` on `(chat_id, created_at)`
+
 ## Global
 
 ### `configs`
@@ -648,6 +675,9 @@ erDiagram
     workspaces ||--o{ integrations : has
     workspaces |o--o{ async_tasks : has
     workspaces ||--o{ events : has
+    workspaces ||--o{ ai_assistant_chats : has
+    users ||--o{ ai_assistant_chats : starts
+    ai_assistant_chats ||--o{ ai_assistant_messages : has
 
     subscriptions ||--o{ subscriptions_meta : has
     integrations ||--o{ integrations_meta : has

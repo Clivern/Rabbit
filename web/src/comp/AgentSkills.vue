@@ -7,10 +7,17 @@
     <ul v-if="skills.length" class="divide-y divide-theme-border">
       <li v-for="skill in skills" :key="skill.id" class="px-6 py-4">
         <div class="flex flex-wrap items-center gap-2">
-          <span v-if="skill.name" class="text-sm font-medium text-theme-text">{{ skill.name }}</span>
-          <span class="rounded bg-theme-hover px-1.5 py-0.5 text-xs font-mono text-theme-textLight">{{ skill.id }}</span>
+          <span v-if="skill.name" class="text-sm font-medium text-theme-text">{{
+            skill.name
+          }}</span>
+          <span
+            class="rounded bg-theme-hover px-1.5 py-0.5 text-xs font-mono text-theme-textLight"
+            >{{ skill.id }}</span
+          >
         </div>
-        <p v-if="skill.description" class="mt-1 text-sm text-theme-textLight">{{ skill.description }}</p>
+        <p v-if="skill.description" class="mt-1 text-sm text-theme-textLight">
+          {{ skill.description }}
+        </p>
         <div v-if="skill.tags.length" class="mt-2 flex flex-wrap gap-1.5">
           <span
             v-for="tag in skill.tags"
@@ -22,7 +29,9 @@
         </div>
       </li>
     </ul>
-    <p v-else class="p-8 text-center text-sm text-theme-textLight">{{ $t('agents_page.no_skills') }}</p>
+    <p v-else class="p-8 text-center text-sm text-theme-textLight">
+      {{ $t('agents_page.no_skills') }}
+    </p>
   </section>
 </template>
 

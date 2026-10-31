@@ -40,6 +40,24 @@ func NewAccess(accessKeys db.AccessKeyRepository, workspaces db.WorkspaceReposit
 	}
 }
 
+// toAccessKeyResponse shapes an access key row for API responses. An empty key hides it.
+func toAccessKeyResponse(item *db.AccessKey, permissions []string, key string) *AccessKeyResponse {
+	return &AccessKeyResponse{
+		Id:          item.Id,
+		WorkspaceId: item.WorkspaceId,
+		Name:        item.Name,
+		Permissions: permissions,
+		CreatedAt:   item.CreatedAt.UTC().Format(time.RFC3339),
+		UpdatedAt:   item.UpdatedAt.UTC().Format(time.RFC3339),
+		Key:         key,
+		ExpiresAt: lo.TernaryF(
+			item.ExpiresAt != nil,
+			func() *string { return new(item.ExpiresAt.UTC().Format(time.RFC3339)) },
+			func() *string { return nil },
+		),
+	}
+}
+
 // ListAccessKeysResult is what you get back when listing workspace access keys.
 type ListAccessKeysResult struct {
 	Keys  []*AccessKeyResponse
@@ -160,22 +178,7 @@ func (a *Access) CreateAccessKey(workspaceId db.Id, principal *Principal, req *C
 		Str("accessKeyId", item.Id.String()).
 		Msg("Access key created")
 
-	resp := &AccessKeyResponse{
-		Id:          item.Id,
-		WorkspaceId: item.WorkspaceId,
-		Name:        item.Name,
-		Permissions: req.Permissions,
-		CreatedAt:   item.CreatedAt.UTC().Format(time.RFC3339),
-		UpdatedAt:   item.UpdatedAt.UTC().Format(time.RFC3339),
-		Key:         token.String(),
-		ExpiresAt: lo.TernaryF(
-			item.ExpiresAt != nil,
-			func() *string { return new(item.ExpiresAt.UTC().Format(time.RFC3339)) },
-			func() *string { return nil },
-		),
-	}
-
-	return resp, nil
+	return toAccessKeyResponse(item, req.Permissions, token.String()), nil
 }
 
 // ListAccessKeys returns workspace access keys (metadata only, never the secret).
@@ -227,20 +230,7 @@ func (a *Access) ListAccessKeys(workspaceId db.Id, limit, offset int) (*ListAcce
 			return nil, fmt.Errorf("%w: %v", ErrFailedListAccessKeys, err)
 		}
 
-		resp := &AccessKeyResponse{
-			Id:          item.Id,
-			WorkspaceId: item.WorkspaceId,
-			Name:        item.Name,
-			Permissions: meta.Permissions,
-			CreatedAt:   item.CreatedAt.UTC().Format(time.RFC3339),
-			UpdatedAt:   item.UpdatedAt.UTC().Format(time.RFC3339),
-			ExpiresAt: lo.TernaryF(
-				item.ExpiresAt != nil,
-				func() *string { return new(item.ExpiresAt.UTC().Format(time.RFC3339)) },
-				func() *string { return nil },
-			),
-		}
-		list = append(list, resp)
+		list = append(list, toAccessKeyResponse(item, meta.Permissions, ""))
 	}
 
 	return &ListAccessKeysResult{Keys: list, Total: total}, nil
@@ -287,21 +277,7 @@ func (a *Access) GetAccessKey(workspaceId, id db.Id) (*AccessKeyResponse, error)
 		return nil, fmt.Errorf("%w: %v", ErrFailedGetAccessKey, err)
 	}
 
-	resp := &AccessKeyResponse{
-		Id:          item.Id,
-		WorkspaceId: item.WorkspaceId,
-		Name:        item.Name,
-		Permissions: meta.Permissions,
-		CreatedAt:   item.CreatedAt.UTC().Format(time.RFC3339),
-		UpdatedAt:   item.UpdatedAt.UTC().Format(time.RFC3339),
-		ExpiresAt: lo.TernaryF(
-			item.ExpiresAt != nil,
-			func() *string { return new(item.ExpiresAt.UTC().Format(time.RFC3339)) },
-			func() *string { return nil },
-		),
-	}
-
-	return resp, nil
+	return toAccessKeyResponse(item, meta.Permissions, ""), nil
 }
 
 // DeleteAccessKey deletes a workspace access key.

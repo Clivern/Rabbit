@@ -291,6 +291,53 @@ func TestUnitAgent(t *testing.T) {
 		assert.Nil(t, f.agents.updated[0].Card)
 	})
 
+	t.Run("upsert rejects an unknown load balancing strategy", func(t *testing.T) {
+		_, _, err := defaultAgentFixture().agent.UpsertAgent(
+			"ws-1",
+			"support-assistant",
+			&UpsertAgentRequest{Version: "1.0.0", LbStrategy: "weighted"},
+		)
+		assert.ErrorIs(t, err, ErrInvalidLbStrategy)
+	})
+
+	t.Run("upsert defaults a new agent to round robin", func(t *testing.T) {
+		f := newAgentFixture(&db.Workspace{Id: "ws-1"}, nil)
+
+		response, created, err := f.agent.UpsertAgent(
+			"ws-1",
+			"support-assistant",
+			&UpsertAgentRequest{Version: "1.0.0"},
+		)
+		require.NoError(t, err)
+		assert.True(t, created)
+		assert.Equal(t, "round_robin", response.LbStrategy)
+		require.Len(t, f.agents.created, 1)
+		assert.Equal(t, "round_robin", f.agents.created[0].LbStrategy)
+	})
+
+	t.Run("upsert stores a custom strategy and keeps it when omitted", func(t *testing.T) {
+		f := defaultAgentFixture()
+
+		response, _, err := f.agent.UpsertAgent(
+			"ws-1",
+			"support-assistant",
+			&UpsertAgentRequest{Version: "1.0.0", LbStrategy: "least_outstanding_tasks"},
+		)
+		require.NoError(t, err)
+		assert.Equal(t, "least_outstanding_tasks", response.LbStrategy)
+		require.Len(t, f.agents.updated, 1)
+		assert.Equal(t, "least_outstanding_tasks", f.agents.updated[0].LbStrategy)
+
+		f.agents.agent.LbStrategy = "least_outstanding_tasks"
+		response, _, err = f.agent.UpsertAgent(
+			"ws-1",
+			"support-assistant",
+			&UpsertAgentRequest{Version: "1.0.1"},
+		)
+		require.NoError(t, err)
+		assert.Equal(t, "least_outstanding_tasks", response.LbStrategy)
+	})
+
 	t.Run("delete returns not found for a missing agent", func(t *testing.T) {
 		f := newAgentFixture(&db.Workspace{Id: "ws-1"}, nil)
 

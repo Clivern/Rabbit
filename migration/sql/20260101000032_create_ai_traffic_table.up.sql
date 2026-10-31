@@ -1,6 +1,7 @@
 CREATE TABLE IF NOT EXISTS ai_traffic (
 	id UUID PRIMARY KEY,
 	workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+	source_agent VARCHAR(100) NOT NULL,
 	source_instance VARCHAR(100) NOT NULL,
 	destination_agent VARCHAR(100) NOT NULL,
 	destination_instance VARCHAR(100) NOT NULL,
@@ -17,6 +18,6 @@ CREATE TABLE IF NOT EXISTS ai_traffic (
 CREATE INDEX IF NOT EXISTS idx_ai_traffic_workspace_id_created_at
 	ON ai_traffic (workspace_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_ai_traffic_workspace_id_instances
-	ON ai_traffic (workspace_id, source_instance, destination_instance);
+	ON ai_traffic (workspace_id, source_agent, destination_instance);
 CREATE INDEX IF NOT EXISTS idx_ai_traffic_workspace_id_task_id
 	ON ai_traffic (workspace_id, task_id);

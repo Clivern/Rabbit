@@ -5,7 +5,6 @@ package db
 
 import (
 	"database/sql"
-	"errors"
 	"time"
 )
 
@@ -51,6 +50,24 @@ func NewEventRepository(db *sql.DB) EventRepository {
 	return &EventRepositoryPostgres{db: db}
 }
 
+// scanEvent maps a row into an event. Column order must match the select list.
+func scanEvent(event *Event) []any {
+	return []any{
+		&event.Id,
+		&event.WorkspaceId,
+		&event.Type,
+		&event.ActorId,
+		&event.ActorName,
+		&event.ActorType,
+		&event.ResourceType,
+		&event.ResourceId,
+		&event.IPAddress,
+		&event.UserAgent,
+		&event.Data,
+		&event.CreatedAt,
+	}
+}
+
 // Create inserts an event row.
 func (r *EventRepositoryPostgres) Create(event *Event) error {
 	id, err := NewId()
@@ -85,38 +102,22 @@ func (r *EventRepositoryPostgres) Create(event *Event) error {
 
 // GetById returns an event by id.
 func (r *EventRepositoryPostgres) GetById(id Id) (*Event, error) {
-	event := &Event{}
-	err := r.db.QueryRow(
+	return QueryOne(
+		r.db,
 		`SELECT
 			id, workspace_id, type, actor_id, actor_name, actor_type,
 			resource_type, resource_id, ip_address, user_agent, data, created_at
 		FROM events
 		WHERE id = $1`,
+		scanEvent,
 		id.String(),
-	).Scan(
-		&event.Id,
-		&event.WorkspaceId,
-		&event.Type,
-		&event.ActorId,
-		&event.ActorName,
-		&event.ActorType,
-		&event.ResourceType,
-		&event.ResourceId,
-		&event.IPAddress,
-		&event.UserAgent,
-		&event.Data,
-		&event.CreatedAt,
 	)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
-
-	return event, err
 }
 
 // ListByWorkspaceId returns the newest events of a workspace.
 func (r *EventRepositoryPostgres) ListByWorkspaceId(workspaceId Id, limit, offset int) ([]*Event, error) {
-	rows, err := r.db.Query(
+	return QueryMany(
+		r.db,
 		`SELECT
 			id, workspace_id, type, actor_id, actor_name, actor_type,
 			resource_type, resource_id, ip_address, user_agent, data, created_at
@@ -124,41 +125,11 @@ func (r *EventRepositoryPostgres) ListByWorkspaceId(workspaceId Id, limit, offse
 		WHERE workspace_id = $1
 		ORDER BY created_at DESC
 		LIMIT $2 OFFSET $3`,
+		scanEvent,
 		workspaceId.String(),
 		limit,
 		offset,
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-
-	var list []*Event
-	for rows.Next() {
-		event := &Event{}
-		err := rows.Scan(
-			&event.Id,
-			&event.WorkspaceId,
-			&event.Type,
-			&event.ActorId,
-			&event.ActorName,
-			&event.ActorType,
-			&event.ResourceType,
-			&event.ResourceId,
-			&event.IPAddress,
-			&event.UserAgent,
-			&event.Data,
-			&event.CreatedAt,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		list = append(list, event)
-	}
-
-	return list, rows.Err()
 }
 
 // CountByWorkspaceId returns the total number of events in a workspace.

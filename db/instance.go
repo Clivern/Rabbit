@@ -5,7 +5,6 @@ package db
 
 import (
 	"database/sql"
-	"errors"
 	"time"
 )
 
@@ -79,6 +78,23 @@ func NewAgentInstanceRepository(db *sql.DB) AgentInstanceRepository {
 	return &AgentInstanceRepositoryPostgres{db: db}
 }
 
+// scanAgentInstance maps a row into an agent instance. Column order must match the select list.
+func scanAgentInstance(instance *AgentInstance) []any {
+	return []any{
+		&instance.Id,
+		&instance.AgentId,
+		&instance.InstanceId,
+		&instance.Address,
+		&instance.Port,
+		&instance.Scheme,
+		&instance.Path,
+		&instance.Meta,
+		&instance.Status,
+		&instance.CreatedAt,
+		&instance.UpdatedAt,
+	}
+}
+
 // Create inserts an agent instance row.
 func (r *AgentInstanceRepositoryPostgres) Create(instance *AgentInstance) error {
 	id, err := NewId()
@@ -110,59 +126,27 @@ func (r *AgentInstanceRepositoryPostgres) Create(instance *AgentInstance) error 
 
 // GetById returns an agent instance by id.
 func (r *AgentInstanceRepositoryPostgres) GetById(id Id) (*AgentInstance, error) {
-	instance := &AgentInstance{}
-	err := r.db.QueryRow(
+	return QueryOne(
+		r.db,
 		`SELECT id, agent_id, instance_id, address, port, scheme, path, meta, status, created_at, updated_at
 		FROM ai_agent_instances
 		WHERE id = $1`,
+		scanAgentInstance,
 		id.String(),
-	).Scan(
-		&instance.Id,
-		&instance.AgentId,
-		&instance.InstanceId,
-		&instance.Address,
-		&instance.Port,
-		&instance.Scheme,
-		&instance.Path,
-		&instance.Meta,
-		&instance.Status,
-		&instance.CreatedAt,
-		&instance.UpdatedAt,
 	)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
-
-	return instance, err
 }
 
 // GetByAgentAndInstanceId returns an agent instance by agent and instance id.
 func (r *AgentInstanceRepositoryPostgres) GetByAgentAndInstanceId(agentId Id, instanceId string) (*AgentInstance, error) {
-	instance := &AgentInstance{}
-	err := r.db.QueryRow(
+	return QueryOne(
+		r.db,
 		`SELECT id, agent_id, instance_id, address, port, scheme, path, meta, status, created_at, updated_at
 		FROM ai_agent_instances
 		WHERE agent_id = $1 AND instance_id = $2`,
+		scanAgentInstance,
 		agentId.String(),
 		instanceId,
-	).Scan(
-		&instance.Id,
-		&instance.AgentId,
-		&instance.InstanceId,
-		&instance.Address,
-		&instance.Port,
-		&instance.Scheme,
-		&instance.Path,
-		&instance.Meta,
-		&instance.Status,
-		&instance.CreatedAt,
-		&instance.UpdatedAt,
 	)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
-
-	return instance, err
 }
 
 // Update updates an agent instance address, endpoint and status.
@@ -193,48 +177,21 @@ func (r *AgentInstanceRepositoryPostgres) Delete(id Id) error {
 
 // ListByAgentId lists instances for an agent.
 func (r *AgentInstanceRepositoryPostgres) ListByAgentId(agentId Id) ([]*AgentInstance, error) {
-	rows, err := r.db.Query(
+	return QueryMany(
+		r.db,
 		`SELECT id, agent_id, instance_id, address, port, scheme, path, meta, status, created_at, updated_at
 		FROM ai_agent_instances
 		WHERE agent_id = $1
 		ORDER BY instance_id`,
+		scanAgentInstance,
 		agentId.String(),
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-
-	var list []*AgentInstance
-	for rows.Next() {
-		instance := &AgentInstance{}
-		err := rows.Scan(
-			&instance.Id,
-			&instance.AgentId,
-			&instance.InstanceId,
-			&instance.Address,
-			&instance.Port,
-			&instance.Scheme,
-			&instance.Path,
-			&instance.Meta,
-			&instance.Status,
-			&instance.CreatedAt,
-			&instance.UpdatedAt,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		list = append(list, instance)
-	}
-
-	return list, rows.Err()
 }
 
 // ListLiveByAgentId lists instances with no critical, unknown, or expired checks.
 func (r *AgentInstanceRepositoryPostgres) ListLiveByAgentId(agentId Id, now time.Time) ([]*AgentInstance, error) {
-	rows, err := r.db.Query(
+	return QueryMany(
+		r.db,
 		`SELECT id, agent_id, instance_id, address, port, scheme, path, meta, status, created_at, updated_at
 		FROM ai_agent_instances
 		WHERE agent_id = $1
@@ -247,42 +204,13 @@ func (r *AgentInstanceRepositoryPostgres) ListLiveByAgentId(agentId Id, now time
 					)
 			)
 		ORDER BY instance_id`,
+		scanAgentInstance,
 		agentId.String(),
 		now,
 		HealthCheckStatusCritical,
 		HealthCheckTypeTTL,
 		HealthCheckStatusUnknown,
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-
-	var list []*AgentInstance
-	for rows.Next() {
-		instance := &AgentInstance{}
-		err := rows.Scan(
-			&instance.Id,
-			&instance.AgentId,
-			&instance.InstanceId,
-			&instance.Address,
-			&instance.Port,
-			&instance.Scheme,
-			&instance.Path,
-			&instance.Meta,
-			&instance.Status,
-			&instance.CreatedAt,
-			&instance.UpdatedAt,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		list = append(list, instance)
-	}
-
-	return list, rows.Err()
 }
 
 // CountByAgentId counts the instances of an agent.
@@ -298,46 +226,18 @@ func (r *AgentInstanceRepositoryPostgres) CountByAgentId(agentId Id) (int64, err
 
 // ListPageByAgentId lists one page of instances for an agent.
 func (r *AgentInstanceRepositoryPostgres) ListPageByAgentId(agentId Id, limit, offset int) ([]*AgentInstance, error) {
-	rows, err := r.db.Query(
+	return QueryMany(
+		r.db,
 		`SELECT id, agent_id, instance_id, address, port, scheme, path, meta, status, created_at, updated_at
 		FROM ai_agent_instances
 		WHERE agent_id = $1
 		ORDER BY instance_id
 		LIMIT $2 OFFSET $3`,
+		scanAgentInstance,
 		agentId.String(),
 		limit,
 		offset,
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-
-	var list []*AgentInstance
-	for rows.Next() {
-		instance := &AgentInstance{}
-		err := rows.Scan(
-			&instance.Id,
-			&instance.AgentId,
-			&instance.InstanceId,
-			&instance.Address,
-			&instance.Port,
-			&instance.Scheme,
-			&instance.Path,
-			&instance.Meta,
-			&instance.Status,
-			&instance.CreatedAt,
-			&instance.UpdatedAt,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		list = append(list, instance)
-	}
-
-	return list, rows.Err()
 }
 
 // CountLiveByAgentId counts the instances with no critical or expired checks.
@@ -367,7 +267,8 @@ func (r *AgentInstanceRepositoryPostgres) CountLiveByAgentId(agentId Id, now tim
 
 // ListLivePageByAgentId lists one page of instances with no critical, unknown, or expired checks.
 func (r *AgentInstanceRepositoryPostgres) ListLivePageByAgentId(agentId Id, now time.Time, limit, offset int) ([]*AgentInstance, error) {
-	rows, err := r.db.Query(
+	return QueryMany(
+		r.db,
 		`SELECT id, agent_id, instance_id, address, port, scheme, path, meta, status, created_at, updated_at
 		FROM ai_agent_instances
 		WHERE agent_id = $1
@@ -381,6 +282,7 @@ func (r *AgentInstanceRepositoryPostgres) ListLivePageByAgentId(agentId Id, now 
 			)
 		ORDER BY instance_id
 		LIMIT $6 OFFSET $7`,
+		scanAgentInstance,
 		agentId.String(),
 		now,
 		HealthCheckStatusCritical,
@@ -389,41 +291,23 @@ func (r *AgentInstanceRepositoryPostgres) ListLivePageByAgentId(agentId Id, now 
 		limit,
 		offset,
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-
-	var list []*AgentInstance
-	for rows.Next() {
-		instance := &AgentInstance{}
-		err := rows.Scan(
-			&instance.Id,
-			&instance.AgentId,
-			&instance.InstanceId,
-			&instance.Address,
-			&instance.Port,
-			&instance.Scheme,
-			&instance.Path,
-			&instance.Meta,
-			&instance.Status,
-			&instance.CreatedAt,
-			&instance.UpdatedAt,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		list = append(list, instance)
-	}
-
-	return list, rows.Err()
 }
 
 // NewAgentInstanceMetaRepository returns the repository for agent instance metadata.
 func NewAgentInstanceMetaRepository(db *sql.DB) AgentInstanceMetaRepository {
 	return &AgentInstanceMetaRepositoryPostgres{db: db}
+}
+
+// scanAgentInstanceMeta maps a row into agent instance metadata. Column order must match the select list.
+func scanAgentInstanceMeta(meta *AgentInstanceMeta) []any {
+	return []any{
+		&meta.Id,
+		&meta.AgentInstanceId,
+		&meta.Key,
+		&meta.Value,
+		&meta.CreatedAt,
+		&meta.UpdatedAt,
+	}
 }
 
 // Create inserts an agent instance metadata row. TODO: remove if not used in future.
@@ -447,26 +331,15 @@ func (r *AgentInstanceMetaRepositoryPostgres) Create(id Id, key, value string) e
 
 // Get returns agent instance metadata by key. TODO: remove if not used in future.
 func (r *AgentInstanceMetaRepositoryPostgres) Get(id Id, key string) (*AgentInstanceMeta, error) {
-	meta := &AgentInstanceMeta{}
-	err := r.db.QueryRow(
+	return QueryOne(
+		r.db,
 		`SELECT id, agent_instance_id, key, value #>> '{}', created_at, updated_at
 		FROM ai_agent_instances_meta
 		WHERE agent_instance_id = $1 AND key = $2`,
+		scanAgentInstanceMeta,
 		id.String(),
 		key,
-	).Scan(
-		&meta.Id,
-		&meta.AgentInstanceId,
-		&meta.Key,
-		&meta.Value,
-		&meta.CreatedAt,
-		&meta.UpdatedAt,
 	)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
-
-	return meta, err
 }
 
 // Update updates an existing agent instance metadata row. TODO: remove if not used in future.
@@ -497,38 +370,15 @@ func (r *AgentInstanceMetaRepositoryPostgres) Delete(id Id, key string) error {
 
 // ListByAgentInstanceId lists agent instance metadata rows. TODO: remove if not used in future.
 func (r *AgentInstanceMetaRepositoryPostgres) ListByAgentInstanceId(id Id) ([]*AgentInstanceMeta, error) {
-	rows, err := r.db.Query(
+	return QueryMany(
+		r.db,
 		`SELECT id, agent_instance_id, key, value #>> '{}', created_at, updated_at
 		FROM ai_agent_instances_meta
 		WHERE agent_instance_id = $1
 		ORDER BY key`,
+		scanAgentInstanceMeta,
 		id.String(),
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-
-	var list []*AgentInstanceMeta
-	for rows.Next() {
-		meta := &AgentInstanceMeta{}
-		err := rows.Scan(
-			&meta.Id,
-			&meta.AgentInstanceId,
-			&meta.Key,
-			&meta.Value,
-			&meta.CreatedAt,
-			&meta.UpdatedAt,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		list = append(list, meta)
-	}
-
-	return list, rows.Err()
 }
 
 // Upsert creates or updates agent instance metadata. TODO: remove if not used in future.

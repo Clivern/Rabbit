@@ -5,7 +5,6 @@ package db
 
 import (
 	"database/sql"
-	"errors"
 	"time"
 )
 
@@ -62,6 +61,18 @@ func NewSubscriptionRepository(db *sql.DB) SubscriptionRepository {
 	return &SubscriptionRepositoryPostgres{db: db}
 }
 
+// scanSubscription maps a row into a subscription. Column order must match the select list.
+func scanSubscription(item *Subscription) []any {
+	return []any{
+		&item.Id,
+		&item.WorkspaceId,
+		&item.ProviderCustomerId,
+		&item.AITokensBalance,
+		&item.CreatedAt,
+		&item.UpdatedAt,
+	}
+}
+
 // Create inserts a subscription row.
 func (r *SubscriptionRepositoryPostgres) Create(subscription *Subscription) error {
 	id, err := NewId()
@@ -88,52 +99,28 @@ func (r *SubscriptionRepositoryPostgres) Create(subscription *Subscription) erro
 
 // GetById returns a subscription by id. TODO: remove if not used in future.
 func (r *SubscriptionRepositoryPostgres) GetById(id Id) (*Subscription, error) {
-	item := &Subscription{}
-	err := r.db.QueryRow(
+	return QueryOne(
+		r.db,
 		`SELECT
 			id, workspace_id, provider_customer_id, ai_tokens_balance, created_at, updated_at
 		FROM subscriptions
 		WHERE id = $1`,
+		scanSubscription,
 		id.String(),
-	).Scan(
-		&item.Id,
-		&item.WorkspaceId,
-		&item.ProviderCustomerId,
-		&item.AITokensBalance,
-		&item.CreatedAt,
-		&item.UpdatedAt,
 	)
-
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
-
-	return item, err
 }
 
 // GetByWorkspaceId returns a subscription by workspace id.
 func (r *SubscriptionRepositoryPostgres) GetByWorkspaceId(workspaceId Id) (*Subscription, error) {
-	item := &Subscription{}
-	err := r.db.QueryRow(
+	return QueryOne(
+		r.db,
 		`SELECT
 			id, workspace_id, provider_customer_id, ai_tokens_balance, created_at, updated_at
 		FROM subscriptions
 		WHERE workspace_id = $1`,
+		scanSubscription,
 		workspaceId.String(),
-	).Scan(
-		&item.Id,
-		&item.WorkspaceId,
-		&item.ProviderCustomerId,
-		&item.AITokensBalance,
-		&item.CreatedAt,
-		&item.UpdatedAt,
 	)
-
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
-
-	return item, err
 }
 
 // Update updates an existing subscription row.
@@ -187,6 +174,18 @@ func NewSubscriptionMetaRepository(db *sql.DB) SubscriptionMetaRepository {
 	return &SubscriptionMetaRepositoryPostgres{db: db}
 }
 
+// scanSubscriptionMeta maps a row into subscription metadata. Column order must match the select list.
+func scanSubscriptionMeta(meta *SubscriptionMeta) []any {
+	return []any{
+		&meta.Id,
+		&meta.SubscriptionId,
+		&meta.Key,
+		&meta.Value,
+		&meta.CreatedAt,
+		&meta.UpdatedAt,
+	}
+}
+
 // Create inserts a subscription metadata row. TODO: remove if not used in future.
 func (r *SubscriptionMetaRepositoryPostgres) Create(id Id, key, value string) error {
 	metaId, err := NewId()
@@ -205,26 +204,14 @@ func (r *SubscriptionMetaRepositoryPostgres) Create(id Id, key, value string) er
 
 // Get returns subscription metadata by key. TODO: remove if not used in future.
 func (r *SubscriptionMetaRepositoryPostgres) Get(id Id, key string) (*SubscriptionMeta, error) {
-	meta := &SubscriptionMeta{}
-	err := r.db.QueryRow(
+	return QueryOne(
+		r.db,
 		`SELECT id, subscription_id, key, value #>> '{}', created_at, updated_at
 		FROM subscriptions_meta
 		WHERE subscription_id = $1 AND key = $2`,
+		scanSubscriptionMeta,
 		id.String(), key,
-	).Scan(
-		&meta.Id,
-		&meta.SubscriptionId,
-		&meta.Key,
-		&meta.Value,
-		&meta.CreatedAt,
-		&meta.UpdatedAt,
 	)
-
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
-
-	return meta, err
 }
 
 // Update updates an existing subscription metadata row. TODO: remove if not used in future.
@@ -252,38 +239,15 @@ func (r *SubscriptionMetaRepositoryPostgres) Delete(id Id, key string) error {
 
 // ListBySubscriptionId lists subscription metadata rows by subscription id. TODO: remove if not used in future.
 func (r *SubscriptionMetaRepositoryPostgres) ListBySubscriptionId(id Id) ([]*SubscriptionMeta, error) {
-	rows, err := r.db.Query(
+	return QueryMany(
+		r.db,
 		`SELECT id, subscription_id, key, value #>> '{}', created_at, updated_at
 		FROM subscriptions_meta
 		WHERE subscription_id = $1
 		ORDER BY key`,
+		scanSubscriptionMeta,
 		id.String(),
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-
-	var list []*SubscriptionMeta
-	for rows.Next() {
-		meta := &SubscriptionMeta{}
-		err := rows.Scan(
-			&meta.Id,
-			&meta.SubscriptionId,
-			&meta.Key,
-			&meta.Value,
-			&meta.CreatedAt,
-			&meta.UpdatedAt,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		list = append(list, meta)
-	}
-
-	return list, rows.Err()
 }
 
 // Upsert creates or updates subscription metadata. TODO: remove if not used in future.

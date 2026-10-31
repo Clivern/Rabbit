@@ -101,6 +101,23 @@ func NewCheck(agents db.AgentRepository, agentChecks db.AgentCheckRepository, in
 	}
 }
 
+// toAgentCheckResponse shapes a check template for API responses.
+func toAgentCheckResponse(template *db.AgentCheck, definition CheckDefinition) *AgentCheckResponse {
+	return &AgentCheckResponse{
+		CheckId:   template.CheckId,
+		Name:      template.Name,
+		Type:      template.Type,
+		Path:      definition.Path,
+		Scheme:    definition.Scheme,
+		Port:      definition.Port,
+		Interval:  definition.Interval,
+		Timeout:   definition.Timeout,
+		TTL:       definition.TTL,
+		CreatedAt: template.CreatedAt.UTC().Format(time.RFC3339),
+		UpdatedAt: template.UpdatedAt.UTC().Format(time.RFC3339),
+	}
+}
+
 // ListAgentChecks returns one page of the check templates of an agent.
 func (c *Check) ListAgentChecks(workspaceId db.Id, agentName string, limit, offset int) (*ListAgentChecksResponse, error) {
 	agent, err := c.AgentRepository.GetByWorkspaceAndName(workspaceId, agentName)
@@ -146,19 +163,7 @@ func (c *Check) ListAgentChecks(workspaceId db.Id, agentName string, limit, offs
 				Msg("Failed to decode check definition")
 		}
 
-		list = append(list, &AgentCheckResponse{
-			CheckId:   template.CheckId,
-			Name:      template.Name,
-			Type:      template.Type,
-			Path:      definition.Path,
-			Scheme:    definition.Scheme,
-			Port:      definition.Port,
-			Interval:  definition.Interval,
-			Timeout:   definition.Timeout,
-			TTL:       definition.TTL,
-			CreatedAt: template.CreatedAt.UTC().Format(time.RFC3339),
-			UpdatedAt: template.UpdatedAt.UTC().Format(time.RFC3339),
-		})
+		list = append(list, toAgentCheckResponse(template, definition))
 	}
 
 	return &ListAgentChecksResponse{
@@ -300,19 +305,7 @@ func (c *Check) UpsertAgentCheck(workspaceId db.Id, agentName, checkId string, r
 		Int("instances", len(instances)).
 		Msg("Agent check upserted")
 
-	return &AgentCheckResponse{
-		CheckId:   template.CheckId,
-		Name:      template.Name,
-		Type:      template.Type,
-		Path:      definition.Path,
-		Scheme:    definition.Scheme,
-		Port:      definition.Port,
-		Interval:  definition.Interval,
-		Timeout:   definition.Timeout,
-		TTL:       definition.TTL,
-		CreatedAt: template.CreatedAt.UTC().Format(time.RFC3339),
-		UpdatedAt: template.UpdatedAt.UTC().Format(time.RFC3339),
-	}, created, nil
+	return toAgentCheckResponse(template, definition), created, nil
 }
 
 // SyncInstanceCheck makes one instance's copy of a check template match the template.

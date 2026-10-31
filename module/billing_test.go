@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/clivern/sloth/db"
-	"github.com/clivern/sloth/pkg/ai"
+	"github.com/clivern/sloth/pkg/llm"
 	"github.com/clivern/sloth/pkg/stripe"
 
 	"github.com/stretchr/testify/assert"
@@ -64,7 +64,7 @@ func TestUnitBilling(t *testing.T) {
 				UsageRepository: &fakeUsage{
 					quantities: map[string]int64{
 						db.UsageTypeAITokens: 300,
-						db.UsageTypeAICost:   ai.USDToNano,
+						db.UsageTypeAICost:   llm.USDToNano,
 					},
 				},
 			}

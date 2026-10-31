@@ -5,7 +5,7 @@ package module
 
 import (
 	"github.com/clivern/sloth/db"
-	"github.com/clivern/sloth/pkg/ai"
+	"github.com/clivern/sloth/pkg/llm"
 	"github.com/clivern/sloth/pkg/util"
 
 	"github.com/rs/zerolog/log"
@@ -88,7 +88,7 @@ func (u *Usage) AICost(usage db.UsageRepository, workspaceId db.Id) (float64, er
 		return 0, err
 	}
 
-	return float64(cost) / ai.USDToNano, nil
+	return float64(cost) / llm.USDToNano, nil
 }
 
 // IncrementAIUsage adds AI token and cost usage for the current calendar month. TODO: remove if not used in future.

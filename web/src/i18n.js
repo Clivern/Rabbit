@@ -18,6 +18,6 @@ export const i18n = createI18n({
   fallbackLocale: defaultLocale,
   messages: {
     en,
-    fr
-  }
+    fr,
+  },
 })

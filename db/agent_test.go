@@ -27,6 +27,7 @@ func TestIntegrationAgentRepository(t *testing.T) {
 		assert.Equal(t, agent.CardChecksum, got.CardChecksum)
 		assert.Equal(t, "1.0.0", got.Version)
 		assert.Equal(t, "/.well-known/agent-card.json", got.CardPath)
+		assert.Equal(t, "round_robin", got.LbStrategy)
 		require.NotNil(t, got.Card)
 		assert.Contains(t, *got.Card, "invoice-extractor")
 
@@ -57,6 +58,7 @@ func TestIntegrationAgentRepository(t *testing.T) {
 		agent.Card = lo.ToPtr(`{"name":"support-assistant","version":"1.1.0"}`)
 		agent.CardChecksum = lo.ToPtr("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")
 		agent.CardPath = "/agent.json"
+		agent.LbStrategy = "sticky"
 		require.NoError(t, repo.Update(agent))
 
 		got, err := repo.GetById(agent.Id)
@@ -64,6 +66,7 @@ func TestIntegrationAgentRepository(t *testing.T) {
 		assert.Equal(t, "1.1.0", got.Version)
 		assert.Equal(t, agent.CardChecksum, got.CardChecksum)
 		assert.Equal(t, "/agent.json", got.CardPath)
+		assert.Equal(t, "sticky", got.LbStrategy)
 
 		list, err := repo.ListByWorkspaceId(workspace.Id, 50, 0)
 		require.NoError(t, err)

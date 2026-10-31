@@ -111,6 +111,24 @@ func NewIntegration(integrations db.IntegrationRepository) *Integration {
 	}
 }
 
+// toIntegrationResponse shapes an integration row for API responses.
+func toIntegrationResponse(item *db.Integration, config IntegrationConfig) *IntegrationResponse {
+	return &IntegrationResponse{
+		Id:          item.Id,
+		WorkspaceId: item.WorkspaceId,
+		Type:        item.Type,
+		Name:        item.Name,
+		URL:         config.URL,
+		Site:        config.Site,
+		Index:       config.Index,
+		Events:      config.Events,
+		HasSecret:   config.SecretEncrypted != "",
+		IsActive:    item.IsActive,
+		CreatedAt:   item.CreatedAt.UTC().Format(time.RFC3339),
+		UpdatedAt:   item.UpdatedAt.UTC().Format(time.RFC3339),
+	}
+}
+
 // ListIntegrations returns paginated integrations in a workspace.
 func (i *Integration) ListIntegrations(workspaceId db.Id, limit, offset int) (*ListIntegrationsResponse, error) {
 	total, err := i.IntegrationRepository.CountByWorkspaceId(workspaceId)
@@ -141,20 +159,7 @@ func (i *Integration) ListIntegrations(workspaceId db.Id, limit, offset int) (*L
 				Msg("Failed to decode integration config")
 		}
 
-		list = append(list, &IntegrationResponse{
-			Id:          item.Id,
-			WorkspaceId: item.WorkspaceId,
-			Type:        item.Type,
-			Name:        item.Name,
-			URL:         config.URL,
-			Site:        config.Site,
-			Index:       config.Index,
-			Events:      config.Events,
-			HasSecret:   config.SecretEncrypted != "",
-			IsActive:    item.IsActive,
-			CreatedAt:   item.CreatedAt.UTC().Format(time.RFC3339),
-			UpdatedAt:   item.UpdatedAt.UTC().Format(time.RFC3339),
-		})
+		list = append(list, toIntegrationResponse(item, config))
 	}
 
 	return &ListIntegrationsResponse{Integrations: list, Total: total}, nil
@@ -183,20 +188,7 @@ func (i *Integration) GetIntegration(workspaceId, integrationId db.Id) (*Integra
 			Msg("Failed to decode integration config")
 	}
 
-	return &IntegrationResponse{
-		Id:          integration.Id,
-		WorkspaceId: integration.WorkspaceId,
-		Type:        integration.Type,
-		Name:        integration.Name,
-		URL:         config.URL,
-		Site:        config.Site,
-		Index:       config.Index,
-		Events:      config.Events,
-		HasSecret:   config.SecretEncrypted != "",
-		IsActive:    integration.IsActive,
-		CreatedAt:   integration.CreatedAt.UTC().Format(time.RFC3339),
-		UpdatedAt:   integration.UpdatedAt.UTC().Format(time.RFC3339),
-	}, nil
+	return toIntegrationResponse(integration, config), nil
 }
 
 // CreateIntegration stores a destination; a generated webhook signing secret is returned once.
@@ -276,21 +268,10 @@ func (i *Integration) CreateIntegration(workspaceId db.Id, req *SaveIntegrationR
 		Str("type", integration.Type).
 		Msg("Integration created")
 
-	return &IntegrationResponse{
-		Id:          integration.Id,
-		WorkspaceId: integration.WorkspaceId,
-		Type:        integration.Type,
-		Name:        integration.Name,
-		URL:         config.URL,
-		Site:        config.Site,
-		Index:       config.Index,
-		Events:      config.Events,
-		HasSecret:   config.SecretEncrypted != "",
-		IsActive:    integration.IsActive,
-		Secret:      lo.Ternary(req.Secret == "", secret, ""),
-		CreatedAt:   integration.CreatedAt.UTC().Format(time.RFC3339),
-		UpdatedAt:   integration.UpdatedAt.UTC().Format(time.RFC3339),
-	}, nil
+	resp := toIntegrationResponse(integration, config)
+	resp.Secret = lo.Ternary(req.Secret == "", secret, "")
+
+	return resp, nil
 }
 
 // UpdateIntegration replaces a destination's settings; an empty secret keeps the stored one.
@@ -377,20 +358,10 @@ func (i *Integration) UpdateIntegration(workspaceId, integrationId db.Id, req *S
 		Bool("isActive", integration.IsActive).
 		Msg("Integration updated")
 
-	return &IntegrationResponse{
-		Id:          integration.Id,
-		WorkspaceId: integration.WorkspaceId,
-		Type:        integration.Type,
-		Name:        integration.Name,
-		URL:         config.URL,
-		Site:        config.Site,
-		Index:       config.Index,
-		Events:      config.Events,
-		HasSecret:   config.SecretEncrypted != "",
-		IsActive:    integration.IsActive,
-		CreatedAt:   integration.CreatedAt.UTC().Format(time.RFC3339),
-		UpdatedAt:   time.Now().UTC().Format(time.RFC3339),
-	}, nil
+	resp := toIntegrationResponse(integration, config)
+	resp.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
+
+	return resp, nil
 }
 
 // DeleteIntegration removes a destination.

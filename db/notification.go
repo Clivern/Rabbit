@@ -5,7 +5,6 @@ package db
 
 import (
 	"database/sql"
-	"errors"
 	"time"
 )
 
@@ -61,6 +60,47 @@ func NewNotificationRepository(db *sql.DB) NotificationRepository {
 	return &NotificationRepositoryPostgres{db: db}
 }
 
+// scanNotification maps a row into a notification. Column order must match the select list.
+func scanNotification(notification *Notification) []any {
+	return []any{
+		&notification.Id,
+		&notification.Audience,
+		&notification.WorkspaceId,
+		&notification.UserId,
+		&notification.Type,
+		&notification.Severity,
+		&notification.Title,
+		&notification.Message,
+		&notification.ResourceType,
+		&notification.ResourceId,
+		&notification.Data,
+		&notification.Checksum,
+		&notification.CreatedAt,
+		&notification.UpdatedAt,
+	}
+}
+
+// scanNotificationRead maps a row into a notification with its read receipt. Column order must match the select list.
+func scanNotificationRead(notification *Notification) []any {
+	return []any{
+		&notification.Id,
+		&notification.Audience,
+		&notification.WorkspaceId,
+		&notification.UserId,
+		&notification.Type,
+		&notification.Severity,
+		&notification.Title,
+		&notification.Message,
+		&notification.ResourceType,
+		&notification.ResourceId,
+		&notification.Data,
+		&notification.Checksum,
+		&notification.ReadAt,
+		&notification.CreatedAt,
+		&notification.UpdatedAt,
+	}
+}
+
 // Create inserts a notification row.
 func (r *NotificationRepositoryPostgres) Create(notification *Notification) error {
 	id, err := NewId()
@@ -99,42 +139,22 @@ func (r *NotificationRepositoryPostgres) Create(notification *Notification) erro
 
 // GetById returns a notification by id.
 func (r *NotificationRepositoryPostgres) GetById(id Id) (*Notification, error) {
-	notification := &Notification{}
-	err := r.db.QueryRow(
+	return QueryOne(
+		r.db,
 		`SELECT
 			id, audience, workspace_id, user_id, type, severity, title, message, resource_type, resource_id,
 			data, checksum, created_at, updated_at
 		FROM notifications
 		WHERE id = $1`,
+		scanNotification,
 		id.String(),
-	).Scan(
-		&notification.Id,
-		&notification.Audience,
-		&notification.WorkspaceId,
-		&notification.UserId,
-		&notification.Type,
-		&notification.Severity,
-		&notification.Title,
-		&notification.Message,
-		&notification.ResourceType,
-		&notification.ResourceId,
-		&notification.Data,
-		&notification.Checksum,
-		&notification.CreatedAt,
-		&notification.UpdatedAt,
 	)
-
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
-
-	return notification, err
 }
 
 // GetLatestMatching returns the newest notification with the same target, type and resource.
 func (r *NotificationRepositoryPostgres) GetLatestMatching(match *Notification) (*Notification, error) {
-	notification := &Notification{}
-	err := r.db.QueryRow(
+	return QueryOne(
+		r.db,
 		`SELECT
 			id, audience, workspace_id, user_id, type, severity, title, message, resource_type, resource_id,
 			data, checksum, created_at, updated_at
@@ -147,39 +167,20 @@ func (r *NotificationRepositoryPostgres) GetLatestMatching(match *Notification) 
 			AND resource_id IS NOT DISTINCT FROM $6
 		ORDER BY created_at DESC
 		LIMIT 1`,
+		scanNotification,
 		match.Audience,
 		match.WorkspaceId,
 		match.UserId,
 		match.Type,
 		match.ResourceType,
 		match.ResourceId,
-	).Scan(
-		&notification.Id,
-		&notification.Audience,
-		&notification.WorkspaceId,
-		&notification.UserId,
-		&notification.Type,
-		&notification.Severity,
-		&notification.Title,
-		&notification.Message,
-		&notification.ResourceType,
-		&notification.ResourceId,
-		&notification.Data,
-		&notification.Checksum,
-		&notification.CreatedAt,
-		&notification.UpdatedAt,
 	)
-
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
-
-	return notification, err
 }
 
 // ListForUser lists a user's undismissed notifications in a workspace, newest first.
 func (r *NotificationRepositoryPostgres) ListForUser(workspaceId, userId Id, admin bool, limit, offset int) ([]*Notification, error) {
-	rows, err := r.db.Query(
+	return QueryMany(
+		r.db,
 		`SELECT
 			n.id, n.audience, n.workspace_id, n.user_id, n.type, n.severity, n.title, n.message,
 			n.resource_type, n.resource_id, n.data, n.checksum, nr.read_at, n.created_at,
@@ -192,45 +193,13 @@ func (r *NotificationRepositoryPostgres) ListForUser(workspaceId, userId Id, adm
 			AND nr.is_dismissed IS NOT TRUE
 		ORDER BY n.created_at DESC
 		LIMIT $4 OFFSET $5`,
+		scanNotificationRead,
 		workspaceId.String(),
 		userId.String(),
 		admin,
 		limit,
 		offset,
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-
-	var notifications []*Notification
-	for rows.Next() {
-		notification := &Notification{}
-		if err := rows.Scan(
-			&notification.Id,
-			&notification.Audience,
-			&notification.WorkspaceId,
-			&notification.UserId,
-			&notification.Type,
-			&notification.Severity,
-			&notification.Title,
-			&notification.Message,
-			&notification.ResourceType,
-			&notification.ResourceId,
-			&notification.Data,
-			&notification.Checksum,
-			&notification.ReadAt,
-			&notification.CreatedAt,
-			&notification.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-
-		notifications = append(notifications, notification)
-	}
-
-	return notifications, rows.Err()
 }
 
 // CountUnreadForUser counts a user's unread notifications in a workspace.
