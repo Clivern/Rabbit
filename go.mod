@@ -10,7 +10,7 @@ require (
 	github.com/go-playground/validator/v10 v10.30.6
 	github.com/google/uuid v1.6.0
 	github.com/imroc/req/v3 v3.61.0
-	github.com/jackc/pgx/v5 v5.12.0
+	github.com/jackc/pgx/v5 v5.13.0
 	github.com/leonelquinteros/gotext v1.8.0
 	github.com/nats-io/nats.go v1.55.0
 	github.com/panjf2000/ants/v2 v2.12.1
