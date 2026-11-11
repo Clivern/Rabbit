@@ -1,4 +1,4 @@
-FROM golang:1.27.3 AS builder
+FROM golang:1.27.4 AS builder
 
 ARG SLOTH_VERSION=0.1.0
 ARG SLOTH_COMMIT=none
